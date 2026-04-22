@@ -1,96 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ============================================================
+   PixelDAO design system — premium dark arcade / web3 aesthetic
+   All colors are HSL. Use semantic tokens, never raw colors.
+   ============================================================ */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core surfaces — deep midnight */
+    --background: 240 30% 4%;
+    --foreground: 220 30% 96%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 240 28% 7%;
+    --card-foreground: 220 30% 96%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 240 30% 6%;
+    --popover-foreground: 220 30% 96%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary = electric magenta */
+    --primary: 322 100% 58%;
+    --primary-foreground: 240 30% 4%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary = cyber cyan */
+    --secondary: 188 100% 55%;
+    --secondary-foreground: 240 30% 4%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Accent = acid lime */
+    --accent: 80 100% 60%;
+    --accent-foreground: 240 30% 4%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Tertiary neons (utility) */
+    --neon-gold: 45 100% 60%;
+    --neon-violet: 270 100% 70%;
+    --neon-coral: 12 100% 64%;
+    --neon-mint: 156 100% 60%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --muted: 240 18% 12%;
+    --muted-foreground: 230 15% 65%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 0 90% 62%;
+    --destructive-foreground: 220 30% 96%;
 
-    --radius: 0.5rem;
+    --border: 240 25% 14%;
+    --input: 240 25% 14%;
+    --ring: 322 100% 58%;
 
-    --sidebar-background: 0 0% 98%;
+    --radius: 0.875rem;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(322 100% 58% / 0.9), hsl(270 100% 70% / 0.85), hsl(188 100% 55% / 0.8));
+    --gradient-neon: linear-gradient(120deg, hsl(322 100% 58%), hsl(188 100% 55%));
+    --gradient-arcade: linear-gradient(135deg, hsl(80 100% 60%), hsl(45 100% 60%));
+    --gradient-card: linear-gradient(160deg, hsl(240 28% 9% / 0.9), hsl(240 30% 5% / 0.95));
+    --gradient-radial-glow: radial-gradient(circle at 50% 0%, hsl(322 100% 58% / 0.18), transparent 60%);
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Shadows / glows */
+    --glow-primary: 0 0 40px hsl(322 100% 58% / 0.45), 0 0 80px hsl(322 100% 58% / 0.2);
+    --glow-secondary: 0 0 40px hsl(188 100% 55% / 0.45), 0 0 80px hsl(188 100% 55% / 0.2);
+    --glow-accent: 0 0 30px hsl(80 100% 60% / 0.5);
+    --shadow-card: 0 30px 60px -20px hsl(240 50% 2% / 0.6), 0 0 0 1px hsl(240 25% 14%);
+    --shadow-elevated: 0 40px 80px -30px hsl(322 100% 58% / 0.25), 0 0 0 1px hsl(240 25% 18%);
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar (legacy support) */
+    --sidebar-background: 240 30% 5%;
+    --sidebar-foreground: 220 30% 90%;
+    --sidebar-primary: 322 100% 58%;
+    --sidebar-primary-foreground: 240 30% 4%;
+    --sidebar-accent: 240 25% 12%;
+    --sidebar-accent-foreground: 220 30% 96%;
+    --sidebar-border: 240 25% 14%;
+    --sidebar-ring: 322 100% 58%;
   }
 }
 
@@ -99,7 +82,176 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html, body, #root {
+    @apply h-full;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(322 100% 58% / 0.12), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(188 100% 55% / 0.08), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 0% 80%, hsl(270 100% 70% / 0.08), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.4);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .font-pixel { font-family: 'Press Start 2P', monospace; letter-spacing: 0.02em; }
+  .font-display { font-family: 'Space Grotesk', sans-serif; }
+
+  .text-gradient-neon {
+    background: var(--gradient-neon);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-gradient-hero {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-gradient-arcade {
+    background: var(--gradient-arcade);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .glow-primary { box-shadow: var(--glow-primary); }
+  .glow-secondary { box-shadow: var(--glow-secondary); }
+  .glow-accent { box-shadow: var(--glow-accent); }
+
+  .bg-gradient-card { background: var(--gradient-card); }
+  .bg-gradient-neon { background: var(--gradient-neon); }
+  .bg-gradient-hero { background: var(--gradient-hero); }
+  .bg-gradient-arcade { background: var(--gradient-arcade); }
+  .bg-radial-glow { background: var(--gradient-radial-glow); }
+
+  /* Pixel-perfect rendering for canvas/mascot */
+  .pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+  /* Animated neon border */
+  .border-neon {
+    position: relative;
+    background: hsl(var(--card));
+    border-radius: var(--radius);
+  }
+  .border-neon::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.6), hsl(var(--secondary) / 0.6), hsl(var(--accent) / 0.5));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Shimmering animated border for hover/active */
+  .border-shimmer::before {
+    background: linear-gradient(135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 25%,
+      hsl(var(--accent)) 50%,
+      hsl(var(--secondary)) 75%,
+      hsl(var(--primary)) 100%);
+    background-size: 300% 300%;
+    animation: shimmer-border 4s linear infinite;
+  }
+
+  /* Subtle scanline overlay */
+  .scanlines {
+    position: relative;
+  }
+  .scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 3px,
+      hsl(0 0% 100% / 0.015) 3px,
+      hsl(0 0% 100% / 0.015) 4px
+    );
+    border-radius: inherit;
+  }
+
+  .crt-vignette {
+    box-shadow: inset 0 0 120px hsl(240 50% 2% / 0.7);
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
+
+/* ===== Keyframes ===== */
+@keyframes shimmer-border {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 300% 0%; }
+}
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.05); }
+}
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(20deg); }
+  75% { transform: rotate(-15deg); }
+}
+@keyframes pixel-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes sparkle {
+  0% { transform: translate(0,0) scale(0); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+}
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-float-soft { animation: float-soft 4s ease-in-out infinite; }
+.animate-blink { animation: blink 4s infinite; transform-origin: center; }
+.animate-wave { animation: wave 1.6s ease-in-out infinite; transform-origin: bottom center; }
+.animate-pixel-pop { animation: pixel-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.animate-ticker { animation: ticker 40s linear infinite; }
+.animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+.animate-bounce-soft { animation: bounce-soft 1.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
