@@ -14,10 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      paint_history: {
+        Row: {
+          id: number
+          new_color: string
+          old_color: string | null
+          painted_at: string
+          pixel_id: number
+          wallet: string
+        }
+        Insert: {
+          id?: number
+          new_color: string
+          old_color?: string | null
+          painted_at?: string
+          pixel_id: number
+          wallet: string
+        }
+        Update: {
+          id?: number
+          new_color?: string
+          old_color?: string | null
+          painted_at?: string
+          pixel_id?: number
+          wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paint_history_pixel_id_fkey"
+            columns: ["pixel_id"]
+            isOneToOne: false
+            referencedRelation: "pixels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pixels: {
+        Row: {
+          active: boolean
+          color: string
+          id: number
+          owner_wallet: string | null
+          updated_at: string
+          x: number
+          y: number
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          id?: number
+          owner_wallet?: string | null
+          updated_at?: string
+          x: number
+          y: number
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          id?: number
+          owner_wallet?: string | null
+          updated_at?: string
+          x?: number
+          y?: number
+        }
+        Relationships: []
+      }
+      wallet_state: {
+        Row: {
+          last_balance: number
+          last_paint_at: string | null
+          pixels_allowed: number
+          pixels_used: number
+          updated_at: string
+          wallet: string
+        }
+        Insert: {
+          last_balance?: number
+          last_paint_at?: string | null
+          pixels_allowed?: number
+          pixels_used?: number
+          updated_at?: string
+          wallet: string
+        }
+        Update: {
+          last_balance?: number
+          last_paint_at?: string | null
+          pixels_allowed?: number
+          pixels_used?: number
+          updated_at?: string
+          wallet?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      leaderboard: {
+        Row: {
+          controlled_pixels: number | null
+          last_active: string | null
+          pixels_allowed: number | null
+          rank: number | null
+          supply_percentage: number | null
+          wallet: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
