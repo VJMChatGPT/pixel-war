@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useWallet } from "@/hooks/useWallet";
 import { useCooldown } from "@/hooks/useCooldown";
-import { fetchWalletState, paintPixel, type WalletStateRow } from "@/services/pixels";
+import { fetchWalletState, paintPixel, type PublicWalletStateRow } from "@/services/pixels";
 import { APP_CONFIG } from "@/config/app";
 import { compactNumber, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
@@ -23,7 +23,7 @@ import { LocateFixed, Sparkles } from "lucide-react";
 export default function CanvasPage() {
   const { pixels, loading: canvasLoading, error: canvasError } = useCanvas();
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
-  const [walletState, setWalletState] = useState<WalletStateRow | null>(null);
+  const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
   const [color, setColor] = useState<string>(APP_CONFIG.palette[0]);
   const [painting, setPainting] = useState(false);
   const [focusKey, setFocusKey] = useState(0);
@@ -41,7 +41,8 @@ export default function CanvasPage() {
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, wallet]
   );
-  const canPaint = isConnected && cooldown.ready && allowedPixels > 0 && !painting;
+  const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
+  const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0 && !painting;
   const canvasSyncIssue = !canvasLoading && !canvasError && usedPixels > 0 && ownedPixelCount === 0;
 
   useEffect(() => {
@@ -63,18 +64,18 @@ export default function CanvasPage() {
       return;
     }
     if (!cooldown.ready) {
-      toast.error("Cooldown active", { description: "Wait until your 15-min cooldown ends." });
+      toast.error("Paint slots full", {
+        description: "You have already used every paint slot available in the current 15-minute window.",
+      });
       return;
     }
     setPainting(true);
     try {
       const res = await paintPixel({
-        wallet: wallet.address,
         x,
         y,
         color,
-        balance: wallet.balance,
-        totalSupply: wallet.totalSupply,
+        sessionToken: wallet.sessionToken ?? "",
       });
       if (!res.ok) {
         toast.error("Paint blocked by server", {

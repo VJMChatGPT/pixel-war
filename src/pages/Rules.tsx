@@ -28,8 +28,8 @@ export default function Rules() {
         <div className="grid md:grid-cols-2 gap-5 mb-10">
           {[
             { icon: Wallet, title: "Hold to paint", desc: "Your pixel allowance is calculated from your CURRENT token balance, refreshed every action.", mood: "wave" as const },
-            { icon: Calculator, title: "0.01% = 1 pixel", desc: "Every basis point of supply unlocks one pixel. The canvas has 10,000 pixels in total.", mood: "idle" as const },
-            { icon: Clock, title: "15-min cooldown", desc: "Between paints, your wallet sleeps for 15 minutes. Cooldown is enforced server-side.", mood: "sleep" as const },
+            { icon: Calculator, title: `${APP_CONFIG.rules.supplyPercentPerPixel}% = 1 pixel`, desc: `Every basis point of supply unlocks one pixel. The canvas has ${APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels in total.`, mood: "idle" as const },
+            { icon: Clock, title: "Rolling 15-min window", desc: "You can spend as many paints as your wallet allows inside each 15-minute window. Once every slot is in use, the oldest paint must expire before you can paint again.", mood: "sleep" as const },
             { icon: TrendingDown, title: "Sell = lose pixels", desc: "If your balance drops below your active pixel count, the excess pixels can be reclaimed by the system.", mood: "shock" as const },
           ].map((r) => (
             <NeonCard key={r.title} className="p-6 flex gap-4">
@@ -84,7 +84,7 @@ export default function Rules() {
               { q: "Which wallets are supported?", a: "Any major Solana wallet works — Phantom, Solflare, Backpack and others. Just hit Connect Wallet." },
               { q: "What happens if I sell some tokens?", a: "Your pixel allowance recalculates from your current balance. If you sell to the point that your used pixels exceed your allowance, the oldest pixels can be reclaimed by the system and become paintable by other holders." },
               { q: "Are pixels permanent?", a: "Pixels persist as long as you keep enough tokens. Other holders can also overpaint your pixels — the canvas is collaborative and competitive." },
-              { q: "Can I bypass the 15-minute cooldown?", a: "No. The cooldown is enforced server-side via Supabase Edge Functions before any write hits the database." },
+              { q: "Can I bypass the 15-minute cooldown?", a: "No. Paint slots are enforced server-side via Supabase Edge Functions. You can paint up to your allowance inside the current 15-minute window, then you must wait for the oldest slot to free up." },
               { q: "Where is the data stored?", a: "Pixel state, wallet state and paint history live in a Postgres database with row-level security. Reads are public, writes go through a verified server action." },
               { q: "Is the canvas on-chain?", a: "Token balances are on-chain (Solana). The pixel state is stored off-chain for performance, anchored to wallet ownership which is on-chain." },
             ].map((item, i) => (

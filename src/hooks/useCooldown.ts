@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { APP_CONFIG } from "@/config/app";
 
 /**
- * useCooldown — returns the remaining ms until the wallet can paint again,
- * given the timestamp of the last paint. Updates every second.
+ * Returns the remaining ms until the wallet regains one paint slot.
+ * `cooldownAnchorAt` is the oldest paint still counting inside the current
+ * rolling cooldown window; when it is null, the wallet can paint immediately.
  */
-export function useCooldown(lastPaintAt: string | Date | null | undefined) {
+export function useCooldown(cooldownAnchorAt: string | Date | null | undefined) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -13,10 +14,13 @@ export function useCooldown(lastPaintAt: string | Date | null | undefined) {
     return () => window.clearInterval(id);
   }, []);
 
-  if (!lastPaintAt) return { remainingMs: 0, ready: true, progress: 1 };
+  if (!cooldownAnchorAt) return { remainingMs: 0, ready: true, progress: 1 };
 
-  const last = typeof lastPaintAt === "string" ? new Date(lastPaintAt).getTime() : lastPaintAt.getTime();
-  const elapsed = now - last;
+  const anchor =
+    typeof cooldownAnchorAt === "string"
+      ? new Date(cooldownAnchorAt).getTime()
+      : cooldownAnchorAt.getTime();
+  const elapsed = now - anchor;
   const remainingMs = Math.max(0, APP_CONFIG.rules.cooldownMs - elapsed);
   const progress = Math.min(1, elapsed / APP_CONFIG.rules.cooldownMs);
 
