@@ -43,19 +43,27 @@ export default function CanvasPage() {
       toast.error("Cooldown active", { description: "Wait until your 15-min cooldown ends." });
       return;
     }
-    const res = await paintPixel({ wallet: wallet.address, x, y, color });
+    const res = await paintPixel({
+      wallet: wallet.address,
+      x,
+      y,
+      color,
+      balance: wallet.balance,
+      totalSupply: wallet.totalSupply,
+    });
     if (!res.ok) {
       toast.error("Paint blocked by server", {
-        description: "The paint action will be wired through a secure edge function. Backend rules are enforced server-side.",
+        description: res.message ?? res.error ?? "Backend rules are enforced server-side.",
       });
       return;
     }
+    if (res.walletState) setWalletState(res.walletState);
     toast.success("Pixel painted!", {
       description: (
         <span className="font-mono text-xs">
           ({x},{y}) · <span style={{ color }}>{color}</span>
         </span>
-      ) as any,
+      ),
     });
   };
 

@@ -73,31 +73,64 @@ export async function fetchWalletPaints(wallet: string, limit = 20): Promise<Pai
   return data ?? [];
 }
 
-/**
- * Paint a pixel — placeholder client-side implementation.
- *
- * In production this MUST move to an edge function so the cooldown,
- * balance check and signature verification cannot be bypassed. Until then
- * the UI calls this function and gets an immediate optimistic update via
- * the realtime subscription.
- *
- * NOTE: with the current RLS (no insert/update policies), this call will
- * be rejected by Supabase for unauthenticated clients — which is the
- * desired security posture. The UI handles that by surfacing an error
- * toast and explaining that the server action is not yet wired up.
- */
 export async function paintPixel(params: {
   wallet: string;
   x: number;
   y: number;
   color: string;
-}): Promise<{ ok: boolean; error?: string }> {
-  // TODO: replace with `supabase.functions.invoke('paint-pixel', { body: params })`
-  const { error } = await supabase
-    .from("pixels")
-    .update({ color: params.color, owner_wallet: params.wallet, updated_at: new Date().toISOString() })
-    .eq("x", params.x)
-    .eq("y", params.y);
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  balance: number;
+  totalSupply: number;
+}): Promise<{
+  ok: boolean;
+  code?: string;
+  message?: string;
+  remainingMs?: number;
+  walletState?: WalletStateRow;
+  error?: string;
+}> {
+  const { data, error } = await supabase.functions.invoke("paint-pixel", {
+    body: params,
+  });
+
+  if (error) {
+    return readFunctionError(error);
+  }
+
+  return data as {
+    ok: boolean;
+    code?: string;
+    message?: string;
+    remainingMs?: number;
+    walletState?: WalletStateRow;
+  };
+}
+
+async function readFunctionError(error: Error): Promise<{
+  ok: false;
+  code?: string;
+  message: string;
+  remainingMs?: number;
+  error: string;
+}> {
+  const context = (error as { context?: Response }).context;
+
+  if (context) {
+    try {
+      const payload = await context.clone().json();
+      if (payload && typeof payload === "object") {
+        const body = payload as { code?: string; message?: string; remainingMs?: number };
+        return {
+          ok: false,
+          code: body.code,
+          message: body.message ?? error.message,
+          remainingMs: body.remainingMs,
+          error: error.message,
+        };
+      }
+    } catch {
+      // Fall back to the SDK error message below.
+    }
+  }
+
+  return { ok: false, error: error.message, message: error.message };
 }
