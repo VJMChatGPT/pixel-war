@@ -105,7 +105,7 @@ export default function CanvasPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="font-display font-bold text-2xl md:text-3xl">The Canvas</h1>
-                <p className="font-mono text-xs text-muted-foreground mt-1">drag to pan · scroll to zoom · click to paint</p>
+                <p className="font-mono text-xs text-muted-foreground mt-1">ready to leave your mark? drag to pan · scroll to zoom · click to paint</p>
               </div>
               <div className="hidden md:flex items-center gap-2">
                 {wallet && usedPixels > 0 && (
@@ -175,8 +175,8 @@ export default function CanvasPage() {
               {!isConnected ? (
                 <div className="text-center py-2">
                   <PixlMascot mood="wave" size={80} className="mx-auto mb-2" />
-                  <h3 className="font-display font-bold text-lg mb-1">Connect to paint</h3>
-                  <p className="text-xs text-muted-foreground mb-4">PIXL needs your wallet to know your brush size.</p>
+                  <h3 className="font-display font-bold text-lg mb-1">Ready to leave your mark?</h3>
+                  <p className="text-xs text-muted-foreground mb-4">Connect your wallet, claim your slots, and start painting the canvas.</p>
                   <WalletConnectButton />
                 </div>
               ) : (
@@ -236,7 +236,7 @@ export default function CanvasPage() {
                   className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/30 flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <span className="font-mono text-xs">Click any pixel on the canvas to paint.</span>
+                  <span className="font-mono text-xs">Click any pixel on the canvas and leave your mark.</span>
                 </motion.div>
               )}
             </NeonCard>

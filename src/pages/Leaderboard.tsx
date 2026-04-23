@@ -42,10 +42,10 @@ export default function Leaderboard() {
             <Trophy className="w-3 h-3" /> top holders
           </div>
           <h1 className="font-display font-bold text-4xl md:text-6xl">
-            The <span className="text-gradient-neon">Pixel Lords</span>
+            The <span className="text-gradient-neon">Biggest Marks</span>
           </h1>
           <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
-            Wallets ranked by pixels controlled on the canvas. Painted in real-time.
+            The wallets leaving the biggest mark on the canvas, ranked in real time.
           </p>
         </div>
 
@@ -153,7 +153,7 @@ export default function Leaderboard() {
                   );
                 })}
                 {!loading && rows.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground font-mono text-sm">No holders yet — be the first to paint.</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground font-mono text-sm">No marks on the board yet — be the first to paint.</td></tr>
                 )}
               </tbody>
             </table>
@@ -167,7 +167,7 @@ export default function Leaderboard() {
               <Trophy className="w-5 h-5 text-primary" />
               <div className="flex-1">
                 <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">your rank</div>
-                <div className="font-display font-bold text-lg">#{myRank.rank} · {Number(myRank.controlled_pixels)} pixels</div>
+                <div className="font-display font-bold text-lg">#{myRank.rank} · {Number(myRank.controlled_pixels)} pixels under your mark</div>
               </div>
               <PixlMascot mood="cheer" size={40} />
             </NeonCard>

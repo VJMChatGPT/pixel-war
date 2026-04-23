@@ -51,8 +51,8 @@ export default function Profile() {
       <Layout>
         <div className="container py-24 text-center">
           <PixlMascot mood="wave" size={120} className="mx-auto mb-6" />
-          <h1 className="font-display font-bold text-3xl mb-2">Your profile awaits</h1>
-          <p className="text-muted-foreground mb-6">Connect your wallet to view your pixel empire.</p>
+          <h1 className="font-display font-bold text-3xl mb-2">Your mark is waiting</h1>
+          <p className="text-muted-foreground mb-6">Connect your wallet to see the territory you control on the canvas.</p>
           <WalletConnectButton />
         </div>
       </Layout>
@@ -105,7 +105,7 @@ export default function Profile() {
           {/* My pixels canvas */}
           <NeonCard className="p-3">
             <div className="flex items-center justify-between mb-2 px-2 pt-1">
-              <h2 className="font-display font-bold text-lg">My territory</h2>
+              <h2 className="font-display font-bold text-lg">My mark</h2>
               <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
                 only your pixels are highlighted
               </span>
@@ -132,7 +132,7 @@ export default function Profile() {
               <h3 className="font-display font-semibold text-sm mb-3">Recent paints</h3>
               {history.length === 0 && (
                 <div className="text-xs text-muted-foreground font-mono text-center py-6">
-                  No paints yet — go claim your first pixel.
+                  No paints yet — go leave your first mark.
                 </div>
               )}
               <div className="space-y-1.5">

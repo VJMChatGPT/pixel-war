@@ -41,12 +41,12 @@ export default function Landing() {
               live on solana · 100×100 canvas
             </div>
             <h1 className="font-display font-bold text-5xl md:text-7xl lg:text-[5.5rem] leading-[0.95] tracking-tight">
-              Own the pixels.<br />
-              <span className="text-gradient-hero">Paint the future.</span>
+              Ready to leave your mark?<br />
+              <span className="text-gradient-hero">Claim the canvas.</span>
             </h1>
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
-              A collaborative on-chain canvas where your token balance becomes your brush.
-              Hold <span className="text-foreground font-semibold">$PIXL</span>, claim your pixels, paint together.
+              A live competitive canvas where your token balance becomes your brush.
+              Hold <span className="text-foreground font-semibold">$PIXL</span>, claim your territory, and leave a mark the whole canvas can see.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -58,7 +58,7 @@ export default function Landing() {
                   className="h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] active:scale-[0.98] transition-all"
                 >
                   <Wallet className="w-5 h-5" />
-                  Connect Wallet
+                  Leave your mark
                 </Button>
               ) : (
                 <Button
@@ -67,7 +67,7 @@ export default function Landing() {
                   className="h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] transition-all"
                 >
                   <Link to="/canvas">
-                    Open Canvas <ArrowRight className="w-5 h-5" />
+                    Start painting <ArrowRight className="w-5 h-5" />
                   </Link>
                 </Button>
               )}
@@ -122,15 +122,15 @@ export default function Landing() {
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div className="font-mono text-xs uppercase tracking-[0.2em] text-primary mb-3">how it works</div>
           <h2 className="font-display font-bold text-4xl md:text-5xl">
-            Four steps to <span className="text-gradient-neon">claim your art</span>
+            Four steps to <span className="text-gradient-neon">leave your mark</span>
           </h2>
         </div>
         <div className="grid md:grid-cols-4 gap-5">
           {[
-            { n: "01", title: "Hold $PIXL", desc: `Every ${APP_CONFIG.rules.supplyPercentPerPixel}% of supply unlocks 1 pixel of canvas territory.`, mood: "idle" as const },
+            { n: "01", title: "Hold $PIXL", desc: `Every ${APP_CONFIG.rules.supplyPercentPerPixel}% of supply unlocks 1 pixel you can control on the canvas.`, mood: "idle" as const },
             { n: "02", title: "Connect wallet", desc: "Sign in with your Solana wallet. Your balance becomes your brush size.", mood: "wave" as const },
-            { n: "03", title: "Paint a pixel", desc: "Pick a color. Click any cell. Watch it land in real-time.", mood: "paint" as const },
-            { n: "04", title: "Wait 15 min", desc: "Cooldown resets. Paint again. Climb the leaderboard.", mood: "sleep" as const },
+            { n: "03", title: "Paint your claim", desc: "Pick a color, click a cell, and watch your mark land in real time.", mood: "paint" as const },
+            { n: "04", title: "Defend your space", desc: "Use your paint slots, hold your ground, and climb the leaderboard.", mood: "sleep" as const },
           ].map((step, i) => (
             <NeonCard key={step.n} className="p-6 hover:-translate-y-1 transition-transform duration-300">
               <div className="flex items-start justify-between mb-4">
@@ -158,7 +158,7 @@ export default function Landing() {
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <Button asChild size="lg" className="h-14 px-8 bg-gradient-neon glow-primary rounded-xl text-primary-foreground font-semibold">
-                <Link to="/canvas">Enter the canvas <ArrowRight className="w-5 h-5" /></Link>
+                <Link to="/canvas">Leave your mark <ArrowRight className="w-5 h-5" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-14 px-8 rounded-xl">
                 <Link to="/leaderboard"><Trophy className="w-5 h-5" /> Leaderboard</Link>
