@@ -96,6 +96,27 @@ export function CanvasGrid({
     [pixels]
   );
 
+  const applyZoomAroundViewportCenter = useCallback((nextZoom: number) => {
+    const c = containerRef.current;
+    if (!c) {
+      setZoom(nextZoom);
+      return;
+    }
+
+    const clampedZoom = Math.max(0.5, Math.min(8, nextZoom));
+    const centerScreenX = c.clientWidth / 2;
+    const centerScreenY = c.clientHeight / 2;
+    const worldX = (centerScreenX - offset.x) / cellSize;
+    const worldY = (centerScreenY - offset.y) / cellSize;
+    const nextCellSize = BASE_PX * clampedZoom;
+
+    setZoom(clampedZoom);
+    setOffset({
+      x: centerScreenX - worldX * nextCellSize,
+      y: centerScreenY - worldY * nextCellSize,
+    });
+  }, [cellSize, offset.x, offset.y]);
+
   useEffect(() => {
     if (!focusWallet || focusKey == null) return;
     focusOnWalletPixels(focusWallet);
@@ -246,7 +267,7 @@ export function CanvasGrid({
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = -e.deltaY * 0.0015;
-    setZoom((z) => Math.max(0.5, Math.min(8, z * (1 + delta))));
+    applyZoomAroundViewportCenter(zoom * (1 + delta));
   };
 
   const hoveredPixel = useMemo(() => {
@@ -274,13 +295,13 @@ export function CanvasGrid({
       <div className="absolute bottom-4 right-4 flex flex-col gap-1 bg-card/80 backdrop-blur border border-border rounded-lg p-1 shadow-xl">
         <button
           className="w-8 h-8 rounded hover:bg-muted/60 font-mono text-lg leading-none"
-          onClick={() => setZoom((z) => Math.min(8, z * 1.25))}
+          onClick={() => applyZoomAroundViewportCenter(zoom * 1.25)}
           aria-label="Zoom in"
         >+</button>
         <div className="text-center font-mono text-[10px] text-muted-foreground tabular-nums">{zoom.toFixed(1)}x</div>
         <button
           className="w-8 h-8 rounded hover:bg-muted/60 font-mono text-lg leading-none"
-          onClick={() => setZoom((z) => Math.max(0.5, z / 1.25))}
+          onClick={() => applyZoomAroundViewportCenter(zoom / 1.25)}
           aria-label="Zoom out"
         >−</button>
       </div>
