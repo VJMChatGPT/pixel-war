@@ -20,14 +20,14 @@ export type WalletStateRow = Database["public"]["Tables"]["wallet_state"]["Row"]
 export type PaintHistoryRow = Database["public"]["Tables"]["paint_history"]["Row"];
 export type LeaderboardRow = Database["public"]["Views"]["leaderboard"]["Row"];
 
-/** Load the entire canvas (10k rows max). */
+/** Load only painted pixels. Empty cells are represented as null client-side. */
 export async function fetchAllPixels(): Promise<PixelRow[]> {
   const { data, error } = await supabase
     .from("pixels")
     .select("*")
+    .not("owner_wallet", "is", null)
     .order("y", { ascending: true })
-    .order("x", { ascending: true })
-    .limit(10_000);
+    .order("x", { ascending: true });
   if (error) throw error;
   return data ?? [];
 }

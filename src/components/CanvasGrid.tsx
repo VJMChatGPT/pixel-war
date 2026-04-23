@@ -124,19 +124,31 @@ export function CanvasGrid({
     ctx.fillStyle = "#0a0a14";
     ctx.fillRect(offset.x, offset.y, W * cellSize, H * cellSize);
 
+    const paintedCount = pixels.reduce((count, pixel) => (pixel?.owner_wallet ? count + 1 : count), 0);
+    const emphasizePainted = paintedCount > 0 && cellSize <= 8;
+
     // Pixels
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const p = pixels[y * W + x];
         if (!p || !p.owner_wallet) continue;
         const dim = highlightWallet && p.owner_wallet !== highlightWallet;
+        const drawX = Math.floor(offset.x + x * cellSize);
+        const drawY = Math.floor(offset.y + y * cellSize);
+        const drawSize = Math.ceil(cellSize);
+
         ctx.fillStyle = dim ? p.color + "30" : p.color;
-        ctx.fillRect(
-          Math.floor(offset.x + x * cellSize),
-          Math.floor(offset.y + y * cellSize),
-          Math.ceil(cellSize),
-          Math.ceil(cellSize)
-        );
+        ctx.fillRect(drawX, drawY, drawSize, drawSize);
+
+        if (emphasizePainted && !dim) {
+          ctx.save();
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 1.5;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 10;
+          ctx.strokeRect(drawX - 1, drawY - 1, drawSize + 2, drawSize + 2);
+          ctx.restore();
+        }
       }
     }
 
