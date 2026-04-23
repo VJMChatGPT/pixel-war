@@ -17,7 +17,7 @@ import { APP_CONFIG } from "@/config/app";
 import { compactNumber, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { LocateFixed, Sparkles } from "lucide-react";
 
 export default function CanvasPage() {
   const { pixels } = useCanvas();
@@ -25,6 +25,8 @@ export default function CanvasPage() {
   const [walletState, setWalletState] = useState<WalletStateRow | null>(null);
   const [color, setColor] = useState<string>(APP_CONFIG.palette[0]);
   const [painting, setPainting] = useState(false);
+  const [focusKey, setFocusKey] = useState(0);
+  const [focusMine, setFocusMine] = useState(false);
 
   useEffect(() => {
     if (!wallet) { setWalletState(null); return; }
@@ -34,6 +36,12 @@ export default function CanvasPage() {
   const cooldown = useCooldown(walletState?.last_paint_at);
   const usedPixels = walletState?.pixels_used ?? 0;
   const canPaint = isConnected && cooldown.ready && allowedPixels > 0 && !painting;
+
+  useEffect(() => {
+    if (!wallet || usedPixels <= 0 || focusMine) return;
+    setFocusMine(true);
+    setFocusKey((key) => key + 1);
+  }, [wallet, usedPixels, focusMine]);
 
   const onPaint = async (x: number, y: number) => {
     if (painting) return;
@@ -85,13 +93,38 @@ export default function CanvasPage() {
                 <h1 className="font-display font-bold text-2xl md:text-3xl">The Canvas</h1>
                 <p className="font-mono text-xs text-muted-foreground mt-1">drag to pan · scroll to zoom · click to paint</p>
               </div>
-              <div className="hidden md:flex items-center gap-2 font-mono text-xs">
-                <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                <span className="text-muted-foreground uppercase tracking-wider">realtime</span>
+              <div className="hidden md:flex items-center gap-2">
+                {wallet && usedPixels > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 rounded-lg"
+                    onClick={() => {
+                      setFocusMine(true);
+                      setFocusKey((key) => key + 1);
+                    }}
+                  >
+                    <LocateFixed className="w-4 h-4" />
+                    Focus my pixels
+                  </Button>
+                )}
+                <div className="flex items-center gap-2 font-mono text-xs">
+                  <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                  <span className="text-muted-foreground uppercase tracking-wider">realtime</span>
+                </div>
               </div>
             </div>
             <NeonCard shimmer={canPaint} className="p-2 md:p-3 aspect-square md:aspect-auto md:h-[calc(100vh-180px)] glow-primary">
-              <CanvasGrid pixels={pixels} onPaint={onPaint} canPaint={canPaint} hoverColor={color} />
+              <CanvasGrid
+                pixels={pixels}
+                onPaint={onPaint}
+                canPaint={canPaint}
+                hoverColor={color}
+                highlightWallet={focusMine ? wallet?.address ?? null : null}
+                focusWallet={wallet?.address ?? null}
+                focusKey={focusKey}
+              />
             </NeonCard>
           </div>
 

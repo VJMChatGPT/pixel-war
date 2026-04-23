@@ -10,6 +10,8 @@ interface Props {
   canPaint?: boolean;
   hoverColor?: string;
   highlightWallet?: string | null;
+  focusWallet?: string | null;
+  focusKey?: number;
   className?: string;
 }
 
@@ -21,7 +23,16 @@ const BASE_PX = 6; // base cell size in CSS px at zoom=1
  * CanvasGrid — high-performance 100×100 grid renderer (canvas2D).
  * Supports pan (drag), zoom (wheel + buttons), hover tooltip, and click-to-paint.
  */
-export function CanvasGrid({ pixels, onPaint, canPaint, hoverColor, highlightWallet, className }: Props) {
+export function CanvasGrid({
+  pixels,
+  onPaint,
+  canPaint,
+  hoverColor,
+  highlightWallet,
+  focusWallet,
+  focusKey,
+  className,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -44,6 +55,51 @@ export function CanvasGrid({ pixels, onPaint, canPaint, hoverColor, highlightWal
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const focusOnWalletPixels = useCallback(
+    (wallet: string) => {
+      const owned = pixels.filter((pixel): pixel is PixelRow => !!pixel && pixel.owner_wallet === wallet);
+      if (owned.length === 0) return;
+
+      const c = containerRef.current;
+      if (!c) return;
+
+      const minX = Math.min(...owned.map((pixel) => pixel.x));
+      const maxX = Math.max(...owned.map((pixel) => pixel.x));
+      const minY = Math.min(...owned.map((pixel) => pixel.y));
+      const maxY = Math.max(...owned.map((pixel) => pixel.y));
+
+      const boundsWidth = maxX - minX + 1;
+      const boundsHeight = maxY - minY + 1;
+      const paddingCells = 6;
+      const nextZoom = Math.max(
+        2,
+        Math.min(
+          8,
+          Math.min(
+            c.clientWidth / ((boundsWidth + paddingCells * 2) * BASE_PX),
+            c.clientHeight / ((boundsHeight + paddingCells * 2) * BASE_PX)
+          )
+        )
+      );
+
+      const nextCellSize = BASE_PX * nextZoom;
+      const centerX = (minX + maxX + 1) / 2;
+      const centerY = (minY + maxY + 1) / 2;
+
+      setZoom(nextZoom);
+      setOffset({
+        x: c.clientWidth / 2 - centerX * nextCellSize,
+        y: c.clientHeight / 2 - centerY * nextCellSize,
+      });
+    },
+    [pixels]
+  );
+
+  useEffect(() => {
+    if (!focusWallet || focusKey == null) return;
+    focusOnWalletPixels(focusWallet);
+  }, [focusKey, focusWallet, focusOnWalletPixels]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
