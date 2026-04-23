@@ -192,6 +192,10 @@ export async function enforceRateLimit(
 }
 
 export async function getWalletSnapshot(wallet: string) {
+  if (isDemoModeEnabled()) {
+    return getDemoWalletSnapshot(wallet);
+  }
+
   const rpcUrl = Deno.env.get("SOLANA_RPC_URL");
   const tokenMintAddress = Deno.env.get("TOKEN_MINT_ADDRESS");
 
@@ -237,6 +241,18 @@ export async function getWalletSnapshot(wallet: string) {
   };
 }
 
+function getDemoWalletSnapshot(wallet: string) {
+  const totalSupply = getDemoTotalSupply();
+  const balance = deterministicDemoBalance(wallet, totalSupply);
+  const pixelsAllowed = totalSupply > 0 ? Math.floor((balance / totalSupply) * CANVAS_PIXELS) : 0;
+
+  return {
+    balance,
+    totalSupply,
+    pixelsAllowed,
+  };
+}
+
 function isAllowedOrigin(origin: string) {
   if (DEFAULT_ALLOWED_ORIGINS.has(origin)) return true;
 
@@ -248,6 +264,11 @@ function isAllowedOrigin(origin: string) {
     .map((value) => value.trim())
     .filter(Boolean)
     .includes(origin);
+}
+
+function isDemoModeEnabled() {
+  const raw = (Deno.env.get("DEMO_MODE") ?? "").trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
 function extractBearerToken(header: string | null) {
@@ -312,6 +333,24 @@ function toUiAmount(raw: bigint, decimals: number) {
   const fraction = raw % divisor;
   const fractionText = fraction.toString().padStart(decimals, "0").replace(/0+$/, "");
   return Number(fractionText ? `${whole.toString()}.${fractionText}` : whole.toString());
+}
+
+function getDemoTotalSupply() {
+  const raw = Number(Deno.env.get("DEMO_TOKEN_TOTAL_SUPPLY") ?? "1000000000");
+  return Number.isFinite(raw) && raw > 0 ? raw : 1_000_000_000;
+}
+
+function deterministicDemoBalance(wallet: string, totalSupply: number) {
+  let hash = 0;
+  for (let i = 0; i < wallet.length; i++) {
+    hash = (hash * 31 + wallet.charCodeAt(i)) >>> 0;
+  }
+
+  const minPct = 0.003;
+  const rangePct = 0.008;
+  const normalized = (hash % 10_000) / 10_000;
+
+  return Math.floor(totalSupply * (minPct + normalized * rangePct));
 }
 
 function toBase64Url(bytes: Uint8Array) {
