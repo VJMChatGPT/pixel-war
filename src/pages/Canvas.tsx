@@ -24,6 +24,7 @@ export default function CanvasPage() {
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
   const [walletState, setWalletState] = useState<WalletStateRow | null>(null);
   const [color, setColor] = useState<string>(APP_CONFIG.palette[0]);
+  const [painting, setPainting] = useState(false);
 
   useEffect(() => {
     if (!wallet) { setWalletState(null); return; }
@@ -32,9 +33,10 @@ export default function CanvasPage() {
 
   const cooldown = useCooldown(walletState?.last_paint_at);
   const usedPixels = walletState?.pixels_used ?? 0;
-  const canPaint = isConnected && cooldown.ready && allowedPixels > 0;
+  const canPaint = isConnected && cooldown.ready && allowedPixels > 0 && !painting;
 
   const onPaint = async (x: number, y: number) => {
+    if (painting) return;
     if (!wallet) {
       toast.error("Connect your wallet to paint");
       return;
@@ -43,28 +45,33 @@ export default function CanvasPage() {
       toast.error("Cooldown active", { description: "Wait until your 15-min cooldown ends." });
       return;
     }
-    const res = await paintPixel({
-      wallet: wallet.address,
-      x,
-      y,
-      color,
-      balance: wallet.balance,
-      totalSupply: wallet.totalSupply,
-    });
-    if (!res.ok) {
-      toast.error("Paint blocked by server", {
-        description: res.message ?? res.error ?? "Backend rules are enforced server-side.",
+    setPainting(true);
+    try {
+      const res = await paintPixel({
+        wallet: wallet.address,
+        x,
+        y,
+        color,
+        balance: wallet.balance,
+        totalSupply: wallet.totalSupply,
       });
-      return;
+      if (!res.ok) {
+        toast.error("Paint blocked by server", {
+          description: res.message ?? res.error ?? "Backend rules are enforced server-side.",
+        });
+        return;
+      }
+      if (res.walletState) setWalletState(res.walletState);
+      toast.success("Pixel painted!", {
+        description: (
+          <span className="font-mono text-xs">
+            ({x},{y}) · <span style={{ color }}>{color}</span>
+          </span>
+        ),
+      });
+    } finally {
+      setPainting(false);
     }
-    if (res.walletState) setWalletState(res.walletState);
-    toast.success("Pixel painted!", {
-      description: (
-        <span className="font-mono text-xs">
-          ({x},{y}) · <span style={{ color }}>{color}</span>
-        </span>
-      ),
-    });
   };
 
   return (
