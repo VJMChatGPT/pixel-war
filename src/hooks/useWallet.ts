@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from "react";
 import { getWalletAdapter, computeAllowedPixels, type WalletInfo } from "@/services/wallet";
 
 const STORAGE_KEY = "pixeldao.wallet";
@@ -12,12 +12,25 @@ interface StoredWallet {
   isMock?: boolean;
 }
 
+interface WalletContextValue {
+  wallet: WalletInfo | null;
+  isConnected: boolean;
+  connecting: boolean;
+  connect: () => Promise<WalletInfo>;
+  disconnect: () => Promise<void>;
+  refreshBalance: () => Promise<void>;
+  allowedPixels: number;
+  supplyPercent: number;
+}
+
+const WalletContext = createContext<WalletContextValue | null>(null);
+
 /**
- * useWallet — single source of truth for the connected wallet across the app.
+ * WalletProvider — single source of truth for the connected wallet across the app.
  * Persists the connection across reloads via localStorage so the demo feels
  * real. Replace the adapter call with Phantom when ready.
  */
-export function useWallet() {
+export function WalletProvider({ children }: { children: ReactNode }) {
   const [wallet, setWallet] = useState<WalletInfo | null>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -90,7 +103,7 @@ export function useWallet() {
   const allowedPixels = wallet ? computeAllowedPixels(wallet.balance, wallet.totalSupply) : 0;
   const supplyPercent = wallet ? (wallet.balance / wallet.totalSupply) * 100 : 0;
 
-  return {
+  const value: WalletContextValue = {
     wallet,
     isConnected: !!wallet,
     connecting,
@@ -100,4 +113,15 @@ export function useWallet() {
     allowedPixels,
     supplyPercent,
   };
+
+  return createElement(WalletContext.Provider, { value }, children);
+}
+
+export function useWallet() {
+  const value = useContext(WalletContext);
+  if (!value) {
+    throw new Error("useWallet must be used within WalletProvider.");
+  }
+
+  return value;
 }

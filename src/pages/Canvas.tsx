@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { CanvasGrid } from "@/components/CanvasGrid";
 import { NeonCard } from "@/components/NeonCard";
@@ -13,15 +13,42 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useWallet } from "@/hooks/useWallet";
 import { useCooldown } from "@/hooks/useCooldown";
-import { fetchWalletState, paintPixel, type PublicWalletStateRow } from "@/services/pixels";
+import { fetchWalletState, paintPixel, type PixelRow, type PublicWalletStateRow } from "@/services/pixels";
 import { APP_CONFIG } from "@/config/app";
 import { compactNumber, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { LocateFixed, Sparkles } from "lucide-react";
 
+type PatchPixel = (x: number, y: number, pixel: PixelRow | null) => PixelRow | null;
+
+function isStillOptimisticPixel(pixel: PixelRow | null | undefined, optimisticUpdatedAt: string) {
+  return !!pixel && pixel.updated_at === optimisticUpdatedAt;
+}
+
+function rollbackOptimisticPixel({
+  pixels,
+  x,
+  y,
+  optimisticUpdatedAt,
+  previousPixel,
+  patchPixel,
+}: {
+  pixels: (PixelRow | null)[];
+  x: number;
+  y: number;
+  optimisticUpdatedAt: string;
+  previousPixel: PixelRow | null;
+  patchPixel: PatchPixel;
+}) {
+  const currentPixel = pixels[y * APP_CONFIG.canvas.width + x];
+  if (isStillOptimisticPixel(currentPixel, optimisticUpdatedAt)) {
+    patchPixel(x, y, previousPixel);
+  }
+}
+
 export default function CanvasPage() {
-  const { pixels, loading: canvasLoading, error: canvasError } = useCanvas();
+  const { pixels, revision, loading: canvasLoading, error: canvasError, patchPixel } = useCanvas();
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
   const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
   const [color, setColor] = useState<string>(APP_CONFIG.palette[0]);
@@ -29,17 +56,26 @@ export default function CanvasPage() {
   const [focusKey, setFocusKey] = useState(0);
   const [focusMine, setFocusMine] = useState(false);
   const [hasAutoFocused, setHasAutoFocused] = useState(false);
+  const pendingPaintRef = useRef(false);
 
   useEffect(() => {
     if (!wallet) { setWalletState(null); return; }
-    fetchWalletState(wallet.address).then(setWalletState);
+
+    let cancelled = false;
+    fetchWalletState(wallet.address).then((state) => {
+      if (!cancelled) setWalletState(state);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [wallet]);
 
   const cooldown = useCooldown(walletState?.last_paint_at);
   const usedPixels = walletState?.pixels_used ?? 0;
   const ownedPixelCount = useMemo(
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
-    [pixels, wallet]
+    [pixels, revision, wallet]
   );
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
   const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0 && !painting;
@@ -58,7 +94,7 @@ export default function CanvasPage() {
   }, [wallet, ownedPixelCount, hasAutoFocused]);
 
   const onPaint = async (x: number, y: number) => {
-    if (painting) return;
+    if (pendingPaintRef.current) return;
     if (!wallet) {
       toast.error("Connect your wallet to paint");
       return;
@@ -69,7 +105,22 @@ export default function CanvasPage() {
       });
       return;
     }
+    pendingPaintRef.current = true;
     setPainting(true);
+    const optimisticUpdatedAt = new Date().toISOString();
+    const previousPixel = pixels[y * APP_CONFIG.canvas.width + x] ?? null;
+    const optimisticPixel: PixelRow = {
+      id: previousPixel?.id ?? -Date.now(),
+      x,
+      y,
+      color: color.toLowerCase(),
+      owner_wallet: wallet.address,
+      active: true,
+      updated_at: optimisticUpdatedAt,
+    };
+
+    patchPixel(x, y, optimisticPixel);
+
     try {
       const res = await paintPixel({
         x,
@@ -78,10 +129,24 @@ export default function CanvasPage() {
         sessionToken: wallet.sessionToken ?? "",
       });
       if (!res.ok) {
+        rollbackOptimisticPixel({
+          pixels,
+          x,
+          y,
+          optimisticUpdatedAt,
+          previousPixel,
+          patchPixel,
+        });
         toast.error("Paint blocked by server", {
           description: res.message ?? res.error ?? "Backend rules are enforced server-side.",
         });
         return;
+      }
+      if (res.pixel && isStillOptimisticPixel(pixels[y * APP_CONFIG.canvas.width + x], optimisticUpdatedAt)) {
+        patchPixel(x, y, { ...optimisticPixel, ...res.pixel, active: true });
+      }
+      if (res.evictedPixel) {
+        patchPixel(res.evictedPixel.x, res.evictedPixel.y, { ...res.evictedPixel, active: true });
       }
       if (res.walletState) setWalletState(res.walletState);
       toast.success("Pixel painted!", {
@@ -91,7 +156,20 @@ export default function CanvasPage() {
           </span>
         ),
       });
+    } catch (error) {
+      rollbackOptimisticPixel({
+        pixels,
+        x,
+        y,
+        optimisticUpdatedAt,
+        previousPixel,
+        patchPixel,
+      });
+      toast.error("Paint failed", {
+        description: error instanceof Error ? error.message : "The backend paint request could not be completed.",
+      });
     } finally {
+      pendingPaintRef.current = false;
       setPainting(false);
     }
   };
@@ -158,6 +236,7 @@ export default function CanvasPage() {
             <NeonCard shimmer={canPaint} className="p-2 md:p-3 aspect-square md:aspect-auto md:h-[calc(100vh-180px)] glow-primary">
               <CanvasGrid
                 pixels={pixels}
+                revision={revision}
                 onPaint={onPaint}
                 canPaint={canPaint}
                 hoverColor={color}

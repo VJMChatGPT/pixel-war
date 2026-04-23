@@ -13,14 +13,14 @@ import { motion } from "framer-motion";
 import { useMemo } from "react";
 
 export default function Landing() {
-  const { pixels } = useCanvas();
+  const { pixels, revision } = useCanvas();
   const { connect, connecting, isConnected } = useWallet();
 
   const stats = useMemo(() => {
     const painted = pixels.filter((p) => p && p.owner_wallet).length;
     const owners = new Set(pixels.filter((p) => p?.owner_wallet).map((p) => p!.owner_wallet)).size;
     return { painted, owners };
-  }, [pixels]);
+  }, [pixels, revision]);
 
   return (
     <Layout>
@@ -105,7 +105,7 @@ export default function Landing() {
             className="relative"
           >
             <NeonCard shimmer className="aspect-square p-3 glow-primary">
-              <CanvasGrid pixels={pixels} className="rounded-md" />
+              <CanvasGrid pixels={pixels} revision={revision} className="rounded-md" />
             </NeonCard>
             <div className="absolute -bottom-6 -left-6 hidden md:block">
               <PixlMascot mood="wave" size={110} />

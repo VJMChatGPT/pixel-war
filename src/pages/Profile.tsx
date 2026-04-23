@@ -22,28 +22,35 @@ export default function Profile() {
   const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
   const [history, setHistory] = useState<PaintHistoryRow[]>([]);
   const [profileError, setProfileError] = useState<string | null>(null);
-  const { pixels, error: canvasError } = useCanvas();
+  const { pixels, revision, error: canvasError } = useCanvas();
   const [copied, setCopied] = useState(false);
   const cooldown = useCooldown(walletState?.last_paint_at);
   const ownedPixelCount = useMemo(
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
-    [pixels, wallet]
+    [pixels, revision, wallet]
   );
 
   useEffect(() => {
     if (!wallet) return;
+    let cancelled = false;
     setProfileError(null);
     Promise.all([
       fetchWalletState(wallet.address),
       fetchWalletPaints(wallet.address, 30),
     ])
       .then(([walletData, paintData]) => {
+        if (cancelled) return;
         setWalletState(walletData);
         setHistory(paintData);
       })
       .catch((err: Error) => {
+        if (cancelled) return;
         setProfileError(err.message);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [wallet]);
 
   if (!isConnected) {
@@ -111,7 +118,7 @@ export default function Profile() {
               </span>
             </div>
             <div className="aspect-square">
-              <CanvasGrid pixels={pixels} highlightWallet={wallet!.address} />
+              <CanvasGrid pixels={pixels} revision={revision} highlightWallet={wallet!.address} />
             </div>
           </NeonCard>
 
