@@ -24,7 +24,7 @@ export function WalletConnectButton() {
         className="relative overflow-hidden bg-gradient-neon text-primary-foreground hover:opacity-95 font-semibold h-11 px-5 rounded-xl glow-primary transition-all hover:scale-[1.02] active:scale-[0.98]"
       >
         {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
-        <span>{connecting ? "Connecting…" : "Connect Phantom"}</span>
+        <span>{connecting ? "Connecting…" : "Connect Wallet"}</span>
       </Button>
     );
   }

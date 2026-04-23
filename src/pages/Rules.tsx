@@ -81,7 +81,7 @@ export default function Rules() {
         <NeonCard className="p-2">
           <Accordion type="single" collapsible className="w-full">
             {[
-              { q: "Which wallets are supported?", a: "Phantom is the primary supported wallet. Solflare and Backpack support is planned." },
+              { q: "Which wallets are supported?", a: "Any major Solana wallet works — Phantom, Solflare, Backpack and others. Just hit Connect Wallet." },
               { q: "What happens if I sell some tokens?", a: "Your pixel allowance recalculates from your current balance. If you sell to the point that your used pixels exceed your allowance, the oldest pixels can be reclaimed by the system and become paintable by other holders." },
               { q: "Are pixels permanent?", a: "Pixels persist as long as you keep enough tokens. Other holders can also overpaint your pixels — the canvas is collaborative and competitive." },
               { q: "Can I bypass the 15-minute cooldown?", a: "No. The cooldown is enforced server-side via Supabase Edge Functions before any write hits the database." },
