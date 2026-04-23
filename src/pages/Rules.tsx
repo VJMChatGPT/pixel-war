@@ -27,7 +27,7 @@ export default function Rules() {
 
         <div className="grid md:grid-cols-2 gap-5 mb-10">
           {[
-            { icon: Wallet, title: "Hold to paint", desc: "Your pixel allowance is calculated from your CURRENT token balance, refreshed every action.", mood: "wave" as const },
+            { icon: Wallet, title: "Hold to paint", desc: "Your pixel allowance is calculated from your current token balance, refreshed every action.", mood: "wave" as const },
             { icon: Calculator, title: `${APP_CONFIG.rules.supplyPercentPerPixel}% = 1 pixel`, desc: `Every basis point of supply unlocks one pixel. The canvas has ${APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels in total.`, mood: "idle" as const },
             { icon: Clock, title: "Rolling 15-min window", desc: "You can spend as many paints as your wallet allows inside each 15-minute window. Once every slot is in use, the oldest paint must expire before you can paint again.", mood: "sleep" as const },
             { icon: TrendingDown, title: "Sell = lose pixels", desc: "If your balance drops below your active pixel count, the excess pixels can be reclaimed by the system.", mood: "shock" as const },
@@ -45,7 +45,6 @@ export default function Rules() {
           ))}
         </div>
 
-        {/* Live calculator */}
         <NeonCard shimmer className="p-8 mb-10">
           <div className="font-mono text-xs uppercase tracking-[0.18em] text-primary mb-2">live calculator</div>
           <h2 className="font-display font-bold text-2xl mb-6">How many pixels do you control?</h2>
@@ -76,17 +75,16 @@ export default function Rules() {
           </div>
         </NeonCard>
 
-        {/* FAQ */}
         <h2 className="font-display font-bold text-2xl mb-4">FAQ</h2>
         <NeonCard className="p-2">
           <Accordion type="single" collapsible className="w-full">
             {[
-              { q: "Which wallets are supported?", a: "Any major Solana wallet works — Phantom, Solflare, Backpack and others. Just hit Connect Wallet." },
-              { q: "What happens if I sell some tokens?", a: "Your pixel allowance recalculates from your current balance. If you sell to the point that your used pixels exceed your allowance, the oldest pixels can be reclaimed by the system and become paintable by other holders." },
-              { q: "Are pixels permanent?", a: "Pixels persist as long as you keep enough tokens. Other holders can also overpaint your pixels — the canvas is collaborative and competitive." },
-              { q: "Can I bypass the 15-minute cooldown?", a: "No. Paint slots are enforced server-side via Supabase Edge Functions. You can paint up to your allowance inside the current 15-minute window, then you must wait for the oldest slot to free up." },
-              { q: "Where is the data stored?", a: "Pixel state, wallet state and paint history live in a Postgres database with row-level security. Reads are public, writes go through a verified server action." },
-              { q: "Is the canvas on-chain?", a: "Token balances are on-chain (Solana). The pixel state is stored off-chain for performance, anchored to wallet ownership which is on-chain." },
+              { q: "Which wallets can I use?", a: "Any major Solana wallet should work. Connect your wallet, and your current balance determines how many pixels you can control." },
+              { q: "How many times can I paint?", a: "You can paint as many times as your wallet allows inside each 15-minute window. If you still have paint slots left, you can keep going. Once you use them all, you wait for the oldest one to free up." },
+              { q: "Can someone paint over my pixels?", a: "Yes. The canvas is competitive, so other holders can repaint your pixels. If you want to keep your spot, you need to defend it." },
+              { q: "What happens if I sell my tokens?", a: "Your pixel allowance drops with your balance. If you end up controlling more pixels than your wallet now allows, some of that territory can be taken back." },
+              { q: "Do my pixels stay there after I close the app?", a: "Yes. Painted pixels stay on the canvas and everyone can see them, even after you leave. They only change if someone paints over them or your allowance drops." },
+              { q: "Why does holding more $PIXL matter?", a: "The more of the supply you hold, the more pixels you can control. Bigger holders can claim more space and keep painting for longer before they run out of slots." },
             ].map((item, i) => (
               <AccordionItem key={i} value={`item-${i}`} className="border-border">
                 <AccordionTrigger className="px-4 hover:no-underline font-display">{item.q}</AccordionTrigger>
