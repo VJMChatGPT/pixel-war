@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { CanvasGrid } from "@/components/CanvasGrid";
 import { NeonCard } from "@/components/NeonCard";
@@ -27,6 +27,7 @@ export default function CanvasPage() {
   const [painting, setPainting] = useState(false);
   const [focusKey, setFocusKey] = useState(0);
   const [focusMine, setFocusMine] = useState(false);
+  const [hasAutoFocused, setHasAutoFocused] = useState(false);
 
   useEffect(() => {
     if (!wallet) { setWalletState(null); return; }
@@ -35,13 +36,23 @@ export default function CanvasPage() {
 
   const cooldown = useCooldown(walletState?.last_paint_at);
   const usedPixels = walletState?.pixels_used ?? 0;
+  const ownedPixelCount = useMemo(
+    () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
+    [pixels, wallet]
+  );
   const canPaint = isConnected && cooldown.ready && allowedPixels > 0 && !painting;
 
   useEffect(() => {
-    if (!wallet || usedPixels <= 0 || focusMine) return;
+    if (!wallet) {
+      setFocusMine(false);
+      setHasAutoFocused(false);
+      return;
+    }
+    if (ownedPixelCount <= 0 || hasAutoFocused) return;
     setFocusMine(true);
     setFocusKey((key) => key + 1);
-  }, [wallet, usedPixels, focusMine]);
+    setHasAutoFocused(true);
+  }, [wallet, ownedPixelCount, hasAutoFocused]);
 
   const onPaint = async (x: number, y: number) => {
     if (painting) return;
@@ -150,7 +161,7 @@ export default function CanvasPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
-                    <PixelBadge count={usedPixels} total={allowedPixels} label="used" variant="secondary" />
+                    <PixelBadge count={ownedPixelCount || usedPixels} total={allowedPixels} label="used" variant="secondary" />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between font-mono text-[11px]">
