@@ -202,6 +202,11 @@ export async function enforceRateLimit(
   }
 }
 
+export function getEnvInt(name: string, fallback: number) {
+  const raw = Number(Deno.env.get(name) ?? `${fallback}`);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : fallback;
+}
+
 export async function getWalletSnapshot(wallet: string) {
   if (isDemoModeEnabled()) {
     return getDemoWalletSnapshot(wallet);

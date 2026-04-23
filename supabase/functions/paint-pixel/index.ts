@@ -3,6 +3,7 @@ import {
   assertAllowedOrigin,
   createServiceClient,
   enforceRateLimit,
+  getEnvInt,
   getClientIp,
   getWalletSnapshot,
   json,
@@ -13,6 +14,10 @@ import {
 const CANVAS_WIDTH = 100;
 const CANVAS_HEIGHT = 100;
 const COOLDOWN_SECONDS = 15 * 60;
+const PAINT_IP_LIMIT = "RATE_LIMIT_PAINT_IP_MAX";
+const PAINT_IP_WINDOW = "RATE_LIMIT_PAINT_IP_WINDOW_SECONDS";
+const PAINT_WALLET_LIMIT = "RATE_LIMIT_PAINT_WALLET_MAX";
+const PAINT_WALLET_WINDOW = "RATE_LIMIT_PAINT_WALLET_WINDOW_SECONDS";
 const ALLOWED_COLORS = new Set([
   "#f3e8ff",
   "#e0c8ff",
@@ -54,8 +59,18 @@ Deno.serve(async (req) => {
     const session = await requireSession(req, supabase);
     const clientIp = getClientIp(req);
 
-    await enforceRateLimit(supabase, `paint:ip:${clientIp}`, 20, 60);
-    await enforceRateLimit(supabase, `paint:wallet:${session.wallet}`, 6, 900);
+    await enforceRateLimit(
+      supabase,
+      `paint:ip:${clientIp}`,
+      getEnvInt(PAINT_IP_LIMIT, 600),
+      getEnvInt(PAINT_IP_WINDOW, 60),
+    );
+    await enforceRateLimit(
+      supabase,
+      `paint:wallet:${session.wallet}`,
+      getEnvInt(PAINT_WALLET_LIMIT, 120),
+      getEnvInt(PAINT_WALLET_WINDOW, 900),
+    );
 
     const body = (await req.json()) as PaintRequest;
     const x = Number(body.x);

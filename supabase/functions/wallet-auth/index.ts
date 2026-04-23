@@ -3,6 +3,7 @@ import {
   assertAllowedOrigin,
   createServiceClient,
   enforceRateLimit,
+  getEnvInt,
   getClientIp,
   getUserAgent,
   getWalletSnapshot,
@@ -33,6 +34,16 @@ type AuthRequest =
 
 const CHALLENGE_TTL_SECONDS = 5 * 60;
 const DEFAULT_SESSION_TTL_SECONDS = 24 * 60 * 60;
+const CHALLENGE_IP_LIMIT = "RATE_LIMIT_CHALLENGE_IP_MAX";
+const CHALLENGE_IP_WINDOW = "RATE_LIMIT_CHALLENGE_IP_WINDOW_SECONDS";
+const CHALLENGE_WALLET_LIMIT = "RATE_LIMIT_CHALLENGE_WALLET_MAX";
+const CHALLENGE_WALLET_WINDOW = "RATE_LIMIT_CHALLENGE_WALLET_WINDOW_SECONDS";
+const VERIFY_IP_LIMIT = "RATE_LIMIT_VERIFY_IP_MAX";
+const VERIFY_IP_WINDOW = "RATE_LIMIT_VERIFY_IP_WINDOW_SECONDS";
+const VERIFY_WALLET_LIMIT = "RATE_LIMIT_VERIFY_WALLET_MAX";
+const VERIFY_WALLET_WINDOW = "RATE_LIMIT_VERIFY_WALLET_WINDOW_SECONDS";
+const REFRESH_IP_LIMIT = "RATE_LIMIT_REFRESH_IP_MAX";
+const REFRESH_IP_WINDOW = "RATE_LIMIT_REFRESH_IP_WINDOW_SECONDS";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -83,8 +94,18 @@ async function issueChallenge(
   }
 
   const clientIp = getClientIp(req);
-  await enforceRateLimit(supabase, `challenge:ip:${clientIp}`, 12, 60);
-  await enforceRateLimit(supabase, `challenge:wallet:${wallet}`, 8, 300);
+  await enforceRateLimit(
+    supabase,
+    `challenge:ip:${clientIp}`,
+    getEnvInt(CHALLENGE_IP_LIMIT, 300),
+    getEnvInt(CHALLENGE_IP_WINDOW, 60),
+  );
+  await enforceRateLimit(
+    supabase,
+    `challenge:wallet:${wallet}`,
+    getEnvInt(CHALLENGE_WALLET_LIMIT, 30),
+    getEnvInt(CHALLENGE_WALLET_WINDOW, 300),
+  );
 
   const issuedAt = new Date();
   const expiresAt = new Date(issuedAt.getTime() + CHALLENGE_TTL_SECONDS * 1000);
@@ -140,8 +161,18 @@ async function verifyChallenge(
   }
 
   const clientIp = getClientIp(req);
-  await enforceRateLimit(supabase, `verify:ip:${clientIp}`, 10, 300);
-  await enforceRateLimit(supabase, `verify:wallet:${wallet}`, 6, 300);
+  await enforceRateLimit(
+    supabase,
+    `verify:ip:${clientIp}`,
+    getEnvInt(VERIFY_IP_LIMIT, 300),
+    getEnvInt(VERIFY_IP_WINDOW, 300),
+  );
+  await enforceRateLimit(
+    supabase,
+    `verify:wallet:${wallet}`,
+    getEnvInt(VERIFY_WALLET_LIMIT, 30),
+    getEnvInt(VERIFY_WALLET_WINDOW, 300),
+  );
 
   const { data, error } = await supabase
     .from("wallet_auth_nonces")
@@ -203,7 +234,12 @@ async function verifyChallenge(
 
 async function refreshSession(req: Request, supabase: ReturnType<typeof createServiceClient>) {
   const clientIp = getClientIp(req);
-  await enforceRateLimit(supabase, `refresh:ip:${clientIp}`, 30, 60);
+  await enforceRateLimit(
+    supabase,
+    `refresh:ip:${clientIp}`,
+    getEnvInt(REFRESH_IP_LIMIT, 1200),
+    getEnvInt(REFRESH_IP_WINDOW, 60),
+  );
 
   const session = await requireSession(req, supabase);
   const snapshot = await getWalletSnapshot(session.wallet);
