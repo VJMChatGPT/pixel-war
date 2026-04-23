@@ -1,24 +1,20 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { PixlMascot } from "@/components/PixlMascot";
+import { Button } from "@/components/ui/button";
+import { Layout } from "@/components/Layout";
 
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
-      </div>
+const NotFound = () => (
+  <Layout>
+    <div className="container py-24 text-center">
+      <PixlMascot mood="shock" size={120} className="mx-auto mb-6" />
+      <div className="font-pixel text-4xl text-gradient-neon mb-4">404</div>
+      <h1 className="font-display font-bold text-3xl mb-2">Pixel not found</h1>
+      <p className="text-muted-foreground mb-8">PIXL looked everywhere — this page isn't on the canvas.</p>
+      <Button asChild className="bg-gradient-neon glow-primary text-primary-foreground rounded-xl h-12 px-6 font-semibold">
+        <Link to="/">Back to home</Link>
+      </Button>
     </div>
-  );
-};
+  </Layout>
+);
 
 export default NotFound;
