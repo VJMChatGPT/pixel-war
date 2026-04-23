@@ -10,7 +10,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCooldown } from "@/hooks/useCooldown";
 import { APP_CONFIG } from "@/config/app";
-import { fetchWalletPaints, fetchWalletState, type PaintHistoryRow, type WalletStateRow } from "@/services/pixels";
+import { fetchWalletPaints, fetchWalletState, type PaintHistoryRow, type PublicWalletStateRow } from "@/services/pixels";
 import { compactNumber, shortAddress, timeAgo, walletGradient } from "@/lib/format";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Profile() {
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
-  const [walletState, setWalletState] = useState<WalletStateRow | null>(null);
+  const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
   const [history, setHistory] = useState<PaintHistoryRow[]>([]);
   const [profileError, setProfileError] = useState<string | null>(null);
   const { pixels, error: canvasError } = useCanvas();

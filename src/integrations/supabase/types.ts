@@ -119,6 +119,16 @@ export type Database = {
         }
         Relationships: []
       }
+      public_wallet_state: {
+        Row: {
+          last_paint_at: string | null
+          pixels_allowed: number | null
+          pixels_used: number | null
+          updated_at: string | null
+          wallet: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

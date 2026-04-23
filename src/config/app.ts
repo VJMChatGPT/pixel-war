@@ -25,20 +25,28 @@
  *   SUPABASE_SERVICE_ROLE_KEY   (full admin access — edge functions only)
  *   SOLANA_RPC_URL              (token balance reads, rate-limited keys)
  *   TOKEN_MINT_ADDRESS          (the project's SPL token mint)
- *   TOKEN_TOTAL_SUPPLY          (or fetched on-chain)
+ *   ALLOWED_APP_ORIGINS         (comma-separated allowed browser origins)
+ *   WALLET_SESSION_TTL_SECONDS  (optional wallet session lifetime)
  */
+
+const SUPPLY_PERCENT_PER_PIXEL = 0.01;
+const TOTAL_SUPPLY_PERCENT = 100;
+const TOTAL_PIXELS = Math.floor(TOTAL_SUPPLY_PERCENT / SUPPLY_PERCENT_PER_PIXEL);
+const CANVAS_WIDTH = Math.floor(Math.sqrt(TOTAL_PIXELS));
+const CANVAS_HEIGHT = Math.ceil(TOTAL_PIXELS / CANVAS_WIDTH);
 
 export const APP_CONFIG = {
   name: "PixelDAO",
   tagline: "Own the pixels. Paint the future.",
 
   canvas: {
-    width: 100,
-    height: 100,
-    totalPixels: 10_000,
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    totalPixels: TOTAL_PIXELS,
   },
 
   rules: {
+    supplyPercentPerPixel: SUPPLY_PERCENT_PER_PIXEL,
     /** 0.01% of supply = 1 allowed pixel → 100% supply = 10,000 pixels. */
     pixelsPerPercentBP: 1, // 1 pixel per 0.01% (1 basis point)
     cooldownMs: 15 * 60 * 1000, // 15 minutes

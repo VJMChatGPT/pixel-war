@@ -2,3 +2,6 @@ project_id = "rcmsgojdpphpuukwwpws"
 
 [functions.paint-pixel]
 verify_jwt = false
+
+[functions.wallet-auth]
+verify_jwt = false

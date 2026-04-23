@@ -1,6 +1,17 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.0";
+import {
+  HttpError,
+  assertAllowedOrigin,
+  createServiceClient,
+  enforceRateLimit,
+  getClientIp,
+  getWalletSnapshot,
+  json,
+  preflight,
+  requireSession,
+} from "../_shared/security.ts";
 
-const CANVAS_PIXELS = 10_000;
+const CANVAS_WIDTH = 100;
+const CANVAS_HEIGHT = 100;
 const COOLDOWN_SECONDS = 15 * 60;
 const ALLOWED_COLORS = new Set([
   "#f3e8ff",
@@ -21,107 +32,76 @@ const ALLOWED_COLORS = new Set([
   "#ffd16a",
 ]);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
 type PaintRequest = {
-  wallet?: string;
   x?: number;
   y?: number;
   color?: string;
-  balance?: number;
-  totalSupply?: number;
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return preflight(req);
   }
 
-  if (req.method !== "POST") {
-    return json({ ok: false, code: "METHOD_NOT_ALLOWED", message: "Use POST." }, 405);
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return json(
-      { ok: false, code: "SERVER_NOT_CONFIGURED", message: "Missing Supabase function secrets." },
-      500,
-    );
-  }
-
-  let body: PaintRequest;
   try {
-    body = await req.json();
-  } catch {
-    return json({ ok: false, code: "INVALID_JSON", message: "Request body must be JSON." }, 400);
+    assertAllowedOrigin(req);
+
+    if (req.method !== "POST") {
+      throw new HttpError(405, "METHOD_NOT_ALLOWED", "Use POST.");
+    }
+
+    const supabase = createServiceClient();
+    const session = await requireSession(req, supabase);
+    const clientIp = getClientIp(req);
+
+    await enforceRateLimit(supabase, `paint:ip:${clientIp}`, 20, 60);
+    await enforceRateLimit(supabase, `paint:wallet:${session.wallet}`, 6, 900);
+
+    const body = (await req.json()) as PaintRequest;
+    const x = Number(body.x);
+    const y = Number(body.y);
+    const color = body.color?.trim().toLowerCase();
+
+    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= CANVAS_WIDTH || y < 0 || y >= CANVAS_HEIGHT) {
+      throw new HttpError(400, "OUT_OF_BOUNDS", "Pixel coordinates are outside the canvas.");
+    }
+
+    if (!color || !/^#[0-9a-f]{6}$/.test(color) || !ALLOWED_COLORS.has(color)) {
+      throw new HttpError(400, "INVALID_COLOR", "Choose a valid palette color.");
+    }
+
+    const snapshot = await getWalletSnapshot(session.wallet);
+    if (snapshot.pixelsAllowed <= 0) {
+      throw new HttpError(403, "INSUFFICIENT_BALANCE", "Token balance is required to paint.");
+    }
+
+    const { data, error } = await supabase.rpc("paint_pixel_transaction", {
+      p_wallet: session.wallet,
+      p_x: x,
+      p_y: y,
+      p_color: color,
+      p_balance: snapshot.balance,
+      p_pixels_allowed: snapshot.pixelsAllowed,
+      p_cooldown_seconds: COOLDOWN_SECONDS,
+    });
+
+    if (error) {
+      throw new HttpError(500, "DATABASE_ERROR", error.message);
+    }
+
+    const result = data as Record<string, unknown>;
+    if (!result?.ok) {
+      const status = result?.code === "COOLDOWN_ACTIVE" || result?.code === "PIXEL_LIMIT_REACHED" ? 409 : 400;
+      return json(req, result, status);
+    }
+
+    return json(req, result, 200);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return json(req, { ok: false, code: error.code, message: error.message, ...error.details }, error.status);
+    }
+
+    const message = error instanceof Error ? error.message : "Unexpected paint error.";
+    return json(req, { ok: false, code: "UNEXPECTED_ERROR", message }, 500);
   }
-
-  const wallet = body.wallet?.trim();
-  const x = Number(body.x);
-  const y = Number(body.y);
-  const color = body.color?.trim().toLowerCase();
-  const balance = Number(body.balance);
-  const totalSupply = Number(body.totalSupply);
-
-  if (!wallet || wallet.length < 8) {
-    return json({ ok: false, code: "INVALID_WALLET", message: "Wallet is required." }, 400);
-  }
-
-  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= 100 || y < 0 || y >= 100) {
-    return json({ ok: false, code: "OUT_OF_BOUNDS", message: "Pixel coordinates are outside the canvas." }, 400);
-  }
-
-  if (!color || !/^#[0-9a-f]{6}$/.test(color) || !ALLOWED_COLORS.has(color)) {
-    return json({ ok: false, code: "INVALID_COLOR", message: "Choose a valid palette color." }, 400);
-  }
-
-  if (!Number.isFinite(balance) || !Number.isFinite(totalSupply) || balance <= 0 || totalSupply <= 0) {
-    return json({ ok: false, code: "INSUFFICIENT_BALANCE", message: "Token balance is required to paint." }, 400);
-  }
-
-  // Demo mode: this comes from the mock wallet. Phantom/on-chain validation should
-  // replace these body fields before production.
-  const pixelsAllowed = Math.floor((balance / totalSupply) * CANVAS_PIXELS);
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  const { data, error } = await supabase.rpc("paint_pixel_transaction", {
-    p_wallet: wallet,
-    p_x: x,
-    p_y: y,
-    p_color: color,
-    p_balance: balance,
-    p_pixels_allowed: pixelsAllowed,
-    p_cooldown_seconds: COOLDOWN_SECONDS,
-  });
-
-  if (error) {
-    return json({ ok: false, code: "DATABASE_ERROR", message: error.message }, 500);
-  }
-
-  const result = data as Record<string, unknown>;
-  if (!result?.ok) {
-    const status = result?.code === "COOLDOWN_ACTIVE" || result?.code === "PIXEL_LIMIT_REACHED" ? 409 : 400;
-    return json(result, status);
-  }
-
-  return json(result, 200);
 });
-
-function json(payload: unknown, status = 200) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-    },
-  });
-}

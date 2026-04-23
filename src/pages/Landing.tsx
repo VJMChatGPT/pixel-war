@@ -127,7 +127,7 @@ export default function Landing() {
         </div>
         <div className="grid md:grid-cols-4 gap-5">
           {[
-            { n: "01", title: "Hold $PIXL", desc: "Every 0.01% of supply unlocks 1 pixel of canvas territory.", mood: "idle" as const },
+            { n: "01", title: "Hold $PIXL", desc: `Every ${APP_CONFIG.rules.supplyPercentPerPixel}% of supply unlocks 1 pixel of canvas territory.`, mood: "idle" as const },
             { n: "02", title: "Connect wallet", desc: "Sign in with your Solana wallet. Your balance becomes your brush size.", mood: "wave" as const },
             { n: "03", title: "Paint a pixel", desc: "Pick a color. Click any cell. Watch it land in real-time.", mood: "paint" as const },
             { n: "04", title: "Wait 15 min", desc: "Cooldown resets. Paint again. Climb the leaderboard.", mood: "sleep" as const },
@@ -154,7 +154,7 @@ export default function Landing() {
               Ready to leave your mark?
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto mb-8">
-              10,000 pixels. One canvas. Forever on-chain. Your pixels stay yours as long as you hold.
+              {APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels. One canvas. Forever on-chain. Your pixels stay yours as long as you hold.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <Button asChild size="lg" className="h-14 px-8 bg-gradient-neon glow-primary rounded-xl text-primary-foreground font-semibold">

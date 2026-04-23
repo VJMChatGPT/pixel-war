@@ -1,4 +1,5 @@
 import { APP_CONFIG } from "@/config/app";
+import { supabase } from "@/integrations/supabase/client";
 
 type WalletMode = "auto" | "phantom" | "mock";
 
@@ -25,20 +26,18 @@ declare global {
 
 export interface WalletInfo {
   address: string;
-  /** Token balance in token units. */
   balance: number;
-  /** Total token supply used to compute pixel allowance. */
   totalSupply: number;
+  sessionToken?: string;
+  sessionExpiresAt?: string;
+  isMock?: boolean;
 }
 
 export interface WalletAdapter {
-  connect(): Promise<WalletInfo>;
-  disconnect(): Promise<void>;
-  /** Fresh balance read for an address. */
-  getBalance(address: string): Promise<number>;
-  /** Returns the current total supply of the project token. */
-  getTotalSupply(): Promise<number>;
-  /** Returns true if this wallet adapter can connect. */
+  connect(existing?: WalletInfo | null): Promise<WalletInfo>;
+  disconnect(wallet?: WalletInfo | null): Promise<void>;
+  getBalance(wallet: WalletInfo): Promise<number>;
+  getTotalSupply(wallet: WalletInfo): Promise<number>;
   isAvailable(): boolean;
 }
 
@@ -55,18 +54,25 @@ const WALLET_MODE: WalletMode = ["auto", "phantom", "mock"].includes(configuredW
 
 export const mockWalletAdapter: WalletAdapter = {
   isAvailable: () => true,
-  async connect() {
-    await delay(450);
-    const address = MOCK_ADDRESSES[Math.floor(Math.random() * MOCK_ADDRESSES.length)];
+  async connect(existing) {
+    await delay(200);
+    const address = existing?.address ?? MOCK_ADDRESSES[Math.floor(Math.random() * MOCK_ADDRESSES.length)];
     const balance = deterministicDemoBalance(address);
-    return { address, balance, totalSupply: MOCK_TOTAL_SUPPLY };
+    return {
+      address,
+      balance,
+      totalSupply: MOCK_TOTAL_SUPPLY,
+      sessionToken: "mock-session",
+      sessionExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      isMock: true,
+    };
   },
   async disconnect() {
-    await delay(120);
+    await delay(80);
   },
-  async getBalance(address: string) {
-    await delay(120);
-    return deterministicDemoBalance(address);
+  async getBalance(wallet) {
+    await delay(80);
+    return deterministicDemoBalance(wallet.address);
   },
   async getTotalSupply() {
     return MOCK_TOTAL_SUPPLY;
@@ -75,36 +81,74 @@ export const mockWalletAdapter: WalletAdapter = {
 
 export const phantomWalletAdapter: WalletAdapter = {
   isAvailable: () => typeof window !== "undefined" && !!window.solana?.isPhantom,
-  async connect() {
+  async connect(existing) {
     const provider = getPhantomProvider();
+    const restoredSession = existing?.sessionToken
+      ? await resumeWalletSession(existing.sessionToken).catch(() => null)
+      : null;
+
+    if (restoredSession) {
+      return {
+        address: restoredSession.address,
+        balance: restoredSession.balance,
+        totalSupply: restoredSession.totalSupply,
+        sessionToken: existing?.sessionToken,
+        sessionExpiresAt: restoredSession.sessionExpiresAt,
+      };
+    }
+
     const { publicKey } = await provider.connect();
     const address = publicKey.toString();
-    const totalSupply = await this.getTotalSupply();
-    const balance = await this.getBalance(address);
+    const challenge = await requestWalletChallenge(address);
 
-    return { address, balance, totalSupply };
+    if (!provider.signMessage) {
+      throw new Error("Your wallet does not support message signing.");
+    }
+
+    const encodedMessage = new TextEncoder().encode(challenge.message);
+    const signed = await provider.signMessage(encodedMessage, "utf8");
+    const signature = encodeBase64(signed.signature);
+    const verified = await verifyWalletChallenge(address, challenge.nonce, signature);
+
+    return {
+      address: verified.wallet,
+      balance: verified.balance,
+      totalSupply: verified.totalSupply,
+      sessionToken: verified.sessionToken,
+      sessionExpiresAt: verified.sessionExpiresAt,
+    };
   },
-  async disconnect() {
+  async disconnect(wallet) {
+    if (wallet?.sessionToken) {
+      await revokeWalletSession(wallet.sessionToken).catch(() => undefined);
+    }
+
     const provider = getPhantomProvider();
     await provider.disconnect();
   },
-  async getBalance(address: string) {
-    await delay(120);
+  async getBalance(wallet) {
+    if (!wallet.sessionToken) {
+      throw new Error("Wallet session missing. Reconnect your wallet.");
+    }
 
-    // Demo balance until the Edge Function verifies the real SPL token balance
-    // from a server-side Solana RPC call.
-    return deterministicDemoBalance(address);
+    const snapshot = await resumeWalletSession(wallet.sessionToken);
+    return snapshot.balance;
   },
-  async getTotalSupply() {
-    return MOCK_TOTAL_SUPPLY;
+  async getTotalSupply(wallet) {
+    if (!wallet.sessionToken) {
+      throw new Error("Wallet session missing. Reconnect your wallet.");
+    }
+
+    const snapshot = await resumeWalletSession(wallet.sessionToken);
+    return snapshot.totalSupply;
   },
 };
 
-export function getWalletAdapter(): WalletAdapter {
-  if (WALLET_MODE === "mock") return mockWalletAdapter;
+export function getWalletAdapter(preferredWallet?: WalletInfo | null): WalletAdapter {
+  if (preferredWallet?.isMock || WALLET_MODE === "mock") return mockWalletAdapter;
   if (phantomWalletAdapter.isAvailable()) return phantomWalletAdapter;
-  if (WALLET_MODE === "phantom") {
-    throw new Error("Phantom wallet not found. Install Phantom or set VITE_WALLET_MODE=mock for local demo mode.");
+  if (WALLET_MODE === "phantom" || WALLET_MODE === "auto") {
+    throw new Error("Phantom wallet not found. Install Phantom or use VITE_WALLET_MODE=mock only for local demos.");
   }
 
   return mockWalletAdapter;
@@ -114,6 +158,89 @@ export function computeAllowedPixels(balance: number, totalSupply: number): numb
   if (totalSupply <= 0 || balance <= 0) return 0;
   const pct = balance / totalSupply;
   return Math.floor(pct * APP_CONFIG.canvas.totalPixels);
+}
+
+async function requestWalletChallenge(wallet: string) {
+  const { data, error } = await supabase.functions.invoke("wallet-auth", {
+    body: {
+      action: "challenge",
+      wallet,
+    },
+  });
+
+  if (error) {
+    throw await readFunctionError(error);
+  }
+
+  return data as {
+    nonce: string;
+    message: string;
+    expiresAt: string;
+  };
+}
+
+async function verifyWalletChallenge(wallet: string, nonce: string, signature: string) {
+  const { data, error } = await supabase.functions.invoke("wallet-auth", {
+    body: {
+      action: "verify",
+      wallet,
+      nonce,
+      signature,
+    },
+  });
+
+  if (error) {
+    throw await readFunctionError(error);
+  }
+
+  return data as {
+    address: string;
+    wallet: string;
+    balance: number;
+    totalSupply: number;
+    sessionToken: string;
+    sessionExpiresAt: string;
+  };
+}
+
+export async function resumeWalletSession(sessionToken: string) {
+  const { data, error } = await supabase.functions.invoke("wallet-auth", {
+    body: { action: "refresh" },
+    headers: {
+      Authorization: `Bearer ${sessionToken}`,
+    },
+  });
+
+  if (error) {
+    throw await readFunctionError(error);
+  }
+
+  const result = data as {
+    wallet: string;
+    balance: number;
+    totalSupply: number;
+    sessionExpiresAt: string;
+  };
+
+  return {
+    address: result.wallet,
+    balance: result.balance,
+    totalSupply: result.totalSupply,
+    sessionExpiresAt: result.sessionExpiresAt,
+  };
+}
+
+async function revokeWalletSession(sessionToken: string) {
+  const { error } = await supabase.functions.invoke("wallet-auth", {
+    body: { action: "revoke" },
+    headers: {
+      Authorization: `Bearer ${sessionToken}`,
+    },
+  });
+
+  if (error) {
+    throw await readFunctionError(error);
+  }
 }
 
 function getPhantomProvider(): PhantomProvider {
@@ -139,4 +266,29 @@ function deterministicDemoBalance(address: string): number {
 
 function delay(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function encodeBase64(bytes: Uint8Array) {
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+async function readFunctionError(error: Error) {
+  const context = (error as { context?: Response }).context;
+
+  if (context) {
+    try {
+      const payload = await context.clone().json();
+      if (payload && typeof payload === "object" && "message" in payload) {
+        return new Error(String((payload as { message?: string }).message ?? error.message));
+      }
+    } catch {
+      // Fall back to the original SDK error below.
+    }
+  }
+
+  return error;
 }

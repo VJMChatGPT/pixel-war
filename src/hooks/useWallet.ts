@@ -7,6 +7,9 @@ interface StoredWallet {
   address: string;
   balance: number;
   totalSupply: number;
+  sessionToken?: string;
+  sessionExpiresAt?: string;
+  isMock?: boolean;
 }
 
 /**
@@ -24,17 +27,44 @@ export function useWallet() {
     }
   });
   const [connecting, setConnecting] = useState(false);
+  const [restoredSessionChecked, setRestoredSessionChecked] = useState(false);
 
   useEffect(() => {
     if (wallet) localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
     else localStorage.removeItem(STORAGE_KEY);
   }, [wallet]);
 
+  useEffect(() => {
+    if (!wallet || wallet.isMock) return;
+    if (restoredSessionChecked) return;
+
+    let cancelled = false;
+    getWalletAdapter(wallet)
+      .connect(wallet)
+      .then((nextWallet) => {
+        if (!cancelled) {
+          setWallet(nextWallet);
+          setRestoredSessionChecked(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWallet(null);
+          setRestoredSessionChecked(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [restoredSessionChecked, wallet]);
+
   const connect = async () => {
     setConnecting(true);
     try {
-      const info = await getWalletAdapter().connect();
+      const info = await getWalletAdapter(wallet).connect(wallet);
       setWallet(info);
+      setRestoredSessionChecked(true);
       return info;
     } finally {
       setConnecting(false);
@@ -42,14 +72,19 @@ export function useWallet() {
   };
 
   const disconnect = async () => {
-    await getWalletAdapter().disconnect();
+    await getWalletAdapter(wallet).disconnect(wallet);
     setWallet(null);
+    setRestoredSessionChecked(true);
   };
 
   const refreshBalance = async () => {
     if (!wallet) return;
-    const balance = await getWalletAdapter().getBalance(wallet.address);
-    setWallet((w) => (w ? { ...w, balance } : w));
+    const adapter = getWalletAdapter(wallet);
+    const [balance, totalSupply] = await Promise.all([
+      adapter.getBalance(wallet),
+      adapter.getTotalSupply(wallet),
+    ]);
+    setWallet((w) => (w ? { ...w, balance, totalSupply } : w));
   };
 
   const allowedPixels = wallet ? computeAllowedPixels(wallet.balance, wallet.totalSupply) : 0;
