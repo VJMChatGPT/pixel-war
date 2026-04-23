@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { APP_CONFIG } from "@/config/app";
 import type { PixelRow } from "@/services/pixels";
-import { shortAddress, timeAgo } from "@/lib/format";
+import { shortAddress, timeAgo, walletGradient } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -71,11 +71,11 @@ export function CanvasGrid({
 
       const boundsWidth = maxX - minX + 1;
       const boundsHeight = maxY - minY + 1;
-      const paddingCells = 6;
+      const paddingCells = 12;
       const nextZoom = Math.max(
-        2,
+        1.2,
         Math.min(
-          8,
+          4,
           Math.min(
             c.clientWidth / ((boundsWidth + paddingCells * 2) * BASE_PX),
             c.clientHeight / ((boundsHeight + paddingCells * 2) * BASE_PX)
@@ -147,13 +147,22 @@ export function CanvasGrid({
 
     const paintedCount = pixels.reduce((count, pixel) => (pixel?.owner_wallet ? count + 1 : count), 0);
     const emphasizePainted = paintedCount > 0 && cellSize <= 8;
+    const highlightSet = highlightWallet
+      ? new Set(
+          pixels
+            .filter((pixel): pixel is PixelRow => !!pixel && pixel.owner_wallet === highlightWallet)
+            .map((pixel) => `${pixel.x},${pixel.y}`)
+        )
+      : null;
+    const highlightStroke = highlightWallet ? walletGradient(highlightWallet)[0] : null;
 
     // Pixels
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const p = pixels[y * W + x];
         if (!p || !p.owner_wallet) continue;
-        const dim = highlightWallet && p.owner_wallet !== highlightWallet;
+        const isHighlighted = !!highlightSet?.has(`${x},${y}`);
+        const dim = !!highlightWallet && !isHighlighted;
         const drawX = Math.floor(offset.x + x * cellSize);
         const drawY = Math.floor(offset.y + y * cellSize);
         const drawSize = Math.ceil(cellSize);
@@ -161,13 +170,42 @@ export function CanvasGrid({
         ctx.fillStyle = dim ? p.color + "30" : p.color;
         ctx.fillRect(drawX, drawY, drawSize, drawSize);
 
-        if (emphasizePainted && !dim) {
+        if (emphasizePainted && !dim && !isHighlighted) {
           ctx.save();
           ctx.strokeStyle = p.color;
           ctx.lineWidth = 1.5;
           ctx.shadowColor = p.color;
           ctx.shadowBlur = 10;
           ctx.strokeRect(drawX - 1, drawY - 1, drawSize + 2, drawSize + 2);
+          ctx.restore();
+        }
+
+        if (isHighlighted && highlightStroke) {
+          ctx.save();
+          ctx.strokeStyle = highlightStroke;
+          ctx.lineWidth = Math.max(1.5, cellSize >= 10 ? 2 : 1.5);
+          ctx.shadowColor = highlightStroke;
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+
+          if (!highlightSet?.has(`${x},${y - 1}`)) {
+            ctx.moveTo(drawX, drawY);
+            ctx.lineTo(drawX + drawSize, drawY);
+          }
+          if (!highlightSet?.has(`${x + 1},${y}`)) {
+            ctx.moveTo(drawX + drawSize, drawY);
+            ctx.lineTo(drawX + drawSize, drawY + drawSize);
+          }
+          if (!highlightSet?.has(`${x},${y + 1}`)) {
+            ctx.moveTo(drawX, drawY + drawSize);
+            ctx.lineTo(drawX + drawSize, drawY + drawSize);
+          }
+          if (!highlightSet?.has(`${x - 1},${y}`)) {
+            ctx.moveTo(drawX, drawY);
+            ctx.lineTo(drawX, drawY + drawSize);
+          }
+
+          ctx.stroke();
           ctx.restore();
         }
       }
