@@ -58,7 +58,7 @@ export default function Landing() {
                   className="h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] active:scale-[0.98] transition-all"
                 >
                   <Wallet className="w-5 h-5" />
-                  Connect Phantom
+                  Connect Wallet
                 </Button>
               ) : (
                 <Button
@@ -128,7 +128,7 @@ export default function Landing() {
         <div className="grid md:grid-cols-4 gap-5">
           {[
             { n: "01", title: "Hold $PIXL", desc: "Every 0.01% of supply unlocks 1 pixel of canvas territory.", mood: "idle" as const },
-            { n: "02", title: "Connect wallet", desc: "Sign in with Phantom. Your balance becomes your brush size.", mood: "wave" as const },
+            { n: "02", title: "Connect wallet", desc: "Sign in with your Solana wallet. Your balance becomes your brush size.", mood: "wave" as const },
             { n: "03", title: "Paint a pixel", desc: "Pick a color. Click any cell. Watch it land in real-time.", mood: "paint" as const },
             { n: "04", title: "Wait 15 min", desc: "Cooldown resets. Paint again. Climb the leaderboard.", mood: "sleep" as const },
           ].map((step, i) => (
