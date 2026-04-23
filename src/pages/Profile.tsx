@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { NeonCard } from "@/components/NeonCard";
 import { PixlMascot } from "@/components/PixlMascot";
@@ -15,19 +15,35 @@ import { compactNumber, shortAddress, timeAgo, walletGradient } from "@/lib/form
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Profile() {
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
   const [walletState, setWalletState] = useState<WalletStateRow | null>(null);
   const [history, setHistory] = useState<PaintHistoryRow[]>([]);
-  const { pixels } = useCanvas();
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const { pixels, error: canvasError } = useCanvas();
   const [copied, setCopied] = useState(false);
   const cooldown = useCooldown(walletState?.last_paint_at);
+  const ownedPixelCount = useMemo(
+    () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
+    [pixels, wallet]
+  );
 
   useEffect(() => {
     if (!wallet) return;
-    fetchWalletState(wallet.address).then(setWalletState);
-    fetchWalletPaints(wallet.address, 30).then(setHistory);
+    setProfileError(null);
+    Promise.all([
+      fetchWalletState(wallet.address),
+      fetchWalletPaints(wallet.address, 30),
+    ])
+      .then(([walletData, paintData]) => {
+        setWalletState(walletData);
+        setHistory(paintData);
+      })
+      .catch((err: Error) => {
+        setProfileError(err.message);
+      });
   }, [wallet]);
 
   if (!isConnected) {
@@ -55,6 +71,13 @@ export default function Profile() {
   return (
     <Layout>
       <div className="container py-10 space-y-6">
+        {(profileError || canvasError) && (
+          <Alert variant="destructive" className="border-destructive/40 bg-destructive/10">
+            <AlertTitle>Profile data failed to load</AlertTitle>
+            <AlertDescription>{profileError ?? canvasError}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Hero card */}
         <NeonCard shimmer className="p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center">
           <div
@@ -71,7 +94,7 @@ export default function Profile() {
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
               <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
-              <PixelBadge count={walletState?.pixels_used ?? 0} label="painted" variant="secondary" />
+              <PixelBadge count={ownedPixelCount || walletState?.pixels_used || 0} label="painted" variant="secondary" />
               <PixelBadge count={Number(supplyPercent.toFixed(3)) as any} label="% supply" variant="accent" />
             </div>
           </div>

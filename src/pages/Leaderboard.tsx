@@ -9,18 +9,25 @@ import { Trophy, Crown, Medal, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Leaderboard() {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const { wallet } = useWallet();
 
   useEffect(() => {
-    fetchLeaderboard(100).then((data) => {
-      setRows(data);
-      setLoading(false);
-    });
+    fetchLeaderboard(100)
+      .then((data) => {
+        setRows(data);
+        setLoading(false);
+      })
+      .catch((err: Error) => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
 
   const podium = rows.slice(0, 3);
@@ -41,6 +48,13 @@ export default function Leaderboard() {
             Wallets ranked by pixels controlled on the canvas. Painted in real-time.
           </p>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-8 border-destructive/40 bg-destructive/10 text-left">
+            <AlertTitle>Leaderboard failed to load</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         {/* Podium */}
         {loading ? (

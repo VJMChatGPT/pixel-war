@@ -6,14 +6,21 @@ import { fetchRecentPaints, type PaintHistoryRow } from "@/services/pixels";
 export function useRecentPaints(limit = 20) {
   const [paints, setPaints] = useState<PaintHistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    fetchRecentPaints(limit).then((data) => {
-      if (!mounted) return;
-      setPaints(data);
-      setLoading(false);
-    });
+    fetchRecentPaints(limit)
+      .then((data) => {
+        if (!mounted) return;
+        setPaints(data);
+        setLoading(false);
+      })
+      .catch((err: Error) => {
+        if (!mounted) return;
+        setError(err.message);
+        setLoading(false);
+      });
 
     const channel = supabase
       .channel("paint-history-stream")
@@ -32,5 +39,5 @@ export function useRecentPaints(limit = 20) {
     };
   }, [limit]);
 
-  return { paints, loading };
+  return { paints, loading, error };
 }

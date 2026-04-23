@@ -2,6 +2,7 @@ import { useRecentPaints } from "@/hooks/useRecentPaints";
 import { shortAddress, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Props {
   className?: string;
@@ -9,7 +10,7 @@ interface Props {
 }
 
 export function ActivityFeed({ className, limit = 12 }: Props) {
-  const { paints, loading } = useRecentPaints(limit);
+  const { paints, loading, error } = useRecentPaints(limit);
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -25,6 +26,12 @@ export function ActivityFeed({ className, limit = 12 }: Props) {
       {loading && Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="h-9 rounded-lg bg-muted/30 animate-pulse" />
       ))}
+      {error && (
+        <Alert variant="destructive" className="border-destructive/40 bg-destructive/10">
+          <AlertTitle>Activity feed failed to load</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <AnimatePresence initial={false}>
         {paints.map((p) => (
           <motion.div

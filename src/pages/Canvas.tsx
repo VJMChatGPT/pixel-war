@@ -9,6 +9,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { PixlMascot } from "@/components/PixlMascot";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useWallet } from "@/hooks/useWallet";
 import { useCooldown } from "@/hooks/useCooldown";
@@ -20,7 +21,7 @@ import { motion } from "framer-motion";
 import { LocateFixed, Sparkles } from "lucide-react";
 
 export default function CanvasPage() {
-  const { pixels } = useCanvas();
+  const { pixels, loading: canvasLoading, error: canvasError } = useCanvas();
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
   const [walletState, setWalletState] = useState<WalletStateRow | null>(null);
   const [color, setColor] = useState<string>(APP_CONFIG.palette[0]);
@@ -41,6 +42,7 @@ export default function CanvasPage() {
     [pixels, wallet]
   );
   const canPaint = isConnected && cooldown.ready && allowedPixels > 0 && !painting;
+  const canvasSyncIssue = !canvasLoading && !canvasError && usedPixels > 0 && ownedPixelCount === 0;
 
   useEffect(() => {
     if (!wallet) {
@@ -112,6 +114,18 @@ export default function CanvasPage() {
                     size="sm"
                     className="h-9 rounded-lg"
                     onClick={() => {
+                      if (canvasSyncIssue) {
+                        toast.error("Canvas out of sync", {
+                          description: "Your wallet state says you own pixels, but the canvas data loaded 0 for your address.",
+                        });
+                        return;
+                      }
+                      if (ownedPixelCount <= 0) {
+                        toast.error("No owned pixels in canvas data yet", {
+                          description: canvasLoading ? "Canvas is still loading." : "The canvas has not loaded your painted pixels yet.",
+                        });
+                        return;
+                      }
                       setFocusMine(true);
                       setFocusKey((key) => key + 1);
                     }}
@@ -126,6 +140,20 @@ export default function CanvasPage() {
                 </div>
               </div>
             </div>
+            {canvasError && (
+              <Alert variant="destructive" className="border-destructive/40 bg-destructive/10">
+                <AlertTitle>Canvas failed to load</AlertTitle>
+                <AlertDescription>{canvasError}</AlertDescription>
+              </Alert>
+            )}
+            {canvasSyncIssue && (
+              <Alert variant="destructive" className="border-destructive/40 bg-destructive/10">
+                <AlertTitle>Canvas data is out of sync</AlertTitle>
+                <AlertDescription>
+                  Wallet state reports {usedPixels} painted pixels, but the canvas query loaded 0 cells for wallet {shortAddress(wallet?.address ?? "")}.
+                </AlertDescription>
+              </Alert>
+            )}
             <NeonCard shimmer={canPaint} className="p-2 md:p-3 aspect-square md:aspect-auto md:h-[calc(100vh-180px)] glow-primary">
               <CanvasGrid
                 pixels={pixels}
@@ -162,6 +190,9 @@ export default function CanvasPage() {
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
                     <PixelBadge count={ownedPixelCount || usedPixels} total={allowedPixels} label="used" variant="secondary" />
+                  </div>
+                  <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    canvas loaded: {ownedPixelCount} owned pixels
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between font-mono text-[11px]">
