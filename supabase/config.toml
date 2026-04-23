@@ -1,1 +1,4 @@
 project_id = "rcmsgojdpphpuukwwpws"
+
+[functions.paint-pixel]
+verify_jwt = false
