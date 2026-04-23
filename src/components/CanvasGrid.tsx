@@ -35,6 +35,7 @@ export function CanvasGrid({
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pixelsRef = useRef(pixels);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [hover, setHover] = useState<{ x: number; y: number; cx: number; cy: number } | null>(null);
@@ -44,6 +45,10 @@ export function CanvasGrid({
   const cellSize = BASE_PX * zoom;
 
   // Center grid on first render
+  useEffect(() => {
+    pixelsRef.current = pixels;
+  }, [pixels]);
+
   useEffect(() => {
     const c = containerRef.current;
     if (!c) return;
@@ -58,7 +63,7 @@ export function CanvasGrid({
 
   const focusOnWalletPixels = useCallback(
     (wallet: string) => {
-      const owned = pixels.filter((pixel): pixel is PixelRow => !!pixel && pixel.owner_wallet === wallet);
+      const owned = pixelsRef.current.filter((pixel): pixel is PixelRow => !!pixel && pixel.owner_wallet === wallet);
       if (owned.length === 0) return;
 
       const c = containerRef.current;
@@ -93,7 +98,7 @@ export function CanvasGrid({
         y: c.clientHeight / 2 - centerY * nextCellSize,
       });
     },
-    [pixels]
+    []
   );
 
   const applyZoomAroundViewportCenter = useCallback((nextZoom: number) => {
@@ -280,8 +285,6 @@ export function CanvasGrid({
       const dx = e.clientX - dragStart.current.x;
       const dy = e.clientY - dragStart.current.y;
       if (Math.abs(dx) + Math.abs(dy) > 4) dragStart.current.moved = true;
-      setOffset({ ox: dragStart.current.ox + dx, oy: dragStart.current.oy + dy } as any);
-      // ^ TS workaround
       setOffset({ x: dragStart.current.ox + dx, y: dragStart.current.oy + dy });
     }
     const cell = screenToCell(e.clientX, e.clientY);
