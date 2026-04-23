@@ -40,6 +40,8 @@ export function json(req: Request, payload: unknown, status = 200) {
 }
 
 export function assertAllowedOrigin(req: Request) {
+  if (shouldAllowAllOrigins()) return;
+
   const origin = req.headers.get("origin");
   if (!origin) return;
 
@@ -56,6 +58,11 @@ export function buildCorsHeaders(origin: string | null) {
     Vary: "Origin",
   });
 
+  if (shouldAllowAllOrigins()) {
+    headers.set("Access-Control-Allow-Origin", "*");
+    return headers;
+  }
+
   if (origin && isAllowedOrigin(origin)) {
     headers.set("Access-Control-Allow-Origin", origin);
   }
@@ -64,6 +71,10 @@ export function buildCorsHeaders(origin: string | null) {
 }
 
 export function preflight(req: Request) {
+  if (shouldAllowAllOrigins()) {
+    return new Response("ok", { headers: buildCorsHeaders(req.headers.get("origin")) });
+  }
+
   const origin = req.headers.get("origin");
   if (origin && !isAllowedOrigin(origin)) {
     return new Response("forbidden", { status: 403, headers: buildCorsHeaders(origin) });
@@ -269,6 +280,12 @@ function isAllowedOrigin(origin: string) {
 function isDemoModeEnabled() {
   const raw = (Deno.env.get("DEMO_MODE") ?? "").trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+function shouldAllowAllOrigins() {
+  const raw = (Deno.env.get("ALLOW_ALL_ORIGINS") ?? "").trim().toLowerCase();
+  if (raw === "1" || raw === "true" || raw === "yes" || raw === "on") return true;
+  return isDemoModeEnabled();
 }
 
 function extractBearerToken(header: string | null) {
