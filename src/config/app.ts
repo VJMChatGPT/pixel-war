@@ -44,12 +44,12 @@ export const APP_CONFIG = {
     cooldownMs: 15 * 60 * 1000, // 15 minutes
   },
 
-  /** Curated arcade neon palette for the pixel painter. */
+  /** Curated violet/lavender palette — Phantom-inspired, no rainbow. */
   palette: [
-    "#ff2d75", "#ff5e3a", "#ffb800", "#fff03a",
-    "#b6ff3c", "#3affb5", "#00f0ff", "#3a8cff",
-    "#9d4dff", "#ff3ad9", "#ffffff", "#a3a3b8",
-    "#5b5b73", "#1a1a2e", "#0a0a14", "#e8e8f0",
+    "#f3e8ff", "#e0c8ff", "#c9a8ff", "#a78bff",
+    "#9d4dff", "#8a4dff", "#7b2dff", "#5b2dba",
+    "#3d1d7a", "#1a0b2e", "#ffffff", "#c4b5d9",
+    "#8b7da8", "#ff6fae", "#9bd9ff", "#ffd16a",
   ] as const,
 } as const;
 
