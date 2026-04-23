@@ -1,0 +1,105 @@
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { PixlMascot } from "./PixlMascot";
+import { WalletConnectButton } from "./WalletConnectButton";
+import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+
+const links = [
+  { to: "/", label: "Home" },
+  { to: "/canvas", label: "Canvas" },
+  { to: "/leaderboard", label: "Leaderboard" },
+  { to: "/profile", label: "Profile" },
+  { to: "/rules", label: "Rules" },
+];
+
+export function NavBar() {
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header
+      className={cn(
+        "sticky top-0 z-40 transition-all duration-300",
+        scrolled ? "backdrop-blur-xl bg-background/70 border-b border-border" : "bg-transparent"
+      )}
+    >
+      <div className="container flex items-center justify-between h-16 md:h-20">
+        <Link to="/" className="flex items-center gap-3 group">
+          <PixlMascot size={40} mood="idle" />
+          <div className="leading-none">
+            <div className="font-display font-bold text-xl tracking-tight">
+              Pixel<span className="text-gradient-neon">DAO</span>
+            </div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5">
+              paint to own
+            </div>
+          </div>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-1">
+          {links.map((l) => (
+            <NavLink
+              key={l.to}
+              to={l.to}
+              className={({ isActive }) =>
+                cn(
+                  "relative px-4 py-2 text-sm font-medium rounded-lg transition-all",
+                  isActive
+                    ? "text-foreground bg-muted/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )
+              }
+            >
+              {l.label}
+              {location.pathname === l.to && (
+                <span className="absolute -bottom-px left-1/2 -translate-x-1/2 h-px w-8 bg-gradient-neon" />
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="hidden md:block">
+          <WalletConnectButton />
+        </div>
+
+        <div className="md:hidden">
+          <Sheet>
+            <SheetTrigger className="p-2 rounded-lg hover:bg-muted/40">
+              <Menu className="w-5 h-5" />
+            </SheetTrigger>
+            <SheetContent side="right" className="bg-background border-border">
+              <div className="flex flex-col gap-2 mt-8">
+                {links.map((l) => (
+                  <NavLink
+                    key={l.to}
+                    to={l.to}
+                    className={({ isActive }) =>
+                      cn(
+                        "px-4 py-3 rounded-lg font-medium",
+                        isActive ? "bg-muted text-foreground" : "text-muted-foreground"
+                      )
+                    }
+                  >
+                    {l.label}
+                  </NavLink>
+                ))}
+                <div className="mt-4">
+                  <WalletConnectButton />
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+}
