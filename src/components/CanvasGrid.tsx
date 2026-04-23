@@ -167,7 +167,7 @@ export function CanvasGrid({
         const drawY = Math.floor(offset.y + y * cellSize);
         const drawSize = Math.ceil(cellSize);
 
-        ctx.fillStyle = dim ? p.color + "30" : p.color;
+        ctx.fillStyle = dim ? p.color + "90" : p.color;
         ctx.fillRect(drawX, drawY, drawSize, drawSize);
 
         if (emphasizePainted && !dim && !isHighlighted) {
@@ -182,10 +182,10 @@ export function CanvasGrid({
 
         if (isHighlighted && highlightStroke) {
           ctx.save();
-          ctx.strokeStyle = highlightStroke;
-          ctx.lineWidth = Math.max(1.5, cellSize >= 10 ? 2 : 1.5);
+          ctx.strokeStyle = highlightStroke + "cc";
+          ctx.lineWidth = Math.max(1, cellSize >= 10 ? 1.5 : 1);
           ctx.shadowColor = highlightStroke;
-          ctx.shadowBlur = 10;
+          ctx.shadowBlur = 4;
           ctx.beginPath();
 
           if (!highlightSet?.has(`${x},${y - 1}`)) {
