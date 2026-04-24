@@ -52,11 +52,10 @@ export default function CanvasPage() {
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
   const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
   const [color, setColor] = useState<string>(APP_CONFIG.palette[0]);
-  const [painting, setPainting] = useState(false);
+  const [pendingPaints, setPendingPaints] = useState(0);
   const [focusKey, setFocusKey] = useState(0);
   const [focusMine, setFocusMine] = useState(false);
   const [hasAutoFocused, setHasAutoFocused] = useState(false);
-  const pendingPaintRef = useRef(false);
 
   useEffect(() => {
     if (!wallet) { setWalletState(null); return; }
@@ -78,7 +77,7 @@ export default function CanvasPage() {
     [pixels, revision, wallet]
   );
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
-  const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0 && !painting;
+  const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0;
   const canvasSyncIssue = !canvasLoading && !canvasError && usedPixels > 0 && ownedPixelCount === 0;
 
   useEffect(() => {
@@ -94,7 +93,6 @@ export default function CanvasPage() {
   }, [wallet, ownedPixelCount, hasAutoFocused]);
 
   const onPaint = async (x: number, y: number) => {
-    if (pendingPaintRef.current) return;
     if (!wallet) {
       toast.error("Connect your wallet to paint");
       return;
@@ -105,12 +103,11 @@ export default function CanvasPage() {
       });
       return;
     }
-    pendingPaintRef.current = true;
-    setPainting(true);
+    setPendingPaints((value) => value + 1);
     const optimisticUpdatedAt = new Date().toISOString();
-    const previousPixel = pixels[y * APP_CONFIG.canvas.width + x] ?? null;
+    const previousPixel = patchPixel(x, y, null);
     const optimisticPixel: PixelRow = {
-      id: previousPixel?.id ?? -Date.now(),
+      id: previousPixel?.id ?? -(Date.now() + x + y),
       x,
       y,
       color: color.toLowerCase(),
@@ -169,8 +166,7 @@ export default function CanvasPage() {
         description: error instanceof Error ? error.message : "The backend paint request could not be completed.",
       });
     } finally {
-      pendingPaintRef.current = false;
-      setPainting(false);
+      setPendingPaints((value) => Math.max(0, value - 1));
     }
   };
 
@@ -315,7 +311,11 @@ export default function CanvasPage() {
                   className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/30 flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <span className="font-mono text-xs">Click any pixel on the canvas and leave your mark.</span>
+                  <span className="font-mono text-xs">
+                    {pendingPaints > 0
+                      ? `Sending ${pendingPaints} paint${pendingPaints === 1 ? "" : "s"}... keep clicking.`
+                      : "Click any pixel on the canvas and leave your mark."}
+                  </span>
                 </motion.div>
               )}
             </NeonCard>
