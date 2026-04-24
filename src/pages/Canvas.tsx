@@ -76,6 +76,10 @@ export default function CanvasPage() {
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, revision, wallet]
   );
+  const displayUsedPixels = Math.min(
+    allowedPixels,
+    Math.max(ownedPixelCount, usedPixels)
+  );
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
   const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0;
   const canvasSyncIssue = !canvasLoading && !canvasError && usedPixels > 0 && ownedPixelCount === 0;
@@ -265,7 +269,7 @@ export default function CanvasPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
-                    <PixelBadge count={ownedPixelCount || usedPixels} total={allowedPixels} label="used" variant="secondary" />
+                    <PixelBadge count={displayUsedPixels} total={allowedPixels} label="used" variant="secondary" />
                   </div>
                   <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     canvas loaded: {ownedPixelCount} owned pixels

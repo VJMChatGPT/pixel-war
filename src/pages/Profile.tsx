@@ -29,6 +29,10 @@ export default function Profile() {
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, revision, wallet]
   );
+  const displayUsedPixels = Math.min(
+    allowedPixels,
+    Math.max(ownedPixelCount, walletState?.pixels_used ?? 0)
+  );
 
   useEffect(() => {
     if (!wallet) return;
@@ -101,7 +105,7 @@ export default function Profile() {
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
               <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
-              <PixelBadge count={ownedPixelCount || walletState?.pixels_used || 0} label="painted" variant="secondary" />
+              <PixelBadge count={displayUsedPixels} label="painted" variant="secondary" />
               <PixelBadge count={Number(supplyPercent.toFixed(3)) as any} label="% supply" variant="accent" />
             </div>
           </div>
