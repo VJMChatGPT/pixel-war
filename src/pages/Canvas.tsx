@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { CanvasGrid } from "@/components/CanvasGrid";
 import { NeonCard } from "@/components/NeonCard";
@@ -10,6 +10,7 @@ import { PixlMascot } from "@/components/PixlMascot";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useWallet } from "@/hooks/useWallet";
 import { useCooldown } from "@/hooks/useCooldown";
@@ -18,7 +19,7 @@ import { APP_CONFIG } from "@/config/app";
 import { compactNumber, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { LocateFixed, Sparkles } from "lucide-react";
+import { Brush, LocateFixed, Sparkles } from "lucide-react";
 
 type PatchPixel = (x: number, y: number, pixel: PixelRow | null) => PixelRow | null;
 
@@ -47,18 +48,46 @@ function rollbackOptimisticPixel({
   }
 }
 
+function getBrushCells(x: number, y: number, brushSize: number) {
+  const cells: Array<{ x: number; y: number }> = [];
+  const startX = x - Math.floor((brushSize - 1) / 2);
+  const startY = y - Math.floor((brushSize - 1) / 2);
+
+  for (let offsetY = 0; offsetY < brushSize; offsetY++) {
+    for (let offsetX = 0; offsetX < brushSize; offsetX++) {
+      const nextX = startX + offsetX;
+      const nextY = startY + offsetY;
+      if (
+        nextX < 0 ||
+        nextX >= APP_CONFIG.canvas.width ||
+        nextY < 0 ||
+        nextY >= APP_CONFIG.canvas.height
+      ) {
+        continue;
+      }
+      cells.push({ x: nextX, y: nextY });
+    }
+  }
+
+  return cells;
+}
+
 export default function CanvasPage() {
   const { pixels, revision, loading: canvasLoading, error: canvasError, patchPixel } = useCanvas();
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
   const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
   const [color, setColor] = useState<string>(APP_CONFIG.palette[0]);
+  const [brushSize, setBrushSize] = useState(1);
   const [pendingPaints, setPendingPaints] = useState(0);
   const [focusKey, setFocusKey] = useState(0);
   const [focusMine, setFocusMine] = useState(false);
   const [hasAutoFocused, setHasAutoFocused] = useState(false);
 
   useEffect(() => {
-    if (!wallet) { setWalletState(null); return; }
+    if (!wallet) {
+      setWalletState(null);
+      return;
+    }
 
     let cancelled = false;
     fetchWalletState(wallet.address).then((state) => {
@@ -76,10 +105,8 @@ export default function CanvasPage() {
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, revision, wallet]
   );
-  const displayUsedPixels = Math.min(
-    allowedPixels,
-    Math.max(ownedPixelCount, usedPixels)
-  );
+  const displayUsedPixels = Math.min(allowedPixels, Math.max(ownedPixelCount, usedPixels));
+  const displayLoadedOwnedPixels = Math.min(allowedPixels, ownedPixelCount);
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
   const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0;
   const canvasSyncIssue = !canvasLoading && !canvasError && usedPixels > 0 && ownedPixelCount === 0;
@@ -96,17 +123,27 @@ export default function CanvasPage() {
     setHasAutoFocused(true);
   }, [wallet, ownedPixelCount, hasAutoFocused]);
 
-  const onPaint = async (x: number, y: number) => {
+  const paintOnePixel = async (
+    x: number,
+    y: number,
+    options?: { silentSuccess?: boolean; silentError?: boolean }
+  ) => {
     if (!wallet) {
-      toast.error("Connect your wallet to paint");
-      return;
+      if (!options?.silentError) {
+        toast.error("Connect your wallet to paint");
+      }
+      return false;
     }
+
     if (!cooldown.ready) {
-      toast.error("Paint slots full", {
-        description: "You have already used every paint slot available in the current 15-minute window.",
-      });
-      return;
+      if (!options?.silentError) {
+        toast.error("Paint slots full", {
+          description: "You have already used every paint slot available in the current 15-minute window.",
+        });
+      }
+      return false;
     }
+
     setPendingPaints((value) => value + 1);
     const optimisticUpdatedAt = new Date().toISOString();
     const previousPixel = patchPixel(x, y, null);
@@ -129,6 +166,7 @@ export default function CanvasPage() {
         color,
         sessionToken: wallet.sessionToken ?? "",
       });
+
       if (!res.ok) {
         rollbackOptimisticPixel({
           pixels,
@@ -138,25 +176,35 @@ export default function CanvasPage() {
           previousPixel,
           patchPixel,
         });
-        toast.error("Paint blocked by server", {
-          description: res.message ?? res.error ?? "Backend rules are enforced server-side.",
-        });
-        return;
+        if (!options?.silentError) {
+          toast.error("Paint blocked by server", {
+            description: res.message ?? res.error ?? "Backend rules are enforced server-side.",
+          });
+        }
+        return false;
       }
+
       if (res.pixel && isStillOptimisticPixel(pixels[y * APP_CONFIG.canvas.width + x], optimisticUpdatedAt)) {
         patchPixel(x, y, { ...optimisticPixel, ...res.pixel, active: true });
       }
+
       if (res.evictedPixel) {
         patchPixel(res.evictedPixel.x, res.evictedPixel.y, { ...res.evictedPixel, active: true });
       }
+
       if (res.walletState) setWalletState(res.walletState);
-      toast.success("Pixel painted!", {
-        description: (
-          <span className="font-mono text-xs">
-            ({x},{y}) · <span style={{ color }}>{color}</span>
-          </span>
-        ),
-      });
+
+      if (!options?.silentSuccess) {
+        toast.success("Pixel painted!", {
+          description: (
+            <span className="font-mono text-xs">
+              ({x},{y}) · <span style={{ color }}>{color}</span>
+            </span>
+          ),
+        });
+      }
+
+      return true;
     } catch (error) {
       rollbackOptimisticPixel({
         pixels,
@@ -166,19 +214,54 @@ export default function CanvasPage() {
         previousPixel,
         patchPixel,
       });
-      toast.error("Paint failed", {
-        description: error instanceof Error ? error.message : "The backend paint request could not be completed.",
-      });
+
+      if (!options?.silentError) {
+        toast.error("Paint failed", {
+          description: error instanceof Error ? error.message : "The backend paint request could not be completed.",
+        });
+      }
+
+      return false;
     } finally {
       setPendingPaints((value) => Math.max(0, value - 1));
     }
+  };
+
+  const onPaint = async (x: number, y: number) => {
+    const cells = getBrushCells(x, y, brushSize);
+    if (cells.length === 0) return;
+
+    if (cells.length === 1) {
+      await paintOnePixel(x, y);
+      return;
+    }
+
+    const results = await Promise.all(
+      cells.map((cell) =>
+        paintOnePixel(cell.x, cell.y, {
+          silentSuccess: true,
+          silentError: true,
+        })
+      )
+    );
+
+    const successCount = results.filter(Boolean).length;
+    if (successCount > 0) {
+      toast.success("Brush applied!", {
+        description: `${successCount}/${cells.length} pixels painted with the ${brushSize}x${brushSize} brush.`,
+      });
+      return;
+    }
+
+    toast.error("Brush paint failed", {
+      description: "None of the selected pixels could be painted.",
+    });
   };
 
   return (
     <Layout footer={false}>
       <div className="container py-6 md:py-8">
         <div className="grid lg:grid-cols-[1fr_360px] gap-6">
-          {/* Canvas */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -240,6 +323,7 @@ export default function CanvasPage() {
                 onPaint={onPaint}
                 canPaint={canPaint}
                 hoverColor={color}
+                brushSize={brushSize}
                 highlightWallet={focusMine ? wallet?.address ?? null : null}
                 focusWallet={wallet?.address ?? null}
                 focusKey={focusKey}
@@ -247,9 +331,7 @@ export default function CanvasPage() {
             </NeonCard>
           </div>
 
-          {/* Side panel */}
           <div className="space-y-4">
-            {/* Wallet status */}
             <NeonCard className="p-5">
               {!isConnected ? (
                 <div className="text-center py-2">
@@ -272,7 +354,7 @@ export default function CanvasPage() {
                     <PixelBadge count={displayUsedPixels} total={allowedPixels} label="used" variant="secondary" />
                   </div>
                   <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    canvas loaded: {ownedPixelCount} owned pixels
+                    canvas loaded: {displayLoadedOwnedPixels} owned pixels
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between font-mono text-[11px]">
@@ -294,7 +376,6 @@ export default function CanvasPage() {
               )}
             </NeonCard>
 
-            {/* Cooldown */}
             {isConnected && (
               <NeonCard className="p-5 flex flex-col items-center">
                 <CooldownRing
@@ -305,8 +386,30 @@ export default function CanvasPage() {
               </NeonCard>
             )}
 
-            {/* Color picker */}
             <NeonCard className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display font-semibold text-sm">Brush</h3>
+                <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+                  <Brush className="w-4 h-4" />
+                  <span>{brushSize}x{brushSize}</span>
+                </div>
+              </div>
+              <ToggleGroup
+                type="single"
+                value={`${brushSize}`}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  setBrushSize(Number(value));
+                }}
+                variant="outline"
+                size="sm"
+                className="justify-start mb-5"
+              >
+                <ToggleGroupItem value="1" aria-label="Brush 1x1">1x1</ToggleGroupItem>
+                <ToggleGroupItem value="2" aria-label="Brush 2x2">2x2</ToggleGroupItem>
+                <ToggleGroupItem value="3" aria-label="Brush 3x3">3x3</ToggleGroupItem>
+              </ToggleGroup>
+
               <ColorPicker value={color} onChange={setColor} disabled={!canPaint} />
               {canPaint && (
                 <motion.div
@@ -318,13 +421,12 @@ export default function CanvasPage() {
                   <span className="font-mono text-xs">
                     {pendingPaints > 0
                       ? `Sending ${pendingPaints} paint${pendingPaints === 1 ? "" : "s"}... keep clicking.`
-                      : "Click any pixel on the canvas and leave your mark."}
+                      : `Click any pixel on the canvas to paint with the ${brushSize}x${brushSize} brush.`}
                   </span>
                 </motion.div>
               )}
             </NeonCard>
 
-            {/* Activity feed */}
             <NeonCard className="p-5 max-h-[420px] overflow-hidden">
               <ActivityFeed />
             </NeonCard>

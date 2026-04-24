@@ -10,6 +10,7 @@ interface Props {
   onPaint?: (x: number, y: number) => void;
   canPaint?: boolean;
   hoverColor?: string;
+  brushSize?: number;
   highlightWallet?: string | null;
   focusWallet?: string | null;
   focusKey?: number;
@@ -28,6 +29,23 @@ const W = APP_CONFIG.canvas.width;
 const H = APP_CONFIG.canvas.height;
 const BASE_PX = 6; // base cell size in CSS px at zoom=1
 
+function getBrushCells(x: number, y: number, brushSize: number) {
+  const cells: Array<{ x: number; y: number }> = [];
+  const startX = x - Math.floor((brushSize - 1) / 2);
+  const startY = y - Math.floor((brushSize - 1) / 2);
+
+  for (let offsetY = 0; offsetY < brushSize; offsetY++) {
+    for (let offsetX = 0; offsetX < brushSize; offsetX++) {
+      const nextX = startX + offsetX;
+      const nextY = startY + offsetY;
+      if (nextX < 0 || nextX >= W || nextY < 0 || nextY >= H) continue;
+      cells.push({ x: nextX, y: nextY });
+    }
+  }
+
+  return cells;
+}
+
 /**
  * CanvasGrid - high-performance 100x100 grid renderer (canvas2D).
  * Supports pan (drag), zoom (wheel + buttons), hover tooltip, and click-to-paint.
@@ -38,6 +56,7 @@ export function CanvasGrid({
   onPaint,
   canPaint,
   hoverColor,
+  brushSize = 1,
   highlightWallet,
   focusWallet,
   focusKey,
@@ -56,6 +75,7 @@ export function CanvasGrid({
   const tooltipRafRef = useRef<number | null>(null);
   const canPaintRef = useRef(canPaint);
   const hoverColorRef = useRef(hoverColor);
+  const brushSizeRef = useRef(brushSize);
   const highlightWalletRef = useRef(highlightWallet);
   const renderMetaRef = useRef<RenderMeta>({
     paintedCount: 0,
@@ -121,16 +141,47 @@ export function CanvasGrid({
     const cellSize = BASE_PX * zoomRef.current;
     const currentCanPaint = canPaintRef.current;
     const currentHoverColor = hoverColorRef.current;
+    const currentBrushSize = brushSizeRef.current;
+    const brushCells = getBrushCells(currentHover.x, currentHover.y, currentBrushSize);
 
-    const hx = Math.floor(offset.x + currentHover.x * cellSize);
-    const hy = Math.floor(offset.y + currentHover.y * cellSize);
+    for (const cell of brushCells) {
+      const hx = Math.floor(offset.x + cell.x * cellSize);
+      const hy = Math.floor(offset.y + cell.y * cellSize);
+      if (currentCanPaint && currentHoverColor) {
+        ctx.fillStyle = currentHoverColor + "80";
+        ctx.fillRect(hx, hy, cellSize, cellSize);
+      }
+    }
+
     ctx.strokeStyle = currentCanPaint ? "#3affb5" : "#fff";
     ctx.lineWidth = 2;
-    ctx.strokeRect(hx - 1, hy - 1, cellSize + 2, cellSize + 2);
-    if (currentCanPaint && currentHoverColor) {
-      ctx.fillStyle = currentHoverColor + "80";
-      ctx.fillRect(hx, hy, cellSize, cellSize);
+    ctx.beginPath();
+    for (const cell of brushCells) {
+      const hx = Math.floor(offset.x + cell.x * cellSize);
+      const hy = Math.floor(offset.y + cell.y * cellSize);
+      const hasTop = brushCells.some((candidate) => candidate.x === cell.x && candidate.y === cell.y - 1);
+      const hasRight = brushCells.some((candidate) => candidate.x === cell.x + 1 && candidate.y === cell.y);
+      const hasBottom = brushCells.some((candidate) => candidate.x === cell.x && candidate.y === cell.y + 1);
+      const hasLeft = brushCells.some((candidate) => candidate.x === cell.x - 1 && candidate.y === cell.y);
+
+      if (!hasTop) {
+        ctx.moveTo(hx - 1, hy - 1);
+        ctx.lineTo(hx + cellSize + 1, hy - 1);
+      }
+      if (!hasRight) {
+        ctx.moveTo(hx + cellSize + 1, hy - 1);
+        ctx.lineTo(hx + cellSize + 1, hy + cellSize + 1);
+      }
+      if (!hasBottom) {
+        ctx.moveTo(hx - 1, hy + cellSize + 1);
+        ctx.lineTo(hx + cellSize + 1, hy + cellSize + 1);
+      }
+      if (!hasLeft) {
+        ctx.moveTo(hx - 1, hy - 1);
+        ctx.lineTo(hx - 1, hy + cellSize + 1);
+      }
     }
+    ctx.stroke();
   }, [prepareCanvas]);
 
   const scheduleOverlayDraw = useCallback(() => {
@@ -374,10 +425,11 @@ export function CanvasGrid({
   useEffect(() => {
     canPaintRef.current = canPaint;
     hoverColorRef.current = hoverColor;
+    brushSizeRef.current = brushSize;
     highlightWalletRef.current = highlightWallet;
     rebuildRenderMeta();
     scheduleDraw();
-  }, [canPaint, hoverColor, highlightWallet, rebuildRenderMeta, scheduleDraw]);
+  }, [canPaint, hoverColor, brushSize, highlightWallet, rebuildRenderMeta, scheduleDraw]);
 
   useEffect(() => {
     const c = containerRef.current;
