@@ -19,7 +19,13 @@ export type PixelRow = Database["public"]["Tables"]["pixels"]["Row"];
 export type WalletStateRow = Database["public"]["Tables"]["wallet_state"]["Row"];
 export type PaintHistoryRow = Database["public"]["Tables"]["paint_history"]["Row"];
 export type LeaderboardRow = Database["public"]["Views"]["leaderboard"]["Row"];
-export type PublicWalletStateRow = Database["public"]["Views"]["public_wallet_state"]["Row"];
+export type PublicWalletStateRow = {
+  wallet: string;
+  pixels_allowed: number;
+  pixels_used: number;
+  last_paint_at: string | null;
+  updated_at: string;
+};
 export type PaintResultPixel = Omit<PixelRow, "active">;
 
 /** Load only painted pixels. Empty cells are represented as null client-side. */
@@ -35,13 +41,13 @@ export async function fetchAllPixels(): Promise<PixelRow[]> {
 }
 
 export async function fetchWalletState(wallet: string): Promise<PublicWalletStateRow | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("public_wallet_state")
     .select("*")
     .eq("wallet", wallet)
     .maybeSingle();
   if (error) throw error;
-  return data;
+  return data as PublicWalletStateRow | null;
 }
 
 export async function fetchRecentPaints(limit = 20): Promise<PaintHistoryRow[]> {
