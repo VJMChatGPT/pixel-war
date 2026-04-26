@@ -27,26 +27,36 @@ export default function Landing() {
       <LiveTicker />
 
       {/* HERO */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-radial-glow pointer-events-none" />
-        <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
-        <div className="container relative pt-16 pb-24 md:pt-24 md:pb-32 grid lg:grid-cols-[1.1fr_1fr] gap-12 items-center">
+      <section className="relative overflow-hidden border-b border-border/60">
+        <div className="absolute inset-0 bg-radial-glow opacity-60 pointer-events-none" />
+        <div className="absolute inset-0 grid-bg opacity-[0.07] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[640px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
+
+        <div className="container relative pt-14 pb-20 md:pt-20 md:pb-28 grid lg:grid-cols-[1fr_minmax(0,560px)] gap-10 lg:gap-16 items-center">
+          {/* LEFT — message */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="relative"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card/50 backdrop-blur font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              live on solana · 100×100 canvas
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card/60 backdrop-blur font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-7">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent" />
+              </span>
+              live · solana · {APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels
             </div>
-            <h1 className="font-display font-bold text-5xl md:text-7xl lg:text-[5.5rem] leading-[0.95] tracking-tight">
-              Ready to leave your mark?<br />
-              <span className="text-gradient-hero">Claim the canvas.</span>
+
+            <h1 className="font-display font-bold text-[2.75rem] sm:text-6xl lg:text-[5.25rem] leading-[0.95] tracking-tight">
+              Turn tokens into
+              <br />
+              <span className="text-gradient-hero">territory.</span>
             </h1>
+
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
-              A live competitive canvas where your token balance becomes your brush.
-              Hold <span className="text-foreground font-semibold">$PIXL</span>, claim your territory, and leave a mark the whole canvas can see.
+              A live collaborative canvas where your <span className="text-foreground font-semibold">$PIXL</span> balance becomes pixels you control.
+              Every {APP_CONFIG.rules.supplyPercentPerPixel}% of supply = 1 pixel of public, on-chain dominance.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -58,7 +68,7 @@ export default function Landing() {
                   className="h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] active:scale-[0.98] transition-all"
                 >
                   <Wallet className="w-5 h-5" />
-                  Leave your mark
+                  Claim your pixels
                 </Button>
               ) : (
                 <Button
@@ -67,7 +77,7 @@ export default function Landing() {
                   className="h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] transition-all"
                 >
                   <Link to="/canvas">
-                    Start painting <ArrowRight className="w-5 h-5" />
+                    Enter the canvas <ArrowRight className="w-5 h-5" />
                   </Link>
                 </Button>
               )}
@@ -81,37 +91,55 @@ export default function Landing() {
               </Button>
             </div>
 
-            {/* Stat chips */}
-            <div className="mt-10 grid grid-cols-3 gap-3 max-w-lg">
-              {[
-                { label: "pixels painted", value: stats.painted.toLocaleString(), icon: Palette },
-                { label: "active holders", value: stats.owners.toLocaleString(), icon: Activity },
-                { label: "total canvas", value: APP_CONFIG.canvas.totalPixels.toLocaleString(), icon: Zap },
-              ].map((s, i) => (
-                <NeonCard key={s.label} className="p-4">
-                  <s.icon className="w-4 h-4 text-primary mb-2" />
-                  <div className="font-mono font-bold text-2xl tabular-nums">{s.value}</div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-1">{s.label}</div>
-                </NeonCard>
-              ))}
+            {/* Inline live stats — compact, single row */}
+            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+                <span className="font-mono tabular-nums text-foreground font-semibold text-base">{stats.painted.toLocaleString()}</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">painted</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_hsl(var(--accent))]" />
+                <span className="font-mono tabular-nums text-foreground font-semibold text-base">{stats.owners.toLocaleString()}</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">holders</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/60" />
+                <span className="font-mono tabular-nums text-foreground font-semibold text-base">{APP_CONFIG.canvas.totalPixels.toLocaleString()}</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">total cells</span>
+              </div>
             </div>
           </motion.div>
 
-          {/* Mini live canvas + mascot */}
+          {/* RIGHT — live canvas, hero focus */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="relative"
+            className="relative mx-auto w-full max-w-[560px]"
           >
-            <NeonCard shimmer className="aspect-square p-3 glow-primary">
+            {/* floating "live" tag */}
+            <div className="absolute -top-3 left-6 z-20 px-2.5 py-1 rounded-md bg-accent text-accent-foreground font-mono text-[10px] font-bold uppercase tracking-[0.2em] shadow-[0_0_20px_hsl(var(--accent)/0.45)]">
+              ● live
+            </div>
+
+            {/* canvas card */}
+            <NeonCard shimmer className="aspect-square p-2.5 glow-primary">
               <CanvasGrid pixels={pixels} revision={revision} className="rounded-md" />
             </NeonCard>
-            <div className="absolute -bottom-6 -left-6 hidden md:block">
-              <PixlMascot mood="wave" size={110} />
+
+            {/* meta strip under the canvas */}
+            <div className="mt-3 flex items-center justify-between px-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              <span>100 × 100 board</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-accent animate-pulse" />
+                updating in real time
+              </span>
             </div>
-            <div className="absolute -top-3 -right-3 px-3 py-1.5 rounded-full bg-accent text-accent-foreground font-mono text-xs font-bold uppercase tracking-wider shadow-[0_0_20px_hsl(var(--accent)/0.5)]">
-              live
+
+            {/* mascot — UNCHANGED */}
+            <div className="absolute -bottom-4 -left-6 hidden md:block">
+              <PixlMascot mood="wave" size={110} />
             </div>
           </motion.div>
         </div>
