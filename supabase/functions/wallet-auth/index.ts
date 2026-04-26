@@ -17,12 +17,20 @@ import {
   verifySolanaSignature,
 } from "../_shared/security.ts";
 
-type AuthRequest = {
-  action?: "challenge" | "verify" | "refresh" | "revoke";
-  wallet?: string;
-  nonce?: string;
-  signature?: string;
-};
+type AuthRequest =
+  | {
+      action?: "challenge";
+      wallet?: string;
+    }
+  | {
+      action?: "verify";
+      wallet?: string;
+      nonce?: string;
+      signature?: string;
+    }
+  | {
+      action?: "refresh" | "revoke";
+    };
 
 const CHALLENGE_TTL_SECONDS = 5 * 60;
 const DEFAULT_SESSION_TTL_SECONDS = 24 * 60 * 60;
