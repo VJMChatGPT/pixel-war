@@ -29,6 +29,10 @@ const W = APP_CONFIG.canvas.width;
 const H = APP_CONFIG.canvas.height;
 const BASE_PX = 6; // base cell size in CSS px at zoom=1
 
+function shouldZoomFromWheelEvent(event: React.WheelEvent) {
+  return event.ctrlKey || event.metaKey;
+}
+
 function getBrushCells(x: number, y: number, brushSize: number) {
   const cells: Array<{ x: number; y: number }> = [];
   const startX = x - Math.floor((brushSize - 1) / 2);
@@ -501,6 +505,10 @@ export function CanvasGrid({
   };
 
   const onWheel = (e: React.WheelEvent) => {
+    if (!shouldZoomFromWheelEvent(e)) {
+      return;
+    }
+
     e.preventDefault();
     const delta = -e.deltaY * 0.0015;
     applyZoomAroundViewportCenter(zoomRef.current * (1 + delta));
