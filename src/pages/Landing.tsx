@@ -8,6 +8,7 @@ import { ArrowRight, Wallet, Trophy, TrendingUp, TrendingDown, MousePointerClick
 import { useCanvas } from "@/hooks/useCanvas";
 import { APP_CONFIG } from "@/config/app";
 import { CanvasGrid } from "@/components/CanvasGrid";
+import { ScrollStoryCanvas } from "@/components/ScrollStoryCanvas";
 import { useWallet } from "@/hooks/useWallet";
 import { motion, useScroll, useTransform, useSpring, useInView, MotionValue } from "framer-motion";
 import { useMemo, useRef } from "react";
@@ -112,7 +113,7 @@ const STAGES = [
   { key: "dominance", label: "05 · Dominance", title: "Dominance.", sub: "The biggest wallet rules the most pixels — until someone takes them." },
 ];
 
-function CinematicNarrative({ pixels, revision }: { pixels: (PixelRow | null)[]; revision: number }) {
+function CinematicNarrative() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
 
@@ -139,8 +140,8 @@ function CinematicNarrative({ pixels, revision }: { pixels: (PixelRow | null)[];
           style={{ scale, x, y }}
           className="absolute inset-0 flex items-center justify-center will-change-transform"
         >
-          <div className="aspect-square w-[min(82vh,82vw)] rounded-md overflow-hidden ring-1 ring-primary/30 shadow-[0_0_120px_hsl(var(--primary)/0.35)] bg-white">
-            <CanvasGrid pixels={pixels} revision={revision} />
+          <div className="aspect-square w-[min(82vh,82vw)] rounded-md overflow-hidden ring-1 ring-primary/30 shadow-[0_0_120px_hsl(var(--primary)/0.35)] bg-[#06040d]">
+            <ScrollStoryCanvas />
           </div>
         </motion.div>
 
@@ -157,7 +158,7 @@ function CinematicNarrative({ pixels, revision }: { pixels: (PixelRow | null)[];
         <div className="absolute top-6 left-0 right-0 px-6 md:px-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground z-10">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            live · canvas
+            story · field
           </div>
           <motion.div>
             {STAGES.map((s, i) => (
@@ -440,7 +441,7 @@ export default function Landing() {
       {/* ============================================================ */}
       {/* 2. CINEMATIC NARRATIVE — pinned scroll-zoom through stages  */}
       {/* ============================================================ */}
-      <CinematicNarrative pixels={pixels} revision={revision} />
+      <CinematicNarrative />
 
       {/* ============================================================ */}
       {/* 3. HOW IT WORKS — visual 3-step                              */}
