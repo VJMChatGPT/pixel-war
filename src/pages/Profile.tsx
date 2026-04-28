@@ -5,6 +5,7 @@ import { PixlMascot } from "@/components/PixlMascot";
 import { CooldownRing } from "@/components/CooldownRing";
 import { PixelBadge } from "@/components/PixelBadge";
 import { CanvasGrid } from "@/components/CanvasGrid";
+import { ShareOnXButton } from "@/components/ShareOnXButton";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { useWallet } from "@/hooks/useWallet";
 import { useCanvas } from "@/hooks/useCanvas";
@@ -54,7 +55,7 @@ export default function Profile() {
     setProfileError(null);
     Promise.all([
       fetchWalletState(wallet.address),
-      fetchWalletPaints(wallet.address, 30),
+      fetchWalletPaints(wallet.address, 5),
     ])
       .then(([walletData, paintData]) => {
         if (cancelled) return;
@@ -214,6 +215,15 @@ export default function Profile() {
                 <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent/80">points / second</div>
                 <div className="font-display font-bold text-2xl mt-1">{formatPoints(pointsPerSecond, 2)}</div>
               </div>
+            </div>
+            <div className="mt-4">
+              <ShareOnXButton
+                wallet={wallet}
+                walletState={walletState}
+                pixels={pixels}
+                ownedPixels={displayUsedPixels}
+                className="max-w-xl"
+              />
             </div>
           </div>
           <PixlMascot mood={cooldown.ready ? "cheer" : "sleep"} size={90} className="hidden md:block" />

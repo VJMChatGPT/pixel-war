@@ -21,6 +21,7 @@ export type PaintHistoryRow = Database["public"]["Tables"]["paint_history"]["Row
 export type LeaderboardRow = Database["public"]["Views"]["leaderboard"]["Row"];
 export type PublicWalletStateRow = Database["public"]["Views"]["public_wallet_state"]["Row"];
 export type PaintResultPixel = Omit<PixelRow, "active">;
+export type PointsLeaderboardRow = PublicWalletStateRow;
 
 /** Load only painted pixels. Empty cells are represented as null client-side. */
 export async function fetchAllPixels(): Promise<PixelRow[]> {
@@ -42,6 +43,24 @@ export async function fetchWalletState(wallet: string): Promise<PublicWalletStat
     .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+export async function fetchWalletDisplayNames(wallets: string[]): Promise<Record<string, string | null>> {
+  const uniqueWallets = [...new Set(wallets.filter(Boolean))];
+  if (uniqueWallets.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from("public_wallet_state")
+    .select("wallet, display_name")
+    .in("wallet", uniqueWallets);
+  if (error) throw error;
+
+  return (data ?? []).reduce<Record<string, string | null>>((acc, row) => {
+    if (row.wallet) {
+      acc[row.wallet] = row.display_name ?? null;
+    }
+    return acc;
+  }, {});
 }
 
 export async function updateWalletDisplayName(params: {
@@ -90,6 +109,18 @@ export async function fetchLeaderboard(limit = 100): Promise<LeaderboardRow[]> {
     .from("leaderboard")
     .select("*")
     .order("rank", { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchPointsLeaderboard(limit = 100): Promise<PointsLeaderboardRow[]> {
+  const { data, error } = await supabase
+    .from("public_wallet_state")
+    .select("*")
+    .gt("total_points", 0)
+    .order("total_points", { ascending: false })
+    .order("pixels_used", { ascending: false })
     .limit(limit);
   if (error) throw error;
   return data ?? [];

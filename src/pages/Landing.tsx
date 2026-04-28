@@ -1,6 +1,5 @@
 import { Layout } from "@/components/Layout";
 import { PixlMascot } from "@/components/PixlMascot";
-import { LiveTicker } from "@/components/LiveTicker";
 import { NeonCard } from "@/components/NeonCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -11,8 +10,8 @@ import { CanvasGrid } from "@/components/CanvasGrid";
 import { ScrollStoryCanvas } from "@/components/ScrollStoryCanvas";
 import { useWallet } from "@/hooks/useWallet";
 import { getWalletConnectionErrorMessage } from "@/services/wallet";
-import { motion, useScroll, useTransform, useSpring, useInView, MotionValue } from "framer-motion";
-import { useMemo, useRef } from "react";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, useSpring, useInView } from "framer-motion";
+import { useMemo, useRef, useState } from "react";
 import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
 import { toast } from "sonner";
@@ -118,6 +117,7 @@ const STAGES = [
 function CinematicNarrative() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const [activeStage, setActiveStage] = useState(0);
 
   // 5 stages → scale from 18x (single pixel zoom) → 1x (whole board) → 0.95x
   const scale = useSpring(useTransform(scrollYProgress, [0, 0.25, 0.55, 0.8, 1], [22, 8, 2.2, 1, 0.95]), {
@@ -128,7 +128,14 @@ function CinematicNarrative() {
   const x = useTransform(scrollYProgress, [0, 1], ["18%", "0%"]);
   const y = useTransform(scrollYProgress, [0, 1], ["-12%", "0%"]);
   const vignette = useTransform(scrollYProgress, [0, 0.3, 1], [0.85, 0.5, 0.25]);
-  const stageIndex = useTransform(scrollYProgress, (v) => Math.min(STAGES.length - 1, Math.floor(v * STAGES.length * 0.999)));
+  const boundaryOpacity = useTransform(scrollYProgress, [0, 0.04, 0.96, 1], [0, 1, 1, 0]);
+  const boundaryGlowOpacity = useTransform(scrollYProgress, [0, 0.06, 0.94, 1], [0, 0.4, 0.4, 0]);
+  const currentStage = STAGES[activeStage];
+
+  useMotionValueEvent(scrollYProgress, "change", (value) => {
+    const nextStage = Math.min(STAGES.length - 1, Math.floor(value * STAGES.length * 0.999));
+    setActiveStage((prev) => (prev === nextStage ? prev : nextStage));
+  });
 
   return (
     <section ref={ref} className="relative" style={{ height: `${STAGES.length * 100}vh` }}>
@@ -139,7 +146,7 @@ function CinematicNarrative() {
 
         {/* the zooming canvas */}
         <motion.div
-          style={{ scale, x, y }}
+          style={{ scale, x, y, opacity: boundaryOpacity }}
           className="absolute inset-0 flex items-center justify-center will-change-transform"
         >
           <div className="aspect-square w-[min(82vh,82vw)] rounded-md overflow-hidden ring-1 ring-primary/30 shadow-[0_0_120px_hsl(var(--primary)/0.35)] bg-[#06040d]">
@@ -149,70 +156,86 @@ function CinematicNarrative() {
 
         {/* vignette overlay (deep at the closest zoom for cinematic feel) */}
         <motion.div
-          style={{ opacity: vignette }}
+          style={{ opacity: useTransform([vignette, boundaryOpacity], ([v, b]) => v * b) }}
           className="pointer-events-none absolute inset-0"
           aria-hidden
         >
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,hsl(var(--background))_85%)]" />
         </motion.div>
 
+        <motion.div
+          style={{ opacity: boundaryGlowOpacity }}
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background via-background/75 to-transparent"
+          aria-hidden
+        />
+        <motion.div
+          style={{ opacity: boundaryGlowOpacity }}
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background via-background/75 to-transparent"
+          aria-hidden
+        />
+
         {/* HUD — top */}
-        <div className="absolute top-6 left-0 right-0 px-6 md:px-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground z-10">
+        <motion.div
+          style={{ opacity: boundaryOpacity }}
+          className="absolute top-6 left-0 right-0 px-6 md:px-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground z-10"
+        >
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             story · field
           </div>
-          <motion.div>
+          <div>
             {STAGES.map((s, i) => (
-              <motion.span
+              <span
                 key={s.key}
-                style={{ opacity: useTransform(stageIndex, (v) => (v === i ? 1 : 0.25)) }}
-                className="ml-3 first:ml-0"
+                style={{ opacity: activeStage === i ? 1 : 0.25 }}
+                className="ml-3 first:ml-0 transition-opacity duration-200"
               >
                 {s.label.split(" ")[0]}
-              </motion.span>
+              </span>
             ))}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
 
         {/* HUD — bottom: stage title */}
-        <div className="absolute bottom-0 left-0 right-0 pb-12 md:pb-16 px-6 md:px-12 z-10">
+        <motion.div
+          style={{ opacity: boundaryOpacity }}
+          className="absolute bottom-0 left-0 right-0 pb-12 md:pb-16 px-6 md:px-12 z-10"
+        >
           <div className="container">
-            {STAGES.map((s, i) => {
-              const opacity = useTransform(stageIndex, (v) => (v === i ? 1 : 0));
-              const yOff = useTransform(stageIndex, (v) => (v === i ? 0 : 16));
-              return (
-                <motion.div
-                  key={s.key}
-                  style={{ opacity, y: yOff, position: "absolute", left: 0, right: 0, bottom: 48 }}
-                  className="px-6 md:px-12"
-                >
-                  <div className="container">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent mb-3">{s.label}</div>
-                    <h3 className="font-display font-bold text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight max-w-4xl">
-                      {s.title}
-                    </h3>
-                    <p className="mt-4 text-base md:text-lg text-muted-foreground max-w-xl">{s.sub}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStage.key}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                className="px-6 md:px-12 absolute left-0 right-0 bottom-12"
+              >
+                <div className="container">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent mb-3">{currentStage.label}</div>
+                  <h3 className="font-display font-bold text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight max-w-4xl">
+                    {currentStage.title}
+                  </h3>
+                  <p className="mt-4 text-base md:text-lg text-muted-foreground max-w-xl">{currentStage.sub}</p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
 
         {/* progress rail */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-3 z-10">
-          {STAGES.map((s, i) => (
-            <motion.span
-              key={s.key}
-              style={{
-                opacity: useTransform(stageIndex, (v) => (v === i ? 1 : 0.25)),
-                scaleY: useTransform(stageIndex, (v) => (v === i ? 1 : 0.6)),
-              }}
-              className="block w-px h-8 bg-foreground origin-center"
+        <motion.div
+          style={{ opacity: boundaryOpacity }}
+          className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-3 z-10"
+        >
+          {STAGES.map((stage, i) => (
+            <span
+              key={stage.key}
+              style={{ opacity: activeStage === i ? 1 : 0.25, transform: `scaleY(${activeStage === i ? 1 : 0.6})` }}
+              className="block w-px h-8 bg-foreground origin-center transition-opacity duration-200"
             />
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -268,8 +291,6 @@ export default function Landing() {
 
   return (
     <Layout>
-      <LiveTicker />
-
       {/* ============================================================ */}
       {/* 1. HERO — full-bleed cinematic                              */}
       {/* ============================================================ */}

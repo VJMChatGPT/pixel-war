@@ -1,8 +1,10 @@
 import { useRecentPaints } from "@/hooks/useRecentPaints";
-import { shortAddress, timeAgo } from "@/lib/format";
+import { timeAgo } from "@/lib/format";
+import { formatWalletDisplayName } from "@/lib/wallet-display";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useWallet } from "@/hooks/useWallet";
 
 interface Props {
   className?: string;
@@ -10,7 +12,8 @@ interface Props {
 }
 
 export function ActivityFeed({ className, limit = 12 }: Props) {
-  const { paints, loading, error } = useRecentPaints(limit);
+  const { paints, displayNamesByWallet, loading, error } = useRecentPaints(limit);
+  const { wallet } = useWallet();
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -46,7 +49,14 @@ export function ActivityFeed({ className, limit = 12 }: Props) {
               <span className="w-3 h-3 rounded-sm border border-border" style={{ background: p.old_color ?? "#0a0a14" }} />
               <span className="w-3 h-3 rounded-sm border border-border" style={{ background: p.new_color, boxShadow: `0 0 6px ${p.new_color}66` }} />
             </div>
-            <span className="font-mono text-xs flex-1 truncate">{shortAddress(p.wallet)}</span>
+            <span className="font-mono text-xs flex-1 truncate">
+              {formatWalletDisplayName({
+                wallet: p.wallet,
+                displayName: displayNamesByWallet[p.wallet] ?? null,
+                currentWallet: wallet?.address,
+                shortenFallback: true,
+              })}
+            </span>
             <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
               {timeAgo(p.painted_at)}
             </span>

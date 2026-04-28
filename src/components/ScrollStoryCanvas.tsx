@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -82,7 +82,7 @@ function sampleCluster(x: number, y: number, cluster: Cluster) {
   };
 }
 
-function drawField(ctx: CanvasRenderingContext2D, timeMs: number) {
+function drawBaseField(ctx: CanvasRenderingContext2D) {
   ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
   ctx.fillStyle = "#06040d";
   ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
@@ -117,7 +117,9 @@ function drawField(ctx: CanvasRenderingContext2D, timeMs: number) {
       }
     }
   }
+}
 
+function drawSparkLayer(ctx: CanvasRenderingContext2D, timeMs: number) {
   for (let i = 0; i < SPARK_POINTS.length; i++) {
     const [x, y] = SPARK_POINTS[i];
     const pulse = 0.55 + 0.45 * Math.sin(timeMs / 700 + i * 0.63);
@@ -131,15 +133,9 @@ function drawField(ctx: CanvasRenderingContext2D, timeMs: number) {
       .padStart(2, "0")}`;
     ctx.fillRect(x - 0.25, y - 0.25, 1.5, 1.5);
   }
-
-  ctx.fillStyle = "rgba(255,255,255,0.03)";
-  for (let i = 0; i < BOARD_SIZE; i += 5) {
-    ctx.fillRect(i, 0, 0.2, BOARD_SIZE);
-    ctx.fillRect(0, i, BOARD_SIZE, 0.2);
-  }
 }
 
-export function ScrollStoryCanvas({ className }: Props) {
+export const ScrollStoryCanvas = memo(function ScrollStoryCanvas({ className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -149,10 +145,25 @@ export function ScrollStoryCanvas({ className }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const baseCanvas = document.createElement("canvas");
+    baseCanvas.width = BOARD_SIZE;
+    baseCanvas.height = BOARD_SIZE;
+    const baseCtx = baseCanvas.getContext("2d");
+    if (!baseCtx) return;
+
+    drawBaseField(baseCtx);
+
     let frameId = 0;
+    let lastPaintMs = 0;
+    const targetFrameMs = 1000 / 24;
 
     const render = (time: number) => {
-      drawField(ctx, time);
+      if (time - lastPaintMs >= targetFrameMs) {
+        lastPaintMs = time;
+        ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
+        ctx.drawImage(baseCanvas, 0, 0);
+        drawSparkLayer(ctx, time);
+      }
       frameId = window.requestAnimationFrame(render);
     };
 
@@ -176,4 +187,4 @@ export function ScrollStoryCanvas({ className }: Props) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,transparent_52%,rgba(6,4,13,0.42)_100%)]" />
     </div>
   );
-}
+});

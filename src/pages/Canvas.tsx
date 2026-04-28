@@ -7,6 +7,7 @@ import { CooldownRing } from "@/components/CooldownRing";
 import { PixelBadge } from "@/components/PixelBadge";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { PixlMascot } from "@/components/PixlMascot";
+import { ShareOnXButton } from "@/components/ShareOnXButton";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,7 +17,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useCooldown } from "@/hooks/useCooldown";
 import { fetchWalletState, paintPixel, type PixelRow, type PublicWalletStateRow } from "@/services/pixels";
 import { APP_CONFIG } from "@/config/app";
-import { compactNumber, shortAddress } from "@/lib/format";
+import { compactNumber, formatPoints, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Brush, LocateFixed, Sparkles } from "lucide-react";
@@ -94,6 +95,8 @@ export default function CanvasPage() {
   const [focusKey, setFocusKey] = useState(0);
   const [focusMine, setFocusMine] = useState(false);
   const [hasAutoFocused, setHasAutoFocused] = useState(false);
+  const [pointsSnapshotAtMs, setPointsSnapshotAtMs] = useState(() => Date.now());
+  const [pointsDisplayNowMs, setPointsDisplayNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     if (!wallet) {
@@ -113,6 +116,10 @@ export default function CanvasPage() {
 
   const cooldown = useCooldown(walletState?.last_paint_at);
   const usedPixels = walletState?.pixels_used ?? 0;
+  const authoritativePointsTotal = walletState?.total_points ?? 0;
+  const pointsPerSecond = walletState?.points_per_second ?? 0;
+  const animatedPointsTotal =
+    authoritativePointsTotal + Math.max(0, (pointsDisplayNowMs - pointsSnapshotAtMs) / 1000) * pointsPerSecond;
   const ownedPixelCount = useMemo(
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, revision, wallet]
@@ -122,6 +129,20 @@ export default function CanvasPage() {
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
   const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0;
   const canvasSyncIssue = !canvasLoading && !canvasError && usedPixels > 0 && ownedPixelCount === 0;
+
+  useEffect(() => {
+    setPointsSnapshotAtMs(Date.now());
+  }, [walletState?.total_points, walletState?.points_per_second, wallet?.address]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setPointsDisplayNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     if (!wallet) {
@@ -415,12 +436,40 @@ export default function CanvasPage() {
                     </div>
                     <PixlMascot mood={cooldown.ready ? "cheer" : "sleep"} size={56} />
                   </div>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary/80">total points</div>
+                      <div className="font-display font-bold text-2xl mt-1">{formatPoints(animatedPointsTotal, 1)}</div>
+                    </div>
+                    <div className="rounded-xl border border-accent/30 bg-accent/10 px-4 py-3">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent/80">points / sec</div>
+                      <div className="font-display font-bold text-2xl mt-1">{formatPoints(pointsPerSecond, 2)}</div>
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <ShareOnXButton
+                      wallet={wallet}
+                      walletState={walletState}
+                      pixels={pixels}
+                      ownedPixels={displayUsedPixels}
+                      className="w-full"
+                    />
+                  </div>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
                     <PixelBadge count={displayUsedPixels} total={allowedPixels} label="used" variant="secondary" />
                   </div>
                   <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     canvas loaded: {displayLoadedOwnedPixels} owned pixels
+                  </div>
+                  <div className="mb-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                      territory bonus
+                    </div>
+                    <div className="text-sm text-muted-foreground leading-relaxed">
+                      You are earning <span className="font-mono text-foreground font-semibold">{formatPoints(pointsPerSecond, 2)} pts/s</span> from{" "}
+                      <span className="font-mono text-foreground font-semibold">{displayUsedPixels}</span> controlled pixels.
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between font-mono text-[11px]">
