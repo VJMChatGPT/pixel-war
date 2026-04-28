@@ -115,6 +115,11 @@ export default function Profile() {
   const animatedPointsTotal =
     authoritativePointsTotal + Math.max(0, (pointsDisplayNowMs - pointsSnapshotAtMs) / 1000) * pointsPerSecond;
   const trimmedDisplayNameDraft = displayNameDraft.trim();
+  const previewDisplayLabel = formatWalletDisplayName({
+    wallet: wallet!.address,
+    displayName: trimmedDisplayNameDraft || null,
+    currentWallet: wallet!.address,
+  });
   const hasDisplayNameChanges = trimmedDisplayNameDraft !== (walletState?.display_name ?? "");
   const canSaveDisplayName =
     !!wallet?.sessionToken &&
@@ -230,61 +235,57 @@ export default function Profile() {
 
           <div className="space-y-4">
             <NeonCard className="p-5">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div className="min-w-0">
                   <h3 className="font-display font-semibold text-base">Display name</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Choose how your wallet is shown on your profile. Leave it empty to fall back to your address.
-                  </p>
+                  <div className="mt-1 font-mono text-xs text-muted-foreground truncate">
+                    {previewDisplayLabel}
+                  </div>
                 </div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground shrink-0">
-                  {displayLabel}
+                  profile
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Input
-                  value={displayNameDraft}
-                  onChange={(event) => setDisplayNameDraft(event.target.value)}
-                  maxLength={MAX_DISPLAY_NAME_LENGTH}
-                  placeholder="Enter a display name"
-                  className="font-mono"
-                />
-                <div className="flex items-center justify-between gap-3">
-                  <div className="font-mono text-[11px] text-muted-foreground">
-                    {trimmedDisplayNameDraft.length}/{MAX_DISPLAY_NAME_LENGTH}
+              <div className="space-y-2.5">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    value={displayNameDraft}
+                    onChange={(event) => setDisplayNameDraft(event.target.value)}
+                    maxLength={MAX_DISPLAY_NAME_LENGTH}
+                    placeholder="Enter a display name"
+                    className="font-mono"
+                  />
+                  <Button
+                    type="button"
+                    disabled={!canSaveDisplayName}
+                    onClick={() => void saveDisplayName()}
+                    className="sm:min-w-[92px]"
+                  >
+                    {savingDisplayName ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[11px]">
+                  <div className="font-mono text-muted-foreground truncate">
+                    {walletState?.display_name ? wallet!.address : "Using wallet address by default"}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="font-mono text-muted-foreground">
+                      {trimmedDisplayNameDraft.length}/{MAX_DISPLAY_NAME_LENGTH}
+                    </span>
                     <Button
                       type="button"
                       variant="ghost"
+                      size="sm"
                       disabled={savingDisplayName || (!walletState?.display_name && trimmedDisplayNameDraft.length === 0)}
                       onClick={() => {
                         setDisplayNameDraft("");
                         void saveDisplayName(null);
                       }}
+                      className="h-auto px-0 text-xs text-muted-foreground hover:text-foreground"
                     >
-                      Reset to address
+                      Reset
                     </Button>
-                    <Button
-                      type="button"
-                      disabled={!canSaveDisplayName}
-                      onClick={() => void saveDisplayName()}
-                    >
-                      {savingDisplayName ? "Saving..." : "Save name"}
-                    </Button>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-border bg-muted/20 px-3 py-3">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                    Preview
-                  </div>
-                  <div className="font-mono text-sm font-semibold break-all">
-                    {formatWalletDisplayName({
-                      wallet: wallet!.address,
-                      displayName: trimmedDisplayNameDraft || null,
-                      currentWallet: wallet!.address,
-                    })}
                   </div>
                 </div>
               </div>
