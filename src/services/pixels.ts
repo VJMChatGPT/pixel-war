@@ -119,7 +119,7 @@ export async function paintPixel(params: {
   remainingMs?: number;
   pixel?: PaintResultPixel;
   evictedPixel?: PaintResultPixel | null;
-  walletState?: WalletStateRow;
+  walletState?: PublicWalletStateRow;
   error?: string;
 }> {
   const { data, error } = await supabase.functions.invoke("paint-pixel", {
@@ -145,7 +145,7 @@ export async function paintPixel(params: {
     remainingMs?: number;
     pixel?: PaintResultPixel;
     evictedPixel?: PaintResultPixel | null;
-    walletState?: WalletStateRow;
+    walletState?: PublicWalletStateRow;
   };
 }
 

@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
     const normalizedDisplayName = normalizeDisplayName(body.displayName);
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("wallet_state")
       .upsert(
         {
@@ -42,12 +42,20 @@ Deno.serve(async (req) => {
           onConflict: "wallet",
           ignoreDuplicates: false,
         },
-      )
-      .select("wallet, display_name, pixels_allowed, pixels_used, last_paint_at, updated_at")
-      .single();
+      );
 
     if (error) {
       throw new HttpError(500, "PROFILE_UPDATE_FAILED", error.message);
+    }
+
+    const { data, error: readError } = await supabase
+      .from("public_wallet_state")
+      .select("*")
+      .eq("wallet", session.wallet)
+      .single();
+
+    if (readError) {
+      throw new HttpError(500, "PROFILE_READ_FAILED", readError.message);
     }
 
     return json(req, {

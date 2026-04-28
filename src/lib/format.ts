@@ -10,6 +10,13 @@ export function compactNumber(n: number): string {
   return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(n);
 }
 
+export function formatPoints(value: number, maximumFractionDigits = 1): string {
+  return new Intl.NumberFormat("en", {
+    minimumFractionDigits: value > 0 && value < 10 ? Math.min(1, maximumFractionDigits) : 0,
+    maximumFractionDigits,
+  }).format(value);
+}
+
 /** Render mm:ss countdown from milliseconds. */
 export function formatCountdown(ms: number): string {
   if (ms <= 0) return "00:00";

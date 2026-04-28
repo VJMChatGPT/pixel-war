@@ -17,7 +17,7 @@ import {
   type PaintHistoryRow,
   type PublicWalletStateRow,
 } from "@/services/pixels";
-import { compactNumber, timeAgo, walletGradient } from "@/lib/format";
+import { compactNumber, formatPoints, timeAgo, walletGradient } from "@/lib/format";
 import { formatWalletDisplayName } from "@/lib/wallet-display";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +34,8 @@ export default function Profile() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [savingDisplayName, setSavingDisplayName] = useState(false);
+  const [pointsSnapshotAtMs, setPointsSnapshotAtMs] = useState(() => Date.now());
+  const [pointsDisplayNowMs, setPointsDisplayNowMs] = useState(() => Date.now());
   const { pixels, revision, error: canvasError } = useCanvas();
   const [copied, setCopied] = useState(false);
   const cooldown = useCooldown(walletState?.last_paint_at);
@@ -73,6 +75,20 @@ export default function Profile() {
     setDisplayNameDraft(walletState?.display_name ?? "");
   }, [wallet?.address, walletState?.display_name]);
 
+  useEffect(() => {
+    setPointsSnapshotAtMs(Date.now());
+  }, [walletState?.total_points, walletState?.points_per_second, wallet?.address]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setPointsDisplayNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   if (!isConnected) {
     return (
       <Layout>
@@ -92,6 +108,12 @@ export default function Profile() {
     displayName: walletState?.display_name,
     currentWallet: wallet!.address,
   });
+  const authoritativePointsTotal = walletState?.total_points ?? 0;
+  const pointsPerSecond = walletState?.points_per_second ?? 0;
+  const projectedPointsPerMinute = pointsPerSecond * 60;
+  const projectedPointsPerHour = pointsPerSecond * 3600;
+  const animatedPointsTotal =
+    authoritativePointsTotal + Math.max(0, (pointsDisplayNowMs - pointsSnapshotAtMs) / 1000) * pointsPerSecond;
   const trimmedDisplayNameDraft = displayNameDraft.trim();
   const hasDisplayNameChanges = trimmedDisplayNameDraft !== (walletState?.display_name ?? "");
   const canSaveDisplayName =
@@ -178,6 +200,16 @@ export default function Profile() {
               <PixelBadge count={displayUsedPixels} label="painted" variant="secondary" />
               <PixelBadge count={Number(supplyPercent.toFixed(3)) as any} label="% supply" variant="accent" />
             </div>
+            <div className="grid sm:grid-cols-2 gap-3 mt-5">
+              <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary/80">total points</div>
+                <div className="font-display font-bold text-2xl mt-1">{formatPoints(animatedPointsTotal, 1)}</div>
+              </div>
+              <div className="rounded-xl border border-accent/30 bg-accent/10 px-4 py-3">
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent/80">points / second</div>
+                <div className="font-display font-bold text-2xl mt-1">{formatPoints(pointsPerSecond, 2)}</div>
+              </div>
+            </div>
           </div>
           <PixlMascot mood={cooldown.ready ? "cheer" : "sleep"} size={90} className="hidden md:block" />
         </NeonCard>
@@ -259,6 +291,29 @@ export default function Profile() {
             </NeonCard>
 
             <NeonCard className="p-5 flex flex-col items-center">
+              <div className="w-full rounded-xl border border-border bg-muted/20 px-4 py-4 mb-4">
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                  Territory bonus
+                </div>
+                <div className="text-sm text-muted-foreground leading-relaxed">
+                  You are earning <span className="font-mono text-foreground font-semibold">{formatPoints(pointsPerSecond, 2)} pts/s</span> from{" "}
+                  <span className="font-mono text-foreground font-semibold">{displayUsedPixels}</span> controlled pixels.
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">per minute</div>
+                    <div className="font-display font-bold text-lg mt-1">+{formatPoints(projectedPointsPerMinute, 1)}</div>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">per hour</div>
+                    <div className="font-display font-bold text-lg mt-1">+{formatPoints(projectedPointsPerHour, 1)}</div>
+                  </div>
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground mt-3">
+                  More territory means more passive points every second.
+                </div>
+              </div>
+
               <CooldownRing
                 remainingMs={cooldown.remainingMs}
                 totalMs={APP_CONFIG.rules.cooldownMs}
