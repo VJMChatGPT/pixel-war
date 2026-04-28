@@ -4,7 +4,15 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon.ico|robots.txt|placeholder.svg).*)",
+      "source": "/share-card/:wallet",
+      "destination": "/api/share-card?wallet=:wallet"
+    },
+    {
+      "source": "/share/:wallet",
+      "destination": "/api/share-page?wallet=:wallet"
+    },
+    {
+      "source": "/((?!api/|share/|share-card/|assets/|favicon.ico|robots.txt|placeholder.svg).*)",
       "destination": "/index.html"
     }
   ]

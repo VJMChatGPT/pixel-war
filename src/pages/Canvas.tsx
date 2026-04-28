@@ -7,7 +7,6 @@ import { CooldownRing } from "@/components/CooldownRing";
 import { PixelBadge } from "@/components/PixelBadge";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { PixlMascot } from "@/components/PixlMascot";
-import { ShareOnXButton } from "@/components/ShareOnXButton";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -445,15 +444,6 @@ export default function CanvasPage() {
                       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent/80">points / sec</div>
                       <div className="font-display font-bold text-2xl mt-1">{formatPoints(pointsPerSecond, 2)}</div>
                     </div>
-                  </div>
-                  <div className="mb-4">
-                    <ShareOnXButton
-                      wallet={wallet}
-                      walletState={walletState}
-                      pixels={pixels}
-                      ownedPixels={displayUsedPixels}
-                      className="w-full"
-                    />
                   </div>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     <PixelBadge count={allowedPixels} label="allowed" variant="primary" />

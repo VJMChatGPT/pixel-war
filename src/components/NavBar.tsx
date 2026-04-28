@@ -1,6 +1,7 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { PixlMascot } from "./PixlMascot";
 import { WalletConnectButton } from "./WalletConnectButton";
+import { HeaderShareOnXButton } from "./HeaderShareOnXButton";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -67,7 +68,8 @@ export function NavBar() {
           ))}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-3">
+          <HeaderShareOnXButton />
           <WalletConnectButton />
         </div>
 
@@ -92,7 +94,8 @@ export function NavBar() {
                     {l.label}
                   </NavLink>
                 ))}
-                <div className="mt-4">
+                <div className="mt-4 space-y-3">
+                  <HeaderShareOnXButton />
                   <WalletConnectButton />
                 </div>
               </div>

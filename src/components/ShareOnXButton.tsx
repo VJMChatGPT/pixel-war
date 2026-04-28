@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { PixelRow, PublicWalletStateRow } from "@/services/pixels";
+import type { PublicWalletStateRow } from "@/services/pixels";
 import type { WalletInfo } from "@/services/wallet";
-import { buildXIntentUrl, buildXShareText, downloadShareCard, generateShareCardBlob } from "@/lib/share";
+import { buildShareUrl, buildXIntentUrl, buildXShareText } from "@/lib/share";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Loader2, Share2 } from "lucide-react";
@@ -10,15 +10,15 @@ import { Loader2, Share2 } from "lucide-react";
 export function ShareOnXButton({
   wallet,
   walletState,
-  pixels,
   ownedPixels,
   className,
+  variant = "card",
 }: {
   wallet: WalletInfo | null;
   walletState: PublicWalletStateRow | null;
-  pixels: (PixelRow | null)[];
   ownedPixels: number;
   className?: string;
+  variant?: "card" | "compact";
 }) {
   const [sharing, setSharing] = useState(false);
 
@@ -26,41 +26,21 @@ export function ShareOnXButton({
 
   const handleShare = async () => {
     setSharing(true);
-    const shareWindow = window.open("", "_blank", "noopener,noreferrer");
 
     try {
-      const [blob, text] = await Promise.all([
-        generateShareCardBlob({
-          walletAddress: wallet.address,
-          walletState,
-          pixels,
-          ownedPixels,
-        }),
-        Promise.resolve(
-          buildXShareText({
-            walletAddress: wallet.address,
-            walletState,
-            ownedPixels,
-          })
-        ),
-      ]);
+      const text = buildXShareText({
+        walletAddress: wallet.address,
+        walletState,
+        ownedPixels,
+      });
+      const shareUrl = buildShareUrl(wallet.address);
+      const intentUrl = buildXIntentUrl({ text, shareUrl });
+      window.open(intentUrl, "_blank", "noopener,noreferrer");
 
-      downloadShareCard(blob);
-      const intentUrl = buildXIntentUrl(text);
-
-      if (shareWindow) {
-        shareWindow.location.href = intentUrl;
-      } else {
-        window.open(intentUrl, "_blank", "noopener,noreferrer");
-      }
-
-      toast.success("Share card ready", {
-        description: "We downloaded your image and opened X. Attach the card to finish the post.",
+      toast.success("Opening X share", {
+        description: "Your post includes a dedicated PIXL share page with a live social preview.",
       });
     } catch (error) {
-      if (shareWindow) {
-        shareWindow.close();
-      }
       toast.error("Could not prepare your X share", {
         description: error instanceof Error ? error.message : "Try again in a moment.",
       });
@@ -68,6 +48,24 @@ export function ShareOnXButton({
       setSharing(false);
     }
   };
+
+  if (variant === "compact") {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => void handleShare()}
+        disabled={sharing}
+        className={cn(
+          "h-11 rounded-xl border-primary/30 bg-primary/10 px-4 font-semibold text-primary hover:bg-primary/15 hover:text-primary shadow-[0_10px_30px_rgba(168,85,247,0.18)]",
+          className
+        )}
+      >
+        {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+        {sharing ? "Preparing..." : "Share on X"}
+      </Button>
+    );
+  }
 
   return (
     <div
@@ -85,7 +83,7 @@ export function ShareOnXButton({
             Show off your territory on X
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
-            Generate a share card with the full board, your highlighted pixels, and your current score.
+            Open a dedicated PIXL share page with your highlighted territory, live points, and a social preview card.
           </div>
         </div>
         <div className="rounded-xl border border-primary/30 bg-primary/10 p-2 text-primary shrink-0">

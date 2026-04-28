@@ -5,7 +5,6 @@ import { PixlMascot } from "@/components/PixlMascot";
 import { CooldownRing } from "@/components/CooldownRing";
 import { PixelBadge } from "@/components/PixelBadge";
 import { CanvasGrid } from "@/components/CanvasGrid";
-import { ShareOnXButton } from "@/components/ShareOnXButton";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { useWallet } from "@/hooks/useWallet";
 import { useCanvas } from "@/hooks/useCanvas";
@@ -216,15 +215,6 @@ export default function Profile() {
                 <div className="font-display font-bold text-2xl mt-1">{formatPoints(pointsPerSecond, 2)}</div>
               </div>
             </div>
-            <div className="mt-4">
-              <ShareOnXButton
-                wallet={wallet}
-                walletState={walletState}
-                pixels={pixels}
-                ownedPixels={displayUsedPixels}
-                className="max-w-xl"
-              />
-            </div>
           </div>
           <PixlMascot mood={cooldown.ready ? "cheer" : "sleep"} size={90} className="hidden md:block" />
         </NeonCard>
@@ -336,7 +326,7 @@ export default function Profile() {
               </div>
             </NeonCard>
 
-            <NeonCard className="p-5 max-h-[400px] overflow-y-auto">
+            <NeonCard className="p-5 max-h-[400px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <h3 className="font-display font-semibold text-sm mb-3">Recent paints</h3>
               {history.length === 0 && (
                 <div className="text-xs text-muted-foreground font-mono text-center py-6">
@@ -350,7 +340,7 @@ export default function Profile() {
                       <span className="w-3 h-3 rounded-sm border border-border" style={{ background: h.old_color ?? "#0a0a14" }} />
                       <span className="w-3 h-3 rounded-sm border border-border" style={{ background: h.new_color, boxShadow: `0 0 6px ${h.new_color}66` }} />
                     </div>
-                    <span className="font-mono text-xs flex-1">pixel #{h.pixel_id}</span>
+                    <span className="font-mono text-xs flex-1 min-w-0 truncate">pixel #{h.pixel_id}</span>
                     <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{timeAgo(h.painted_at)}</span>
                   </div>
                 ))}
