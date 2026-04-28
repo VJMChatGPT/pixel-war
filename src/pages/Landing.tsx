@@ -4,7 +4,7 @@ import { LiveTicker } from "@/components/LiveTicker";
 import { NeonCard } from "@/components/NeonCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Wallet, Trophy, TrendingUp, TrendingDown, Sparkles, MousePointerClick, Zap } from "lucide-react";
+import { ArrowRight, Wallet, Trophy, TrendingUp, TrendingDown, MousePointerClick, Zap, Crown, Eye } from "lucide-react";
 import { useCanvas } from "@/hooks/useCanvas";
 import { APP_CONFIG } from "@/config/app";
 import { CanvasGrid } from "@/components/CanvasGrid";
@@ -37,41 +37,10 @@ function Reveal({ children, delay = 0, y = 28 }: { children: React.ReactNode; de
       ref={ref}
       initial={{ opacity: 0, y }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </motion.div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Mini grid — animated pixel cluster used in scroll-storytelling     */
-/* ------------------------------------------------------------------ */
-function PixelCluster({ progress }: { progress: MotionValue<number> }) {
-  // 10x10 abstract cluster that grows / colors-in as user scrolls
-  const cells = useMemo(() => Array.from({ length: 100 }, (_, i) => i), []);
-  const palette = APP_CONFIG.palette;
-  return (
-    <div className="grid grid-cols-10 gap-[2px] w-full max-w-[420px] aspect-square mx-auto">
-      {cells.map((i) => {
-        const threshold = (i * 7919) % 100; // pseudo-random distribution
-        const opacity = useTransform(progress, [0, 1], [0.05, 1]);
-        const scale = useTransform(progress, [0, 1], [0.4, 1]);
-        const colorIndex = i % palette.length;
-        const fill = palette[colorIndex];
-        return (
-          <motion.div
-            key={i}
-            style={{
-              backgroundColor: fill,
-              opacity: useTransform(progress, (v) => (v * 100 > threshold ? 0.85 : 0.05)),
-              scale,
-            }}
-            className="rounded-[1px]"
-          />
-        );
-      })}
-    </div>
   );
 }
 
@@ -85,9 +54,7 @@ function DominanceBoard({ pixels }: { pixels: (PixelRow | null)[] }) {
       if (!p?.owner_wallet) continue;
       map.set(p.owner_wallet, (map.get(p.owner_wallet) ?? 0) + 1);
     }
-    return [...map.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
   }, [pixels]);
 
   const seed = top.length > 0
@@ -109,7 +76,9 @@ function DominanceBoard({ pixels }: { pixels: (PixelRow | null)[] }) {
         return (
           <Reveal key={wallet} delay={i * 0.06}>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] text-muted-foreground w-6">#{i + 1}</span>
+              <span className="font-mono text-[10px] text-muted-foreground w-6">
+                {i === 0 ? <Crown className="w-3 h-3 text-accent inline" /> : `#${i + 1}`}
+              </span>
               <span className="font-mono text-xs text-foreground/90 w-32 truncate">{shortAddress(wallet)}</span>
               <div className="flex-1 h-2 bg-muted/40 rounded-full overflow-hidden">
                 <motion.div
@@ -128,6 +97,121 @@ function DominanceBoard({ pixels }: { pixels: (PixelRow | null)[] }) {
         );
       })}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Cinematic stage — pinned scroll, single canvas zooming through     */
+/* progressively revealed scales (pixel → cluster → board → dom)      */
+/* ------------------------------------------------------------------ */
+const STAGES = [
+  { key: "pixel", label: "01 · Pixel", title: "One pixel.", sub: "0.01% of supply. A single on-chain cell, yours to color." },
+  { key: "cluster", label: "02 · Cluster", title: "A cluster.", sub: "Stack tokens. Stack pixels. Build a recognizable mark." },
+  { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells. A region of the board with your name on it." },
+  { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas." },
+  { key: "dominance", label: "05 · Dominance", title: "Dominance.", sub: "The biggest wallet rules the most pixels — until someone takes them." },
+];
+
+function CinematicNarrative({ pixels, revision }: { pixels: (PixelRow | null)[]; revision: number }) {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+
+  // 5 stages → scale from 18x (single pixel zoom) → 1x (whole board) → 0.95x
+  const scale = useSpring(useTransform(scrollYProgress, [0, 0.25, 0.55, 0.8, 1], [22, 8, 2.2, 1, 0.95]), {
+    stiffness: 60,
+    damping: 24,
+  });
+  // Pan slightly while zooming
+  const x = useTransform(scrollYProgress, [0, 1], ["18%", "0%"]);
+  const y = useTransform(scrollYProgress, [0, 1], ["-12%", "0%"]);
+  const vignette = useTransform(scrollYProgress, [0, 0.3, 1], [0.85, 0.5, 0.25]);
+  const stageIndex = useTransform(scrollYProgress, (v) => Math.min(STAGES.length - 1, Math.floor(v * STAGES.length * 0.999)));
+
+  return (
+    <section ref={ref} className="relative" style={{ height: `${STAGES.length * 100}vh` }}>
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-background">
+        {/* ambient grid */}
+        <div className="absolute inset-0 grid-bg opacity-[0.05]" />
+        <div className="absolute inset-0 bg-radial-glow opacity-40" />
+
+        {/* the zooming canvas */}
+        <motion.div
+          style={{ scale, x, y }}
+          className="absolute inset-0 flex items-center justify-center will-change-transform"
+        >
+          <div className="aspect-square w-[min(82vh,82vw)] rounded-md overflow-hidden ring-1 ring-primary/30 shadow-[0_0_120px_hsl(var(--primary)/0.35)] bg-white">
+            <CanvasGrid pixels={pixels} revision={revision} />
+          </div>
+        </motion.div>
+
+        {/* vignette overlay (deep at the closest zoom for cinematic feel) */}
+        <motion.div
+          style={{ opacity: vignette }}
+          className="pointer-events-none absolute inset-0"
+          aria-hidden
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,hsl(var(--background))_85%)]" />
+        </motion.div>
+
+        {/* HUD — top */}
+        <div className="absolute top-6 left-0 right-0 px-6 md:px-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground z-10">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            live · canvas
+          </div>
+          <motion.div>
+            {STAGES.map((s, i) => (
+              <motion.span
+                key={s.key}
+                style={{ opacity: useTransform(stageIndex, (v) => (v === i ? 1 : 0.25)) }}
+                className="ml-3 first:ml-0"
+              >
+                {s.label.split(" ")[0]}
+              </motion.span>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* HUD — bottom: stage title */}
+        <div className="absolute bottom-0 left-0 right-0 pb-12 md:pb-16 px-6 md:px-12 z-10">
+          <div className="container">
+            {STAGES.map((s, i) => {
+              const opacity = useTransform(stageIndex, (v) => (v === i ? 1 : 0));
+              const yOff = useTransform(stageIndex, (v) => (v === i ? 0 : 16));
+              return (
+                <motion.div
+                  key={s.key}
+                  style={{ opacity, y: yOff, position: "absolute", left: 0, right: 0, bottom: 48 }}
+                  className="px-6 md:px-12"
+                >
+                  <div className="container">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent mb-3">{s.label}</div>
+                    <h3 className="font-display font-bold text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight max-w-4xl">
+                      {s.title}
+                    </h3>
+                    <p className="mt-4 text-base md:text-lg text-muted-foreground max-w-xl">{s.sub}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* progress rail */}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-3 z-10">
+          {STAGES.map((s, i) => (
+            <motion.span
+              key={s.key}
+              style={{
+                opacity: useTransform(stageIndex, (v) => (v === i ? 1 : 0.25)),
+                scaleY: useTransform(stageIndex, (v) => (v === i ? 1 : 0.6)),
+              }}
+              className="block w-px h-8 bg-foreground origin-center"
+            />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -150,21 +234,12 @@ export default function Landing() {
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const heroCanvasScale = useSpring(useTransform(heroProgress, [0, 1], [1, 1.18]), { stiffness: 80, damping: 20 });
-  const heroCanvasY = useTransform(heroProgress, [0, 1], [0, -60]);
-  const heroTextY = useTransform(heroProgress, [0, 1], [0, -120]);
+  const heroCanvasScale = useSpring(useTransform(heroProgress, [0, 1], [1, 1.35]), { stiffness: 80, damping: 20 });
+  const heroCanvasY = useTransform(heroProgress, [0, 1], [0, -120]);
+  const heroTextY = useTransform(heroProgress, [0, 1], [0, -180]);
   const heroTextOpacity = useTransform(heroProgress, [0, 0.7], [1, 0]);
-  const heroGlowOpacity = useTransform(heroProgress, [0, 1], [0.7, 0.1]);
-
-  /* ---- NARRATIVE section: pixel → cluster → territory → board ---- */
-  const narrativeRef = useRef<HTMLElement>(null);
-  const { scrollYProgress: narrativeProgress } = useScroll({
-    target: narrativeRef,
-    offset: ["start end", "end start"],
-  });
-  const clusterProgress = useSpring(useTransform(narrativeProgress, [0.1, 0.65], [0, 1]), { stiffness: 60, damping: 22 });
-  const zoomScale = useTransform(narrativeProgress, [0, 0.5, 1], [4, 1, 0.85]);
-  const zoomLabelStep = useTransform(narrativeProgress, [0, 0.25, 0.5, 0.75, 1], [0, 1, 2, 3, 4]);
+  const heroGlowOpacity = useTransform(heroProgress, [0, 1], [0.7, 0.05]);
+  const heroBgY = useTransform(heroProgress, [0, 1], [0, 200]);
 
   /* ---- BUY/SELL mechanic scroll ---- */
   const mechanicRef = useRef<HTMLElement>(null);
@@ -180,22 +255,23 @@ export default function Landing() {
       <LiveTicker />
 
       {/* ============================================================ */}
-      {/* 1. HERO — full-screen, parallax, live canvas as the moment  */}
+      {/* 1. HERO — full-bleed cinematic                              */}
       {/* ============================================================ */}
       <section
         ref={heroRef}
         className="relative min-h-[100svh] overflow-hidden border-b border-border/60 flex items-center"
       >
         {/* ambient layers */}
-        <motion.div style={{ opacity: heroGlowOpacity }} className="absolute inset-0 bg-radial-glow pointer-events-none" />
+        <motion.div style={{ opacity: heroGlowOpacity, y: heroBgY }} className="absolute inset-0 bg-radial-glow pointer-events-none" />
         <div className="absolute inset-0 grid-bg opacity-[0.06] pointer-events-none" />
         <motion.div
           style={{ opacity: heroGlowOpacity }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[820px] h-[820px] rounded-full bg-primary/15 blur-[140px] pointer-events-none"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[920px] h-[920px] rounded-full bg-primary/15 blur-[160px] pointer-events-none"
         />
+
         {/* drifting pixel particles */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 14 }).map((_, i) => (
+          {Array.from({ length: 18 }).map((_, i) => (
             <motion.span
               key={i}
               className="absolute w-1.5 h-1.5 rounded-[1px]"
@@ -205,7 +281,7 @@ export default function Landing() {
                 top: `${(i * 41) % 100}%`,
                 boxShadow: `0 0 10px ${APP_CONFIG.palette[i % APP_CONFIG.palette.length]}`,
               }}
-              animate={{ y: [0, -30, 0], opacity: [0.2, 0.8, 0.2] }}
+              animate={{ y: [0, -40, 0], opacity: [0.15, 0.7, 0.15] }}
               transition={{ duration: 6 + (i % 5), repeat: Infinity, delay: i * 0.3, ease: "easeInOut" }}
             />
           ))}
@@ -214,21 +290,17 @@ export default function Landing() {
         <div className="container relative grid lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] gap-12 lg:gap-20 items-center py-20">
           {/* LEFT — message */}
           <motion.div style={{ y: heroTextY, opacity: heroTextOpacity }} className="relative">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
               <SectionEyebrow>
                 live · solana · {APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels
               </SectionEyebrow>
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 font-display font-bold text-[3rem] sm:text-7xl lg:text-[6.5rem] leading-[0.92] tracking-tight"
+              transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-6 font-display font-bold text-[3.2rem] sm:text-7xl lg:text-[7.5rem] leading-[0.88] tracking-[-0.03em]"
             >
               Your wallet.
               <br />
@@ -238,7 +310,7 @@ export default function Landing() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.35 }}
               className="mt-7 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed"
             >
               A live, on-chain canvas where <span className="text-foreground font-semibold">$PIXL</span> becomes
@@ -249,7 +321,7 @@ export default function Landing() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.45 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
               className="mt-9 flex flex-wrap gap-3"
             >
               {!isConnected ? (
@@ -280,11 +352,10 @@ export default function Landing() {
               </Button>
             </motion.div>
 
-            {/* live stats row */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
+              transition={{ duration: 0.8, delay: 0.75 }}
               className="mt-12 flex flex-wrap items-center gap-x-10 gap-y-4"
             >
               <div className="flex items-center gap-2.5">
@@ -307,19 +378,17 @@ export default function Landing() {
 
           {/* RIGHT — live canvas, parallax */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
+            initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1.1, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
             style={{ scale: heroCanvasScale, y: heroCanvasY }}
             className="relative mx-auto w-full max-w-[640px]"
           >
-            {/* live tag */}
             <div className="absolute -top-3 left-6 z-20 px-2.5 py-1 rounded-md bg-accent text-accent-foreground font-mono text-[10px] font-bold uppercase tracking-[0.2em] shadow-[0_0_24px_hsl(var(--accent)/0.55)]">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-foreground mr-1.5 animate-pulse" />
               live · public
             </div>
 
-            {/* corner ticks */}
             {[
               "top-0 left-0 border-t-2 border-l-2",
               "top-0 right-0 border-t-2 border-r-2",
@@ -333,7 +402,6 @@ export default function Landing() {
               <CanvasGrid pixels={pixels} revision={revision} className="rounded-md" />
             </NeonCard>
 
-            {/* meta strip */}
             <div className="mt-3 flex items-center justify-between px-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               <span>100 × 100 board</span>
               <span className="flex items-center gap-1.5">
@@ -342,7 +410,7 @@ export default function Landing() {
               </span>
             </div>
 
-            {/* MASCOT — UNCHANGED, repositioned */}
+            {/* MASCOT — UNCHANGED */}
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -360,7 +428,7 @@ export default function Landing() {
           transition={{ delay: 1.4 }}
           className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground font-mono text-[10px] uppercase tracking-[0.3em]"
         >
-          <span>scroll</span>
+          <span>scroll to enter</span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
@@ -370,71 +438,23 @@ export default function Landing() {
       </section>
 
       {/* ============================================================ */}
-      {/* 2. NARRATIVE — pixel → cluster → territory → board → dom    */}
+      {/* 2. CINEMATIC NARRATIVE — pinned scroll-zoom through stages  */}
       {/* ============================================================ */}
-      <section ref={narrativeRef} className="relative">
-        <div className="sticky top-0 h-[100svh] flex items-center overflow-hidden">
-          <div className="absolute inset-0 bg-radial-glow opacity-30" />
-          <div className="container relative grid lg:grid-cols-2 gap-10 items-center">
-            {/* LEFT — animated visual */}
-            <div className="relative flex items-center justify-center min-h-[420px]">
-              <motion.div style={{ scale: zoomScale }} className="relative">
-                <PixelCluster progress={clusterProgress} />
-              </motion.div>
-              {/* corner crosshair */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/20" />
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-primary/20" />
-              </div>
-            </div>
-
-            {/* RIGHT — labels that step through */}
-            <div className="space-y-6">
-              <SectionEyebrow>the unfold</SectionEyebrow>
-              <h2 className="font-display font-bold text-4xl md:text-6xl leading-[0.95] tracking-tight">
-                One pixel.
-                <br />
-                <span className="text-gradient-hero">A whole territory.</span>
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-md leading-relaxed">
-                Watch how a single token holder turns into a visible, on-chain force on the canvas — pixel by pixel.
-              </p>
-
-              <div className="space-y-2 pt-4">
-                {["Pixel", "Cluster", "Territory", "Board", "Dominance"].map((label, i) => {
-                  const active = useTransform(zoomLabelStep, (v) => Math.round(v) === i);
-                  return (
-                    <motion.div
-                      key={label}
-                      style={{ opacity: useTransform(active, (a) => (a ? 1 : 0.35)) }}
-                      className="flex items-center gap-3"
-                    >
-                      <motion.span
-                        style={{ scaleX: useTransform(active, (a) => (a ? 1 : 0.4)) }}
-                        className="origin-left h-px w-12 bg-gradient-neon"
-                      />
-                      <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-foreground">{label}</span>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* spacer to give scroll runway */}
-        <div className="h-[120vh]" />
-      </section>
+      <CinematicNarrative pixels={pixels} revision={revision} />
 
       {/* ============================================================ */}
       {/* 3. HOW IT WORKS — visual 3-step                              */}
       {/* ============================================================ */}
-      <section className="relative border-t border-border/60 py-28">
-        <div className="container">
+      <section className="relative border-t border-border/60 py-32">
+        <div className="absolute inset-0 grid-bg opacity-[0.04] pointer-events-none" />
+        <div className="container relative">
           <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="text-center max-w-2xl mx-auto mb-20">
               <SectionEyebrow>how it works</SectionEyebrow>
-              <h2 className="mt-5 font-display font-bold text-4xl md:text-6xl leading-tight">
-                Three moves to <span className="text-gradient-hero">claim the board</span>
+              <h2 className="mt-5 font-display font-bold text-5xl md:text-7xl leading-[0.95] tracking-tight">
+                Three moves.
+                <br />
+                <span className="text-gradient-hero">Claim the board.</span>
               </h2>
             </div>
           </Reveal>
@@ -471,12 +491,12 @@ export default function Landing() {
                 title: "Paint your claim",
                 desc: "Pick a color, click a cell. Your mark lands instantly on a public, on-chain board.",
                 visual: (
-                  <div className="relative mt-6 aspect-square rounded-md bg-card/40 border border-border overflow-hidden">
+                  <div className="relative mt-6 aspect-square rounded-md bg-white border border-border overflow-hidden">
                     <div className="absolute inset-0 grid grid-cols-12 gap-px p-2">
                       {Array.from({ length: 144 }).map((_, i) => (
                         <motion.div
                           key={i}
-                          initial={{ backgroundColor: "transparent" }}
+                          initial={{ backgroundColor: "rgba(0,0,0,0)" }}
                           whileInView={{ backgroundColor: APP_CONFIG.palette[(i * 3) % APP_CONFIG.palette.length] }}
                           viewport={{ once: true }}
                           transition={{ duration: 0.2, delay: i * 0.008 }}
@@ -491,7 +511,7 @@ export default function Landing() {
                       transition={{ delay: 1.2 }}
                       className="absolute bottom-3 right-3"
                     >
-                      <MousePointerClick className="w-6 h-6 text-accent drop-shadow-[0_0_8px_hsl(var(--accent))]" />
+                      <MousePointerClick className="w-6 h-6 text-primary drop-shadow-[0_0_8px_hsl(var(--primary))]" />
                     </motion.div>
                   </div>
                 ),
@@ -528,7 +548,7 @@ export default function Landing() {
                       {s.icon}
                       <span className="font-pixel text-[10px]">{s.n}</span>
                     </div>
-                    <Sparkles className="w-4 h-4 text-accent/70" />
+                    <Eye className="w-4 h-4 text-accent/70" />
                   </div>
                   <h3 className="font-display font-bold text-2xl mb-2">{s.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
@@ -543,13 +563,13 @@ export default function Landing() {
       {/* ============================================================ */}
       {/* 4. DOMINANCE — top wallets, real data                        */}
       {/* ============================================================ */}
-      <section className="relative border-t border-border/60 py-28 overflow-hidden">
+      <section className="relative border-t border-border/60 py-32 overflow-hidden">
         <div className="absolute inset-0 bg-radial-glow opacity-40" />
         <div className="container relative grid lg:grid-cols-[minmax(0,520px)_1fr] gap-14 items-center">
           <Reveal>
             <div>
               <SectionEyebrow>dominance</SectionEyebrow>
-              <h2 className="mt-5 font-display font-bold text-4xl md:text-6xl leading-tight">
+              <h2 className="mt-5 font-display font-bold text-5xl md:text-7xl leading-[0.95] tracking-tight">
                 The board has
                 <br />
                 <span className="text-gradient-hero">a king.</span>
@@ -587,12 +607,12 @@ export default function Landing() {
       {/* ============================================================ */}
       {/* 5. BUY/SELL MECHANIC                                         */}
       {/* ============================================================ */}
-      <section ref={mechanicRef} className="relative border-t border-border/60 py-28">
+      <section ref={mechanicRef} className="relative border-t border-border/60 py-32">
         <div className="container">
           <Reveal>
             <div className="text-center max-w-2xl mx-auto mb-16">
               <SectionEyebrow>token mechanic</SectionEyebrow>
-              <h2 className="mt-5 font-display font-bold text-4xl md:text-6xl leading-tight">
+              <h2 className="mt-5 font-display font-bold text-5xl md:text-7xl leading-[0.95] tracking-tight">
                 Buy. Hold. <span className="text-gradient-hero">Win territory.</span>
               </h2>
               <p className="mt-5 text-muted-foreground text-lg">
@@ -602,7 +622,6 @@ export default function Landing() {
           </Reveal>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {/* BUY */}
             <Reveal>
               <NeonCard glow="primary" className="p-8 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
@@ -630,7 +649,6 @@ export default function Landing() {
               </NeonCard>
             </Reveal>
 
-            {/* SELL */}
             <Reveal delay={0.1}>
               <NeonCard className="p-8 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
@@ -662,58 +680,59 @@ export default function Landing() {
       </section>
 
       {/* ============================================================ */}
-      {/* 6. FINAL CTA                                                 */}
+      {/* 6. FINAL CTA — full bleed                                    */}
       {/* ============================================================ */}
-      <section className="container py-28">
-        <Reveal>
-          <NeonCard shimmer className="relative overflow-hidden p-12 md:p-20 text-center">
-            <div className="absolute inset-0 bg-radial-glow opacity-70" />
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-              className="absolute -top-32 -right-32 w-[400px] h-[400px] rounded-full border border-primary/10"
-            />
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-              className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full border border-accent/10"
-            />
+      <section className="relative border-t border-border/60 min-h-[90svh] flex items-center overflow-hidden">
+        <div className="absolute inset-0 bg-radial-glow opacity-80" />
+        <div className="absolute inset-0 grid-bg opacity-[0.05]" />
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full border border-primary/10"
+        />
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full border border-accent/10"
+        />
 
-            <div className="relative">
-              {/* MASCOT — UNCHANGED */}
-              <PixlMascot mood="cheer" size={100} className="mx-auto mb-6" />
+        <div className="container relative text-center py-24">
+          <Reveal>
+            {/* MASCOT — UNCHANGED */}
+            <PixlMascot mood="cheer" size={120} className="mx-auto mb-8" />
 
-              <h2 className="font-display font-bold text-4xl md:text-6xl leading-tight">
-                Ten thousand pixels.
-                <br />
-                <span className="text-gradient-hero">One canvas. One king.</span>
-              </h2>
-              <p className="mt-5 text-muted-foreground max-w-lg mx-auto text-lg">
-                Connect your wallet. Take your pixels. Defend them in front of everyone.
-              </p>
+            <SectionEyebrow>the canvas is live</SectionEyebrow>
 
-              <div className="mt-10 flex flex-wrap gap-3 justify-center">
-                {!isConnected ? (
-                  <Button
-                    onClick={() => connect()}
-                    disabled={connecting}
-                    size="lg"
-                    className="h-14 px-8 bg-gradient-neon glow-primary rounded-xl text-primary-foreground font-semibold"
-                  >
-                    <Wallet className="w-5 h-5" /> Connect wallet
-                  </Button>
-                ) : (
-                  <Button asChild size="lg" className="h-14 px-8 bg-gradient-neon glow-primary rounded-xl text-primary-foreground font-semibold">
-                    <Link to="/canvas"><Zap className="w-5 h-5" /> Enter the canvas</Link>
-                  </Button>
-                )}
-                <Button asChild size="lg" variant="outline" className="h-14 px-8 rounded-xl">
-                  <Link to="/leaderboard"><Trophy className="w-5 h-5" /> Leaderboard</Link>
+            <h2 className="mt-6 font-display font-bold text-6xl md:text-8xl lg:text-9xl leading-[0.88] tracking-[-0.03em]">
+              Ten thousand pixels.
+              <br />
+              <span className="text-gradient-hero">One king.</span>
+            </h2>
+            <p className="mt-8 text-muted-foreground max-w-xl mx-auto text-lg md:text-xl">
+              Connect your wallet. Take your pixels. Defend them in front of everyone.
+            </p>
+
+            <div className="mt-12 flex flex-wrap gap-3 justify-center">
+              {!isConnected ? (
+                <Button
+                  onClick={() => connect()}
+                  disabled={connecting}
+                  size="lg"
+                  className="h-16 px-10 text-base bg-gradient-neon glow-primary rounded-xl text-primary-foreground font-semibold"
+                >
+                  <Wallet className="w-5 h-5" /> Connect wallet
                 </Button>
-              </div>
+              ) : (
+                <Button asChild size="lg" className="h-16 px-10 text-base bg-gradient-neon glow-primary rounded-xl text-primary-foreground font-semibold">
+                  <Link to="/canvas"><Zap className="w-5 h-5" /> Enter the canvas</Link>
+                </Button>
+              )}
+              <Button asChild size="lg" variant="outline" className="h-16 px-10 text-base rounded-xl">
+                <Link to="/leaderboard"><Trophy className="w-5 h-5" /> Leaderboard</Link>
+              </Button>
             </div>
-          </NeonCard>
-        </Reveal>
+          </Reveal>
+        </div>
       </section>
     </Layout>
   );
