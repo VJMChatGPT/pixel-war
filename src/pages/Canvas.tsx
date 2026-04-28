@@ -48,6 +48,18 @@ function rollbackOptimisticPixel({
   }
 }
 
+function isNoopPixelForWallet(
+  pixel: PixelRow | null | undefined,
+  walletAddress: string,
+  nextColor: string
+) {
+  return (
+    !!pixel &&
+    pixel.owner_wallet === walletAddress &&
+    pixel.color.toLowerCase() === nextColor.toLowerCase()
+  );
+}
+
 function getBrushCells(x: number, y: number, brushSize: number) {
   const cells: Array<{ x: number; y: number }> = [];
   const startX = x - Math.floor((brushSize - 1) / 2);
@@ -144,6 +156,16 @@ export default function CanvasPage() {
       return false;
     }
 
+    const currentPixel = pixels[y * APP_CONFIG.canvas.width + x];
+    if (isNoopPixelForWallet(currentPixel, wallet.address, color)) {
+      if (!options?.silentSuccess) {
+        toast.message("No changes applied", {
+          description: "That pixel already matches your current color and ownership.",
+        });
+      }
+      return null;
+    }
+
     setPendingPaints((value) => value + 1);
     const optimisticUpdatedAt = new Date().toISOString();
     const previousPixel = patchPixel(x, y, null);
@@ -182,6 +204,24 @@ export default function CanvasPage() {
           });
         }
         return false;
+      }
+
+      if (res.changed === false || res.code === "NO_OP") {
+        rollbackOptimisticPixel({
+          pixels,
+          x,
+          y,
+          optimisticUpdatedAt,
+          previousPixel,
+          patchPixel,
+        });
+        if (res.walletState) setWalletState(res.walletState);
+        if (!options?.silentSuccess) {
+          toast.message("No changes applied", {
+            description: res.message ?? "That pixel already matched the requested state.",
+          });
+        }
+        return null;
       }
 
       if (res.pixel && isStillOptimisticPixel(pixels[y * APP_CONFIG.canvas.width + x], optimisticUpdatedAt)) {
@@ -228,11 +268,26 @@ export default function CanvasPage() {
   };
 
   const onPaint = async (x: number, y: number) => {
-    const cells = getBrushCells(x, y, brushSize);
-    if (cells.length === 0) return;
+    const attemptedCells = getBrushCells(x, y, brushSize);
+    if (attemptedCells.length === 0 || !wallet) return;
+
+    const cells = attemptedCells.filter((cell) => {
+      const currentPixel = pixels[cell.y * APP_CONFIG.canvas.width + cell.x];
+      return !isNoopPixelForWallet(currentPixel, wallet.address, color);
+    });
+
+    if (cells.length === 0) {
+      toast.message("No changes applied", {
+        description:
+          attemptedCells.length === 1
+            ? "That pixel already matches your current color and ownership."
+            : `All ${attemptedCells.length} pixels in this ${brushSize}x${brushSize} brush already match your current color and ownership.`,
+      });
+      return;
+    }
 
     if (cells.length === 1) {
-      await paintOnePixel(x, y);
+      await paintOnePixel(cells[0].x, cells[0].y);
       return;
     }
 
@@ -245,10 +300,21 @@ export default function CanvasPage() {
       )
     );
 
-    const successCount = results.filter(Boolean).length;
+    const successCount = results.filter((result) => result === true).length;
+    const noopCount = attemptedCells.length - cells.length + results.filter((result) => result === null).length;
     if (successCount > 0) {
       toast.success("Brush applied!", {
-        description: `${successCount}/${cells.length} pixels painted with the ${brushSize}x${brushSize} brush.`,
+        description:
+          noopCount > 0
+            ? `${successCount} pixels changed, ${noopCount} already matched, in the ${brushSize}x${brushSize} brush.`
+            : `${successCount}/${cells.length} pixels changed with the ${brushSize}x${brushSize} brush.`,
+      });
+      return;
+    }
+
+    if (noopCount > 0) {
+      toast.message("No changes applied", {
+        description: `The remaining ${noopCount} brush pixels already matched the requested state.`,
       });
       return;
     }

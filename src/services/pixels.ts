@@ -89,6 +89,7 @@ export async function paintPixel(params: {
 }): Promise<{
   ok: boolean;
   code?: string;
+  changed?: boolean;
   message?: string;
   remainingMs?: number;
   pixel?: PaintResultPixel;
@@ -114,6 +115,7 @@ export async function paintPixel(params: {
   return data as {
     ok: boolean;
     code?: string;
+    changed?: boolean;
     message?: string;
     remainingMs?: number;
     pixel?: PaintResultPixel;
