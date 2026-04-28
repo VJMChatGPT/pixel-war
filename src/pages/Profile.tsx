@@ -10,18 +10,30 @@ import { useWallet } from "@/hooks/useWallet";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCooldown } from "@/hooks/useCooldown";
 import { APP_CONFIG } from "@/config/app";
-import { fetchWalletPaints, fetchWalletState, type PaintHistoryRow, type PublicWalletStateRow } from "@/services/pixels";
-import { compactNumber, shortAddress, timeAgo, walletGradient } from "@/lib/format";
+import {
+  fetchWalletPaints,
+  fetchWalletState,
+  updateWalletDisplayName,
+  type PaintHistoryRow,
+  type PublicWalletStateRow,
+} from "@/services/pixels";
+import { compactNumber, timeAgo, walletGradient } from "@/lib/format";
+import { formatWalletDisplayName } from "@/lib/wallet-display";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+
+const MAX_DISPLAY_NAME_LENGTH = 32;
 
 export default function Profile() {
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
   const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
   const [history, setHistory] = useState<PaintHistoryRow[]>([]);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [displayNameDraft, setDisplayNameDraft] = useState("");
+  const [savingDisplayName, setSavingDisplayName] = useState(false);
   const { pixels, revision, error: canvasError } = useCanvas();
   const [copied, setCopied] = useState(false);
   const cooldown = useCooldown(walletState?.last_paint_at);
@@ -57,6 +69,10 @@ export default function Profile() {
     };
   }, [wallet]);
 
+  useEffect(() => {
+    setDisplayNameDraft(walletState?.display_name ?? "");
+  }, [wallet?.address, walletState?.display_name]);
+
   if (!isConnected) {
     return (
       <Layout>
@@ -71,12 +87,63 @@ export default function Profile() {
   }
 
   const [a, b] = walletGradient(wallet!.address);
+  const displayLabel = formatWalletDisplayName({
+    wallet: wallet!.address,
+    displayName: walletState?.display_name,
+    currentWallet: wallet!.address,
+  });
+  const trimmedDisplayNameDraft = displayNameDraft.trim();
+  const hasDisplayNameChanges = trimmedDisplayNameDraft !== (walletState?.display_name ?? "");
+  const canSaveDisplayName =
+    !!wallet?.sessionToken &&
+    !savingDisplayName &&
+    trimmedDisplayNameDraft.length <= MAX_DISPLAY_NAME_LENGTH &&
+    hasDisplayNameChanges;
 
   const copyAddress = () => {
     navigator.clipboard.writeText(wallet!.address);
     setCopied(true);
     toast.success("Address copied");
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const saveDisplayName = async (nextDisplayName: string | null = trimmedDisplayNameDraft || null) => {
+    if (!wallet?.sessionToken) {
+      toast.error("Reconnect your wallet to update your profile");
+      return;
+    }
+
+    if (nextDisplayName && nextDisplayName.length > MAX_DISPLAY_NAME_LENGTH) {
+      toast.error("Display name too long", {
+        description: `Use ${MAX_DISPLAY_NAME_LENGTH} characters or fewer.`,
+      });
+      return;
+    }
+
+    setSavingDisplayName(true);
+    try {
+      const result = await updateWalletDisplayName({
+        displayName: nextDisplayName,
+        sessionToken: wallet.sessionToken,
+      });
+
+      if (!result.ok || !result.walletState) {
+        toast.error("Could not save display name", {
+          description: result.message ?? result.error ?? "Try again in a moment.",
+        });
+        return;
+      }
+
+      setWalletState(result.walletState);
+      setDisplayNameDraft(result.walletState.display_name ?? "");
+      toast.success(result.walletState.display_name ? "Display name updated" : "Display name cleared");
+    } catch (error) {
+      toast.error("Could not save display name", {
+        description: error instanceof Error ? error.message : "Try again in a moment.",
+      });
+    } finally {
+      setSavingDisplayName(false);
+    }
   };
 
   return (
@@ -98,10 +165,13 @@ export default function Profile() {
           <div className="flex-1 min-w-0">
             <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">connected wallet</div>
             <div className="flex items-center gap-2 mt-1">
-              <span className="font-mono font-bold text-lg md:text-2xl truncate">{wallet!.address}</span>
+              <span className="font-mono font-bold text-lg md:text-2xl truncate">{displayLabel}</span>
               <Button size="icon" variant="ghost" onClick={copyAddress} className="h-8 w-8 shrink-0">
                 {copied ? <Check className="w-4 h-4 text-accent" /> : <Copy className="w-4 h-4" />}
               </Button>
+            </div>
+            <div className="font-mono text-xs text-muted-foreground mt-1 break-all">
+              {wallet!.address}
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
               <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
@@ -127,6 +197,67 @@ export default function Profile() {
           </NeonCard>
 
           <div className="space-y-4">
+            <NeonCard className="p-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="font-display font-semibold text-base">Display name</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Choose how your wallet is shown on your profile. Leave it empty to fall back to your address.
+                  </p>
+                </div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground shrink-0">
+                  {displayLabel}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Input
+                  value={displayNameDraft}
+                  onChange={(event) => setDisplayNameDraft(event.target.value)}
+                  maxLength={MAX_DISPLAY_NAME_LENGTH}
+                  placeholder="Enter a display name"
+                  className="font-mono"
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-mono text-[11px] text-muted-foreground">
+                    {trimmedDisplayNameDraft.length}/{MAX_DISPLAY_NAME_LENGTH}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled={savingDisplayName || (!walletState?.display_name && trimmedDisplayNameDraft.length === 0)}
+                      onClick={() => {
+                        setDisplayNameDraft("");
+                        void saveDisplayName(null);
+                      }}
+                    >
+                      Reset to address
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={!canSaveDisplayName}
+                      onClick={() => void saveDisplayName()}
+                    >
+                      {savingDisplayName ? "Saving..." : "Save name"}
+                    </Button>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/20 px-3 py-3">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                    Preview
+                  </div>
+                  <div className="font-mono text-sm font-semibold break-all">
+                    {formatWalletDisplayName({
+                      wallet: wallet!.address,
+                      displayName: trimmedDisplayNameDraft || null,
+                      currentWallet: wallet!.address,
+                    })}
+                  </div>
+                </div>
+              </div>
+            </NeonCard>
+
             <NeonCard className="p-5 flex flex-col items-center">
               <CooldownRing
                 remainingMs={cooldown.remainingMs}

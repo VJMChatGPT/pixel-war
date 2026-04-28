@@ -81,6 +81,7 @@ export type Database = {
       }
       wallet_state: {
         Row: {
+          display_name: string | null
           last_balance: number
           last_paint_at: string | null
           pixels_allowed: number
@@ -89,6 +90,7 @@ export type Database = {
           wallet: string
         }
         Insert: {
+          display_name?: string | null
           last_balance?: number
           last_paint_at?: string | null
           pixels_allowed?: number
@@ -97,6 +99,7 @@ export type Database = {
           wallet: string
         }
         Update: {
+          display_name?: string | null
           last_balance?: number
           last_paint_at?: string | null
           pixels_allowed?: number
@@ -111,10 +114,22 @@ export type Database = {
       leaderboard: {
         Row: {
           controlled_pixels: number | null
+          display_name: string | null
           last_active: string | null
           pixels_allowed: number | null
           rank: number | null
           supply_percentage: number | null
+          wallet: string | null
+        }
+        Relationships: []
+      }
+      public_wallet_state: {
+        Row: {
+          display_name: string | null
+          last_paint_at: string | null
+          pixels_allowed: number | null
+          pixels_used: number | null
+          updated_at: string | null
           wallet: string | null
         }
         Relationships: []
