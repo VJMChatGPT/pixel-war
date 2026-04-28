@@ -14,6 +14,7 @@ import { motion, useScroll, useTransform, useSpring, useInView, MotionValue } fr
 import { useMemo, useRef } from "react";
 import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
+import { toast } from "sonner";
 
 /* ------------------------------------------------------------------ */
 /* Section heading helper                                             */
@@ -251,6 +252,19 @@ export default function Landing() {
   const buyBars = useTransform(mechanicProgress, [0.2, 0.6], [0.2, 1]);
   const sellBars = useTransform(mechanicProgress, [0.4, 0.8], [1, 0.15]);
 
+  const handleConnectClick = async () => {
+    try {
+      const connectedWallet = await connect();
+      toast.success("Wallet connected", {
+        description: shortAddress(connectedWallet.address),
+      });
+    } catch (error) {
+      toast.error("Failed to connect", {
+        description: error instanceof Error ? error.message : "Try again in a moment.",
+      });
+    }
+  };
+
   return (
     <Layout>
       <LiveTicker />
@@ -290,7 +304,7 @@ export default function Landing() {
 
         <div className="container relative grid lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] gap-12 lg:gap-20 items-center py-20">
           {/* LEFT — message */}
-          <motion.div style={{ y: heroTextY, opacity: heroTextOpacity }} className="relative">
+          <motion.div style={{ y: heroTextY, opacity: heroTextOpacity }} className="relative z-10">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
               <SectionEyebrow>
                 live · solana · {APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels
@@ -328,7 +342,7 @@ export default function Landing() {
               {!isConnected ? (
                 <Button
                   size="lg"
-                  onClick={() => connect()}
+                  onClick={() => void handleConnectClick()}
                   disabled={connecting}
                   className="group h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] active:scale-[0.98] transition-all"
                 >
@@ -684,20 +698,20 @@ export default function Landing() {
       {/* 6. FINAL CTA — full bleed                                    */}
       {/* ============================================================ */}
       <section className="relative border-t border-border/60 min-h-[90svh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 bg-radial-glow opacity-80" />
-        <div className="absolute inset-0 grid-bg opacity-[0.05]" />
+        <div className="absolute inset-0 bg-radial-glow opacity-80 pointer-events-none" />
+        <div className="absolute inset-0 grid-bg opacity-[0.05] pointer-events-none" />
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full border border-primary/10"
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full border border-primary/10 pointer-events-none"
         />
         <motion.div
           animate={{ rotate: -360 }}
           transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full border border-accent/10"
+          className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full border border-accent/10 pointer-events-none"
         />
 
-        <div className="container relative text-center py-24">
+        <div className="container relative z-10 text-center py-24">
           <Reveal>
             {/* MASCOT — UNCHANGED */}
             <PixlMascot mood="cheer" size={120} className="mx-auto mb-8" />
@@ -716,7 +730,7 @@ export default function Landing() {
             <div className="mt-12 flex flex-wrap gap-3 justify-center">
               {!isConnected ? (
                 <Button
-                  onClick={() => connect()}
+                  onClick={() => void handleConnectClick()}
                   disabled={connecting}
                   size="lg"
                   className="h-16 px-10 text-base bg-gradient-neon glow-primary rounded-xl text-primary-foreground font-semibold"
