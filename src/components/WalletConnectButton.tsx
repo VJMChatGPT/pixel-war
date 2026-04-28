@@ -1,6 +1,7 @@
 import { useWallet } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
 import { shortAddress, walletGradient } from "@/lib/format";
+import { getWalletConnectionErrorMessage } from "@/services/wallet";
 import { Wallet, LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -16,8 +17,8 @@ export function WalletConnectButton() {
           try {
             const w = await connect();
             toast.success("Wallet connected", { description: shortAddress(w.address) });
-          } catch (e: any) {
-            toast.error("Failed to connect", { description: e.message });
+          } catch (error) {
+            toast.error("Failed to connect", { description: getWalletConnectionErrorMessage(error) });
           }
         }}
         disabled={connecting}

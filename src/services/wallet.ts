@@ -10,6 +10,7 @@ type PhantomPublicKey = {
 type PhantomProvider = {
   isPhantom?: boolean;
   publicKey?: PhantomPublicKey | null;
+  providers?: PhantomProvider[];
   connect(options?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: PhantomPublicKey }>;
   disconnect(): Promise<void>;
   signMessage?(message: Uint8Array, display?: "utf8" | "hex"): Promise<{
@@ -20,7 +21,13 @@ type PhantomProvider = {
 
 declare global {
   interface Window {
+    phantom?: {
+      solana?: PhantomProvider;
+    };
     solana?: PhantomProvider;
+    sui?: unknown;
+    suiWallet?: unknown;
+    suiWallets?: unknown;
   }
 }
 
@@ -80,7 +87,7 @@ export const mockWalletAdapter: WalletAdapter = {
 };
 
 export const phantomWalletAdapter: WalletAdapter = {
-  isAvailable: () => typeof window !== "undefined" && !!window.solana?.isPhantom,
+  isAvailable: () => !!getInjectedPhantomProvider(),
   async connect(existing) {
     const provider = getPhantomProvider();
     const restoredSession = existing?.sessionToken
@@ -97,7 +104,21 @@ export const phantomWalletAdapter: WalletAdapter = {
       };
     }
 
-    const { publicKey } = await provider.connect();
+    let publicKey: PhantomPublicKey | null | undefined;
+    try {
+      const connectResult = await provider.connect();
+      publicKey = connectResult?.publicKey ?? provider.publicKey;
+    } catch (error) {
+      publicKey = provider.publicKey;
+      if (!publicKey?.toString()) {
+        throw normalizePhantomConnectError(error);
+      }
+    }
+
+    if (!publicKey?.toString()) {
+      throw new Error("Phantom connected without returning a wallet address.");
+    }
+
     const address = publicKey.toString();
     const challenge = await requestWalletChallenge(address);
 
@@ -106,7 +127,12 @@ export const phantomWalletAdapter: WalletAdapter = {
     }
 
     const encodedMessage = new TextEncoder().encode(challenge.message);
-    const signed = await provider.signMessage(encodedMessage, "utf8");
+    let signed: { publicKey: PhantomPublicKey; signature: Uint8Array };
+    try {
+      signed = await provider.signMessage(encodedMessage, "utf8");
+    } catch (error) {
+      throw normalizeWalletError(error, "Phantom could not sign the authentication message.");
+    }
     const signature = encodeBase64(signed.signature);
     const verified = await verifyWalletChallenge(address, challenge.nonce, signature);
 
@@ -148,7 +174,11 @@ export function getWalletAdapter(preferredWallet?: WalletInfo | null): WalletAda
   if (preferredWallet?.isMock || WALLET_MODE === "mock") return mockWalletAdapter;
   if (phantomWalletAdapter.isAvailable()) return phantomWalletAdapter;
   if (WALLET_MODE === "phantom" || WALLET_MODE === "auto") {
-    throw new Error("Phantom wallet not found. Install Phantom or use VITE_WALLET_MODE=mock only for local demos.");
+    if (hasLikelyNonSolanaWalletInstalled()) {
+      throw new Error("This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use Phantom or another Solana-compatible wallet.");
+    }
+
+    throw new Error("Phantom was not detected. Please install or enable Phantom. This app only supports Solana wallets.");
   }
 
   return mockWalletAdapter;
@@ -158,6 +188,37 @@ export function computeAllowedPixels(balance: number, totalSupply: number): numb
   if (totalSupply <= 0 || balance <= 0) return 0;
   const pct = balance / totalSupply;
   return Math.floor(pct * APP_CONFIG.canvas.totalPixels);
+}
+
+export function getWalletConnectionErrorMessage(error: unknown) {
+  const normalized = normalizeWalletError(error, "Wallet connection failed before authentication started.");
+  const message = normalized.message.trim();
+
+  if (isMissingPhantomMessage(message)) {
+    return hasLikelyNonSolanaWalletInstalled()
+      ? "This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use Phantom or another Solana-compatible wallet."
+      : "Phantom was not detected. Please install or enable Phantom. This app only supports Solana wallets.";
+  }
+
+  if (isUserRejectedMessage(message)) {
+    return "Phantom is detected, but the connection was rejected or cancelled. Unlock Phantom and approve the Solana wallet connection request.";
+  }
+
+  if (isLockedWalletMessage(message)) {
+    return "Phantom is installed but appears to be locked. Unlock Phantom first, then try connecting again.";
+  }
+
+  if (message === "Your wallet does not support message signing.") {
+    return "This app only supports Solana wallets that can sign messages. Please use Phantom or another Solana-compatible wallet.";
+  }
+
+  if (message.includes("Unexpected error")) {
+    return hasMultipleSolanaProviders()
+      ? "Wallet connection failed before authentication. Multiple wallet extensions may be interfering. Try disabling other wallet extensions and use Phantom with a Solana wallet, not a Sui wallet."
+      : "Wallet connection failed before authentication. Make sure you are using a Solana wallet, not a Sui wallet, and try again with Phantom.";
+  }
+
+  return message;
 }
 
 async function requestWalletChallenge(wallet: string) {
@@ -244,11 +305,47 @@ async function revokeWalletSession(sessionToken: string) {
 }
 
 function getPhantomProvider(): PhantomProvider {
-  const provider = typeof window !== "undefined" ? window.solana : undefined;
+  const provider = getInjectedPhantomProvider();
   if (!provider?.isPhantom) {
-    throw new Error("Phantom wallet not found. Install Phantom to connect a real wallet.");
+    if (hasLikelyNonSolanaWalletInstalled()) {
+      throw new Error("This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use Phantom or another Solana-compatible wallet.");
+    }
+
+    throw new Error("Phantom was not detected. Please install or enable Phantom to connect a real wallet.");
   }
+
+  if (typeof provider.connect !== "function") {
+    throw new Error("The detected wallet provider does not expose a Solana connection API. Please use Phantom or another Solana-compatible wallet.");
+  }
+
   return provider;
+}
+
+function getInjectedPhantomProvider() {
+  if (typeof window === "undefined") return undefined;
+
+  if (window.phantom?.solana?.isPhantom) {
+    return window.phantom.solana;
+  }
+
+  if (window.solana?.isPhantom) {
+    return window.solana;
+  }
+
+  return window.solana?.providers?.find((provider) => provider?.isPhantom);
+}
+
+function hasMultipleSolanaProviders() {
+  if (typeof window === "undefined") return false;
+
+  const providers = window.solana?.providers;
+  return Array.isArray(providers) && providers.filter(Boolean).length > 1;
+}
+
+function hasLikelyNonSolanaWalletInstalled() {
+  if (typeof window === "undefined") return false;
+
+  return Boolean(window.suiWallet || window.sui || (Array.isArray(window.suiWallets) && window.suiWallets.length > 0));
 }
 
 function deterministicDemoBalance(address: string): number {
@@ -291,4 +388,71 @@ async function readFunctionError(error: Error) {
   }
 
   return error;
+}
+
+function normalizeWalletError(error: unknown, fallbackMessage: string) {
+  if (error instanceof Error && error.message) {
+    return error;
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    return new Error(error);
+  }
+
+  if (error && typeof error === "object") {
+    const message =
+      readMessageField(error, "message") ??
+      readMessageField(error, "error") ??
+      readMessageField(error, "reason") ??
+      readMessageField(error, "details");
+
+    if (message) {
+      return new Error(message);
+    }
+
+    try {
+      return new Error(JSON.stringify(error));
+    } catch {
+      // Fall through to the fallback below.
+    }
+  }
+
+  return new Error(fallbackMessage);
+}
+
+function normalizePhantomConnectError(error: unknown) {
+  const normalized = normalizeWalletError(error, "Phantom connection failed before authentication started.");
+
+  if (normalized.message === "Unexpected error") {
+    return new Error(
+      'Phantom returned "Unexpected error" before PixelDAO could start wallet-auth. This is coming from the Phantom provider, not Supabase. Make sure you are using a Solana wallet, not a Sui wallet, and try unlocking Phantom, refreshing the page, or temporarily disabling other wallet extensions.',
+    );
+  }
+
+  return normalized;
+}
+
+function readMessageField(value: object, key: "message" | "error" | "reason" | "details") {
+  const field = (value as Record<string, unknown>)[key];
+  return typeof field === "string" && field.trim() ? field : null;
+}
+
+function isLockedWalletMessage(message: string) {
+  const lower = message.toLowerCase();
+  return lower.includes("locked") || lower.includes("unlock");
+}
+
+function isMissingPhantomMessage(message: string) {
+  const lower = message.toLowerCase();
+  return lower.includes("phantom wallet not found") || lower.includes("phantom was not detected");
+}
+
+function isUserRejectedMessage(message: string) {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("user rejected") ||
+    lower.includes("rejected the request") ||
+    lower.includes("cancelled") ||
+    lower.includes("canceled")
+  );
 }

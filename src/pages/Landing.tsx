@@ -10,6 +10,7 @@ import { APP_CONFIG } from "@/config/app";
 import { CanvasGrid } from "@/components/CanvasGrid";
 import { ScrollStoryCanvas } from "@/components/ScrollStoryCanvas";
 import { useWallet } from "@/hooks/useWallet";
+import { getWalletConnectionErrorMessage } from "@/services/wallet";
 import { motion, useScroll, useTransform, useSpring, useInView, MotionValue } from "framer-motion";
 import { useMemo, useRef } from "react";
 import { shortAddress } from "@/lib/format";
@@ -260,7 +261,7 @@ export default function Landing() {
       });
     } catch (error) {
       toast.error("Failed to connect", {
-        description: error instanceof Error ? error.message : "Try again in a moment.",
+        description: getWalletConnectionErrorMessage(error),
       });
     }
   };
