@@ -4,9 +4,9 @@ import {
   buildSharePath,
   getShareDisplayLabel,
   getShareFallbackAddress,
-} from "../src/lib/share";
-import { formatPoints } from "../src/lib/format";
-import { fetchShareSnapshot, htmlEscape, isValidWalletAddress } from "./_share";
+} from "../src/lib/share.js";
+import { formatPoints } from "../src/lib/format.js";
+import { fetchShareSnapshot, htmlEscape, isValidWalletAddress } from "./_share.js";
 
 export const config = {
   runtime: "edge",

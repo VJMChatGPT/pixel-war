@@ -1,14 +1,24 @@
-import { APP_CONFIG } from "@/config/app";
-import { formatPoints, shortAddress } from "@/lib/format";
-import { formatWalletDisplayName } from "@/lib/wallet-display";
-import type { PixelRow, PublicWalletStateRow } from "@/services/pixels";
+import { APP_CONFIG } from "../config/app";
+import { formatPoints, shortAddress } from "./format";
 
 const DEFAULT_SITE_URL = "https://pixel-propaganda-project.vercel.app";
 
 type ShareWalletState = Pick<
-  PublicWalletStateRow,
+  {
+    display_name: string | null;
+    total_points: number | null;
+    points_per_second: number | null;
+    pixels_used: number | null;
+  },
   "display_name" | "total_points" | "points_per_second" | "pixels_used"
 >;
+
+type SharePixel = {
+  x: number;
+  y: number;
+  color: string;
+  owner_wallet: string | null;
+};
 
 function escapeXml(value: string) {
   return value
@@ -26,11 +36,9 @@ function normalizeOrigin(origin?: string) {
 }
 
 export function getShareDisplayLabel(walletAddress: string, walletState: ShareWalletState | null) {
-  return formatWalletDisplayName({
-    wallet: walletAddress,
-    displayName: walletState?.display_name ?? null,
-    shortenFallback: true,
-  });
+  const fallback = shortAddress(walletAddress);
+  const displayName = walletState?.display_name?.trim();
+  return displayName || fallback;
 }
 
 export function buildSharePath(walletAddress: string) {
@@ -80,7 +88,7 @@ export function buildShareBoardSvg({
   width = 480,
   height = 480,
 }: {
-  pixels: Pick<PixelRow, "x" | "y" | "color" | "owner_wallet">[];
+  pixels: SharePixel[];
   walletAddress: string;
   width?: number;
   height?: number;
