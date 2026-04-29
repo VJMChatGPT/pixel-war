@@ -10,6 +10,12 @@ export function compactNumber(n: number): string {
   return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(n);
 }
 
+export const POINTS_PER_PIXEL_PER_SECOND = 0.05;
+
+export function estimatePointsPerSecond(controlledPixels: number | null | undefined): number {
+  return Math.max(0, Number(controlledPixels ?? 0)) * POINTS_PER_PIXEL_PER_SECOND;
+}
+
 export function formatPoints(value: number, maximumFractionDigits = 1): string {
   return new Intl.NumberFormat("en", {
     minimumFractionDigits: value > 0 && value < 10 ? Math.min(1, maximumFractionDigits) : 0,

@@ -17,7 +17,7 @@ import {
   type PaintHistoryRow,
   type PublicWalletStateRow,
 } from "@/services/pixels";
-import { compactNumber, formatPoints, timeAgo, walletGradient } from "@/lib/format";
+import { compactNumber, estimatePointsPerSecond, formatPoints, timeAgo, walletGradient } from "@/lib/format";
 import { formatWalletDisplayName } from "@/lib/wallet-display";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -109,7 +109,10 @@ export default function Profile() {
     currentWallet: wallet!.address,
   });
   const authoritativePointsTotal = walletState?.total_points ?? 0;
-  const pointsPerSecond = walletState?.points_per_second ?? 0;
+  const pointsPerSecond =
+    walletState?.points_per_second && walletState.points_per_second > 0
+      ? walletState.points_per_second
+      : estimatePointsPerSecond(displayUsedPixels);
   const projectedPointsPerMinute = pointsPerSecond * 60;
   const projectedPointsPerHour = pointsPerSecond * 3600;
   const animatedPointsTotal =

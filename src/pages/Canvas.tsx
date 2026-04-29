@@ -16,7 +16,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useCooldown } from "@/hooks/useCooldown";
 import { fetchWalletState, paintPixel, type PixelRow, type PublicWalletStateRow } from "@/services/pixels";
 import { APP_CONFIG } from "@/config/app";
-import { compactNumber, formatPoints, shortAddress } from "@/lib/format";
+import { compactNumber, estimatePointsPerSecond, formatPoints, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Brush, LocateFixed, Sparkles } from "lucide-react";
@@ -115,14 +115,17 @@ export default function CanvasPage() {
 
   const cooldown = useCooldown(walletState?.last_paint_at);
   const usedPixels = walletState?.pixels_used ?? 0;
-  const authoritativePointsTotal = walletState?.total_points ?? 0;
-  const pointsPerSecond = walletState?.points_per_second ?? 0;
-  const animatedPointsTotal =
-    authoritativePointsTotal + Math.max(0, (pointsDisplayNowMs - pointsSnapshotAtMs) / 1000) * pointsPerSecond;
   const ownedPixelCount = useMemo(
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, revision, wallet]
   );
+  const authoritativePointsTotal = walletState?.total_points ?? 0;
+  const pointsPerSecond =
+    walletState?.points_per_second && walletState.points_per_second > 0
+      ? walletState.points_per_second
+      : estimatePointsPerSecond(Math.max(ownedPixelCount, usedPixels));
+  const animatedPointsTotal =
+    authoritativePointsTotal + Math.max(0, (pointsDisplayNowMs - pointsSnapshotAtMs) / 1000) * pointsPerSecond;
   const displayUsedPixels = Math.min(allowedPixels, Math.max(ownedPixelCount, usedPixels));
   const displayLoadedOwnedPixels = Math.min(allowedPixels, ownedPixelCount);
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
