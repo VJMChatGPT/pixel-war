@@ -174,7 +174,7 @@ function CinematicNarrative() {
 
         {/* vignette overlay (deep at the closest zoom for cinematic feel) */}
         <motion.div
-          style={{ opacity: useTransform([vignette, boundaryOpacity], ([v, b]) => v * b) }}
+          style={{ opacity: vignetteOpacity }}
           className="pointer-events-none absolute inset-0"
           aria-hidden
         >
