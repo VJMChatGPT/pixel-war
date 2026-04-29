@@ -120,20 +120,37 @@ function CinematicNarrative() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const [activeStage, setActiveStage] = useState(0);
 
-  // 5 stages → scale from 18x (single pixel zoom) → 1x (whole board) → 0.95x
-  const scale = useSpring(useTransform(scrollYProgress, [0, 0.25, 0.55, 0.8, 1], [22, 8, 2.2, 1, 0.95]), {
-    stiffness: 60,
-    damping: 24,
+  // Smooth the raw scroll progress first — produces buttery motion across all derived values
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 110,
+    damping: 32,
+    mass: 0.55,
+    restDelta: 0.0005,
   });
-  // Pan slightly while zooming
-  const x = useTransform(scrollYProgress, [0, 1], ["18%", "0%"]);
-  const y = useTransform(scrollYProgress, [0, 1], ["-12%", "0%"]);
-  const vignette = useTransform(scrollYProgress, [0, 0.3, 1], [0.85, 0.5, 0.25]);
-  const boundaryOpacity = useTransform(scrollYProgress, [0, 0.04, 0.96, 1], [0, 1, 1, 0]);
-  const boundaryGlowOpacity = useTransform(scrollYProgress, [0, 0.06, 0.94, 1], [0, 0.4, 0.4, 0]);
+
+  // 5 stages → focused on a single cell → cluster → territory → board → settled wide
+  // Curve eased for cinematic deceleration as we pull back
+  const scaleRaw = useTransform(
+    smoothProgress,
+    [0, 0.18, 0.4, 0.62, 0.82, 1],
+    [28, 12, 4.6, 1.9, 1.04, 0.96],
+  );
+  const scale = useSpring(scaleRaw, { stiffness: 70, damping: 26, mass: 0.5 });
+
+  // Subtle pan that drifts toward center as we zoom out
+  const x = useTransform(smoothProgress, [0, 0.35, 1], ["22%", "8%", "0%"]);
+  const y = useTransform(smoothProgress, [0, 0.35, 1], ["-14%", "-4%", "0%"]);
+  const vignette = useTransform(smoothProgress, [0, 0.3, 1], [0.85, 0.5, 0.22]);
+  const vignetteOpacity = useTransform(smoothProgress, (v) => {
+    const vg = 0.85 + (0.22 - 0.85) * Math.min(1, Math.max(0, v / 1));
+    const b = v < 0.04 ? v / 0.04 : v > 0.96 ? (1 - v) / 0.04 : 1;
+    return Math.max(0, vg * b);
+  });
+  const boundaryOpacity = useTransform(smoothProgress, [0, 0.04, 0.96, 1], [0, 1, 1, 0]);
+  const boundaryGlowOpacity = useTransform(smoothProgress, [0, 0.06, 0.94, 1], [0, 0.4, 0.4, 0]);
   const currentStage = STAGES[activeStage];
 
-  useMotionValueEvent(scrollYProgress, "change", (value) => {
+  useMotionValueEvent(smoothProgress, "change", (value) => {
     const nextStage = Math.min(STAGES.length - 1, Math.floor(value * STAGES.length * 0.999));
     setActiveStage((prev) => (prev === nextStage ? prev : nextStage));
   });
@@ -157,7 +174,7 @@ function CinematicNarrative() {
 
         {/* vignette overlay (deep at the closest zoom for cinematic feel) */}
         <motion.div
-          style={{ opacity: useTransform([vignette, boundaryOpacity], ([v, b]) => v * b) }}
+          style={{ opacity: vignetteOpacity }}
           className="pointer-events-none absolute inset-0"
           aria-hidden
         >
