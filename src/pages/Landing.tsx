@@ -293,6 +293,11 @@ export default function Landing() {
   return (
     <Layout>
       {/* ============================================================ */}
+      {/* 0. ROUND COUNTDOWN BANNER — round-system intro                */}
+      {/* ============================================================ */}
+      <RoundCountdownBanner />
+
+      {/* ============================================================ */}
       {/* 1. HERO — full-bleed cinematic                              */}
       {/* ============================================================ */}
       <section
@@ -479,6 +484,11 @@ export default function Landing() {
       {/* 2. CINEMATIC NARRATIVE — pinned scroll-zoom through stages  */}
       {/* ============================================================ */}
       <CinematicNarrative />
+
+      {/* ============================================================ */}
+      {/* 2.5 ROUND SYSTEM — countdown · winner ad · how it works · museum */}
+      {/* ============================================================ */}
+      <RoundSystemSection />
 
       {/* ============================================================ */}
       {/* 3. HOW IT WORKS — visual 3-step                              */}
