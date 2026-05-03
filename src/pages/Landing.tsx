@@ -108,11 +108,11 @@ function DominanceBoard({ pixels }: { pixels: (PixelRow | null)[] }) {
 /* progressively revealed scales (pixel → cluster → board → dom)      */
 /* ------------------------------------------------------------------ */
 const STAGES = [
-  { key: "pixel", label: "01 · Pixel", title: "One pixel.", sub: "0.01% of supply. A single on-chain cell, yours to color." },
-  { key: "cluster", label: "02 · Cluster", title: "A cluster.", sub: "Stack tokens. Stack pixels. Build a recognizable mark." },
-  { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells. A region of the board with your name on it." },
-  { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas." },
-  { key: "dominance", label: "05 · Dominance", title: "Dominance.", sub: "The biggest wallet rules the most pixels — until someone takes them." },
+  { key: "pixel", label: "01 · Pixel", title: "One pixel.", sub: "0.01% of supply. A single on-chain cell — yours to color, yours to defend." },
+  { key: "cluster", label: "02 · Cluster", title: "A cluster.", sub: "Stack tokens. Stack pixels. Plant a mark the whole board can recognize." },
+  { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells under one wallet. A region of the canvas with your name on it." },
+  { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas — every round." },
+  { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on PIXL." },
 ];
 
 const MECHANIC_PIXEL_COUNT = 60;
