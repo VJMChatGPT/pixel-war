@@ -175,7 +175,7 @@ function CinematicNarrative() {
   });
 
   return (
-    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * 100}vh` }}>
+    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * 165}vh` }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-background isolate">
         {/* ambient grid */}
         <div className="absolute inset-0 grid-bg opacity-[0.05]" />
@@ -249,10 +249,10 @@ function CinematicNarrative() {
           </div>
         </motion.div>
 
-        {/* Center text scrim — keeps copy readable while board stays visible */}
+        {/* Center text scrim — stronger, keeps copy crisply readable over the board */}
         <motion.div
           style={{ opacity: boundaryContentOpacity }}
-          className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_60%_45%_at_50%_50%,hsl(var(--background)/0.78)_0%,hsl(var(--background)/0.55)_45%,transparent_75%)]"
+          className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_70%_55%_at_50%_50%,hsl(var(--background)/0.92)_0%,hsl(var(--background)/0.78)_38%,hsl(var(--background)/0.4)_65%,transparent_82%)]"
           aria-hidden
         />
 
@@ -264,23 +264,35 @@ function CinematicNarrative() {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStage.key}
-              initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
+              initial={{ opacity: 0, y: 18, filter: "blur(4px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -16, filter: "blur(6px)" }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-3xl text-center"
+              exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              className="relative max-w-3xl text-center"
             >
+              {/* Soft solid backing panel directly behind text for guaranteed legibility */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-x-10 -inset-y-8 md:-inset-x-16 md:-inset-y-12 -z-10 rounded-[2rem] bg-background/55 backdrop-blur-md ring-1 ring-white/5 shadow-[0_30px_120px_-20px_hsl(var(--background))]"
+                style={{ maskImage: "radial-gradient(ellipse at center, black 55%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse at center, black 55%, transparent 100%)" }}
+              />
               <div className="font-mono text-[11px] md:text-xs uppercase tracking-[0.4em] text-accent mb-5 drop-shadow-[0_0_12px_hsl(var(--accent)/0.6)]">
                 {currentStage.label}
               </div>
-              <h3 className="font-display font-bold text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.88] tracking-tight text-gradient-hero drop-shadow-[0_2px_30px_hsl(var(--primary)/0.45)]">
+              <h3
+                className="font-display font-bold text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.88] tracking-tight text-gradient-hero"
+                style={{ filter: "drop-shadow(0 2px 18px hsl(var(--background))) drop-shadow(0 0 28px hsl(var(--primary) / 0.55))" }}
+              >
                 {currentStage.title}
               </h3>
-              <p className="mt-7 mx-auto text-lg md:text-2xl leading-snug text-foreground/90 max-w-2xl font-medium">
+              <p
+                className="mt-7 mx-auto text-lg md:text-2xl leading-snug text-foreground max-w-2xl font-medium"
+                style={{ textShadow: "0 1px 2px hsl(var(--background)), 0 2px 16px hsl(var(--background) / 0.95), 0 0 32px hsl(var(--background))" }}
+              >
                 {currentStage.sub}
               </p>
               {currentStage.key === "dominance" && (
-                <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-accent backdrop-blur-sm">
+                <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-accent/50 bg-background/70 px-4 py-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-accent backdrop-blur-md shadow-[0_0_24px_hsl(var(--accent)/0.25)]">
                   <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
                   winner gets the homepage ad slot
                 </div>
