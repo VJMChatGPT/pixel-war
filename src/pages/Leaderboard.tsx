@@ -21,28 +21,80 @@ type PointsBoardEntry = PointsLeaderboardRow & {
   rank: number;
 };
 
-function filterWalletRows<T extends { wallet: string | null }>(rows: T[], search: string) {
+type WalletDisplayRow = {
+  wallet: string | null;
+  displayName?: string | null;
+  display_name?: string | null;
+};
+
+function getRowDisplayName(row: WalletDisplayRow) {
+  return row.displayName ?? row.display_name ?? null;
+}
+
+function filterWalletRows<T extends WalletDisplayRow>(rows: T[], search: string) {
   const query = search.trim().toLowerCase();
   if (!query) return rows;
-  return rows.filter((row) => row.wallet?.toLowerCase().includes(query));
+  return rows.filter((row) => {
+    const walletMatch = row.wallet?.toLowerCase().includes(query);
+    const displayNameMatch = getRowDisplayName(row)?.trim().toLowerCase().includes(query);
+    return walletMatch || displayNameMatch;
+  });
+}
+
+function WalletIdentity({
+  wallet,
+  displayName,
+  currentWallet,
+  compact = false,
+}: {
+  wallet: string | null;
+  displayName?: string | null;
+  currentWallet?: string | null;
+  compact?: boolean;
+}) {
+  const hasDisplayName = !!displayName?.trim();
+  const primaryLabel = formatWalletDisplayName({
+    wallet,
+    displayName,
+    currentWallet,
+    shortenFallback: true,
+  });
+  const addressLabel = shortAddress(wallet ?? "");
+
+  return (
+    <div className="min-w-0">
+      <div className={cn("font-mono truncate", compact ? "text-sm font-semibold mb-1" : "")}>
+        {primaryLabel}
+      </div>
+      {hasDisplayName && (
+        <div className="font-mono text-[10px] text-muted-foreground truncate">
+          {addressLabel}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Podium({
   rows,
   metricLabel,
   metricValue,
+  currentWallet,
 }: {
   rows: Array<{
     wallet: string | null;
     rank: number | null;
     displayName?: string | null;
+    display_name?: string | null;
   }>;
   metricLabel: string;
   metricValue: (row: {
     wallet: string | null;
     rank: number | null;
     displayName?: string | null;
+    display_name?: string | null;
   }) => string;
+  currentWallet?: string | null;
 }) {
   const podium = rows.slice(0, 3);
 
@@ -73,9 +125,12 @@ function Podium({
                 className="w-20 h-20 rounded-2xl mx-auto mb-3 shadow-xl"
                 style={{ background: `linear-gradient(135deg, ${a}, ${b})` }}
               />
-              <div className="font-mono font-semibold text-sm mb-1 truncate">
-                {row.displayName?.trim() || shortAddress(row.wallet ?? "")}
-              </div>
+              <WalletIdentity
+                wallet={row.wallet}
+                displayName={getRowDisplayName(row)}
+                currentWallet={currentWallet}
+                compact
+              />
               <div className="font-display font-bold text-3xl text-gradient-neon mt-3">
                 {metricValue(row)}
               </div>
@@ -129,19 +184,7 @@ function LeaderboardTable({
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="w-7 h-7 rounded-md shrink-0" style={{ background: `linear-gradient(135deg, ${a}, ${b})` }} />
-                    <div className="min-w-0">
-                      <div className="font-mono truncate">
-                        {formatWalletDisplayName({
-                          wallet: row.wallet,
-                          displayName: row.displayName,
-                          currentWallet,
-                          shortenFallback: true,
-                        })}
-                      </div>
-                      {row.displayName?.trim() && (
-                        <div className="font-mono text-[10px] text-muted-foreground truncate">{shortAddress(row.wallet ?? "")}</div>
-                      )}
-                    </div>
+                    <WalletIdentity wallet={row.wallet} displayName={row.displayName} currentWallet={currentWallet} />
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums">{row.metric}</td>
@@ -260,6 +303,7 @@ export default function Leaderboard() {
                 rows={pointsPodium}
                 metricLabel="total points"
                 metricValue={(row) => compactNumber(Number((row as PointsBoardEntry).total_points) ?? 0)}
+                currentWallet={wallet?.address}
               />
 
               <NeonCard className="p-2 md:p-4">
@@ -299,6 +343,7 @@ export default function Leaderboard() {
                 rows={pixelPodium}
                 metricLabel="pixels controlled"
                 metricValue={(row) => compactNumber(Number((row as LeaderboardRow).controlled_pixels) ?? 0)}
+                currentWallet={wallet?.address}
               />
 
               <NeonCard className="p-2 md:p-4">
