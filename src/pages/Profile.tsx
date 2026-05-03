@@ -7,17 +7,16 @@ import { PixelBadge } from "@/components/PixelBadge";
 import { CanvasGrid } from "@/components/CanvasGrid";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { useWallet } from "@/hooks/useWallet";
+import { useAnimatedWalletPoints, useWalletState } from "@/hooks/useWalletState";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCooldown } from "@/hooks/useCooldown";
 import { APP_CONFIG } from "@/config/app";
 import {
   fetchWalletPaints,
-  fetchWalletState,
   updateWalletDisplayName,
   type PaintHistoryRow,
-  type PublicWalletStateRow,
 } from "@/services/pixels";
-import { compactNumber, estimatePointsPerSecond, formatPoints, timeAgo, walletGradient } from "@/lib/format";
+import { compactNumber, formatPoints, timeAgo, walletGradient } from "@/lib/format";
 import { formatWalletDisplayName } from "@/lib/wallet-display";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -29,13 +28,11 @@ const MAX_DISPLAY_NAME_LENGTH = 32;
 
 export default function Profile() {
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
-  const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
+  const { invalidateWalletState, setWalletStateData, walletState, walletStateError } = useWalletState();
   const [history, setHistory] = useState<PaintHistoryRow[]>([]);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [savingDisplayName, setSavingDisplayName] = useState(false);
-  const [pointsSnapshotAtMs, setPointsSnapshotAtMs] = useState(() => Date.now());
-  const [pointsDisplayNowMs, setPointsDisplayNowMs] = useState(() => Date.now());
   const { pixels, revision, error: canvasError } = useCanvas();
   const [copied, setCopied] = useState(false);
   const cooldown = useCooldown(walletState?.last_paint_at);
@@ -47,18 +44,20 @@ export default function Profile() {
     allowedPixels,
     Math.max(ownedPixelCount, walletState?.pixels_used ?? 0)
   );
+  const { animatedPointsTotal, pointsPerSecond } = useAnimatedWalletPoints(displayUsedPixels);
 
   useEffect(() => {
-    if (!wallet) return;
+    if (!wallet) {
+      setHistory([]);
+      setProfileError(null);
+      return;
+    }
+
     let cancelled = false;
     setProfileError(null);
-    Promise.all([
-      fetchWalletState(wallet.address),
-      fetchWalletPaints(wallet.address, 5),
-    ])
-      .then(([walletData, paintData]) => {
+    fetchWalletPaints(wallet.address, 5)
+      .then((paintData) => {
         if (cancelled) return;
-        setWalletState(walletData);
         setHistory(paintData);
       })
       .catch((err: Error) => {
@@ -74,20 +73,6 @@ export default function Profile() {
   useEffect(() => {
     setDisplayNameDraft(walletState?.display_name ?? "");
   }, [wallet?.address, walletState?.display_name]);
-
-  useEffect(() => {
-    setPointsSnapshotAtMs(Date.now());
-  }, [walletState?.total_points, walletState?.points_per_second, wallet?.address]);
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setPointsDisplayNowMs(Date.now());
-    }, 1000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, []);
 
   if (!isConnected) {
     return (
@@ -108,15 +93,8 @@ export default function Profile() {
     displayName: walletState?.display_name,
     currentWallet: wallet!.address,
   });
-  const authoritativePointsTotal = walletState?.total_points ?? 0;
-  const pointsPerSecond =
-    walletState?.points_per_second && walletState.points_per_second > 0
-      ? walletState.points_per_second
-      : estimatePointsPerSecond(displayUsedPixels);
   const projectedPointsPerMinute = pointsPerSecond * 60;
   const projectedPointsPerHour = pointsPerSecond * 3600;
-  const animatedPointsTotal =
-    authoritativePointsTotal + Math.max(0, (pointsDisplayNowMs - pointsSnapshotAtMs) / 1000) * pointsPerSecond;
   const trimmedDisplayNameDraft = displayNameDraft.trim();
   const previewDisplayLabel = formatWalletDisplayName({
     wallet: wallet!.address,
@@ -164,8 +142,9 @@ export default function Profile() {
         return;
       }
 
-      setWalletState(result.walletState);
+      setWalletStateData(result.walletState);
       setDisplayNameDraft(result.walletState.display_name ?? "");
+      void invalidateWalletState();
       toast.success(result.walletState.display_name ? "Display name updated" : "Display name cleared");
     } catch (error) {
       toast.error("Could not save display name", {
@@ -179,10 +158,10 @@ export default function Profile() {
   return (
     <Layout>
       <div className="container py-10 space-y-6">
-        {(profileError || canvasError) && (
+        {(profileError || walletStateError || canvasError) && (
           <Alert variant="destructive" className="border-destructive/40 bg-destructive/10">
             <AlertTitle>Profile data failed to load</AlertTitle>
-            <AlertDescription>{profileError ?? canvasError}</AlertDescription>
+            <AlertDescription>{profileError ?? walletStateError ?? canvasError}</AlertDescription>
           </Alert>
         )}
 
@@ -206,7 +185,7 @@ export default function Profile() {
             <div className="flex flex-wrap gap-2 mt-4">
               <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
               <PixelBadge count={displayUsedPixels} label="painted" variant="secondary" />
-              <PixelBadge count={Number(supplyPercent.toFixed(3)) as any} label="% supply" variant="accent" />
+              <PixelBadge count={Number(supplyPercent.toFixed(3))} label="% supply" variant="accent" />
             </div>
             <div className="grid sm:grid-cols-2 gap-3 mt-5">
               <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">

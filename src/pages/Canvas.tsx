@@ -13,10 +13,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCanvas } from "@/hooks/useCanvas";
 import { useWallet } from "@/hooks/useWallet";
+import { useAnimatedWalletPoints, useWalletState } from "@/hooks/useWalletState";
 import { useCooldown } from "@/hooks/useCooldown";
-import { fetchWalletState, paintPixel, type PixelRow, type PublicWalletStateRow } from "@/services/pixels";
+import { paintPixel, type PixelRow } from "@/services/pixels";
 import { APP_CONFIG } from "@/config/app";
-import { compactNumber, estimatePointsPerSecond, formatPoints, shortAddress } from "@/lib/format";
+import { compactNumber, formatPoints, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Brush, LocateFixed, Sparkles } from "lucide-react";
@@ -87,30 +88,12 @@ function getBrushCells(x: number, y: number, brushSize: number) {
 export default function CanvasPage() {
   const { pixels, revision, loading: canvasLoading, error: canvasError, patchPixel } = useCanvas();
   const { wallet, isConnected, allowedPixels, supplyPercent } = useWallet();
-  const [walletState, setWalletState] = useState<PublicWalletStateRow | null>(null);
+  const { walletState, invalidateWalletState, setWalletStateData } = useWalletState();
   const [color, setColor] = useState<string>(APP_CONFIG.palette[0]);
   const [brushSize, setBrushSize] = useState(1);
   const [pendingPaints, setPendingPaints] = useState(0);
   const [focusKey, setFocusKey] = useState(0);
   const [focusMine, setFocusMine] = useState(false);
-  const [pointsSnapshotAtMs, setPointsSnapshotAtMs] = useState(() => Date.now());
-  const [pointsDisplayNowMs, setPointsDisplayNowMs] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!wallet) {
-      setWalletState(null);
-      return;
-    }
-
-    let cancelled = false;
-    fetchWalletState(wallet.address).then((state) => {
-      if (!cancelled) setWalletState(state);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [wallet]);
 
   const cooldown = useCooldown(walletState?.last_paint_at);
   const usedPixels = walletState?.pixels_used ?? 0;
@@ -118,32 +101,12 @@ export default function CanvasPage() {
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, revision, wallet]
   );
-  const authoritativePointsTotal = walletState?.total_points ?? 0;
-  const pointsPerSecond =
-    walletState?.points_per_second && walletState.points_per_second > 0
-      ? walletState.points_per_second
-      : estimatePointsPerSecond(Math.max(ownedPixelCount, usedPixels));
-  const animatedPointsTotal =
-    authoritativePointsTotal + Math.max(0, (pointsDisplayNowMs - pointsSnapshotAtMs) / 1000) * pointsPerSecond;
   const displayUsedPixels = Math.min(allowedPixels, Math.max(ownedPixelCount, usedPixels));
   const displayLoadedOwnedPixels = Math.min(allowedPixels, ownedPixelCount);
+  const { animatedPointsTotal, pointsPerSecond } = useAnimatedWalletPoints(Math.max(ownedPixelCount, usedPixels));
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
   const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0;
   const canvasSyncIssue = !canvasLoading && !canvasError && usedPixels > 0 && ownedPixelCount === 0;
-
-  useEffect(() => {
-    setPointsSnapshotAtMs(Date.now());
-  }, [walletState?.total_points, walletState?.points_per_second, wallet?.address]);
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setPointsDisplayNowMs(Date.now());
-    }, 1000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, []);
 
   useEffect(() => {
     if (!wallet) {
@@ -231,7 +194,11 @@ export default function CanvasPage() {
           previousPixel,
           patchPixel,
         });
-        if (res.walletState) setWalletState(res.walletState);
+        if (res.walletState) {
+          setWalletStateData(res.walletState);
+        } else {
+          void invalidateWalletState();
+        }
         if (!options?.silentSuccess) {
           toast.message("No changes applied", {
             description: res.message ?? "That pixel already matched the requested state.",
@@ -248,7 +215,11 @@ export default function CanvasPage() {
         patchPixel(res.evictedPixel.x, res.evictedPixel.y, { ...res.evictedPixel, active: true });
       }
 
-      if (res.walletState) setWalletState(res.walletState);
+      if (res.walletState) {
+        setWalletStateData(res.walletState);
+      } else {
+        void invalidateWalletState();
+      }
 
       if (!options?.silentSuccess) {
         toast.success("Pixel painted!", {
