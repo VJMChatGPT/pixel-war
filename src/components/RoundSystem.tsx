@@ -194,27 +194,95 @@ export function WinnerAdSlot() {
       ))}
 
       <div className="absolute top-3 left-3 z-20 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-accent text-accent-foreground font-mono text-[10px] font-bold uppercase tracking-[0.2em] shadow-[0_0_20px_hsl(var(--accent)/0.5)]">
-        <Crown className="w-3 h-3" /> future winner slot
+        <Crown className="w-3 h-3" /> winner promotion slot
       </div>
       <div className="absolute top-3 right-3 z-20 font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground">
         round #{roundNumber}
       </div>
 
-      <div className="relative p-8 md:p-12 min-h-[260px] flex flex-col justify-center bg-gradient-to-br from-primary/15 via-secondary/10 to-transparent">
-        <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent mb-3">
-          points decide who leads
+      <div className="relative grid gap-6 p-8 md:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] md:p-12 min-h-[320px] bg-gradient-to-br from-primary/15 via-secondary/10 to-transparent">
+        <div className="flex flex-col justify-center">
+          <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent mb-3">
+            win the round. own the spotlight.
+          </div>
+          <h3 className="font-display font-bold text-3xl md:text-5xl leading-[0.95] tracking-tight">
+            Top the board.
+            <br />
+            <span className="text-gradient-hero">Claim the featured slot.</span>
+          </h3>
+          <p className="mt-4 max-w-lg text-sm md:text-base text-muted-foreground">
+            The winner claims this entire homepage feature block.
+          </p>
+          <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-accent">
+            this whole area becomes the winner spot
+          </div>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-accent">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              homepage visibility
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              full section reward
+            </div>
+          </div>
         </div>
-        <h3 className="font-display font-bold text-3xl md:text-5xl leading-[0.95] tracking-tight">
-          Territory creates points.
-          <br />
-          <span className="text-gradient-hero">Points create status.</span>
-        </h3>
-        <p className="mt-3 text-muted-foreground max-w-lg text-sm md:text-base">
-          Round #{roundNumber} is the permanent live race for now. The ad slot and museum will come later.
-        </p>
-        <div className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-          score race active
+
+        <div className="relative flex items-center">
+          <div className="w-full rounded-2xl border border-accent/35 bg-background/70 p-4 shadow-[0_0_40px_hsl(var(--accent)/0.14)] backdrop-blur">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">featured winner</div>
+                <div className="mt-1 font-display text-xl font-bold">Winner gets this slot</div>
+              </div>
+              <div className="rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-right">
+                <div className="font-mono text-[9px] uppercase tracking-[0.22em] text-muted-foreground">reward</div>
+                <div className="font-display text-lg font-bold text-gradient-hero">Front Page</div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-gradient-to-br from-background via-card to-background/80 p-5">
+              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                winner promo preview
+              </div>
+              <div className="mt-4 flex items-end justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="font-display text-3xl font-bold leading-none text-gradient-hero">
+                    Your brand here
+                  </div>
+                  <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-accent">
+                    homepage feature
+                  </div>
+                </div>
+                <div className="grid h-16 w-16 shrink-0 grid-cols-4 gap-1 rounded-lg border border-border/60 bg-card/70 p-2">
+                  {Array.from({ length: 16 }).map((_, index) => (
+                    <span
+                      key={index}
+                      className="rounded-[2px]"
+                      style={{
+                        background:
+                          index % 5 === 0
+                            ? "hsl(var(--accent))"
+                            : index % 3 === 0
+                              ? "hsl(var(--primary))"
+                              : "hsl(var(--muted))",
+                        boxShadow: index % 5 === 0 ? "0 0 10px hsl(var(--accent) / 0.45)" : "none",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                full winner feature block
+              </div>
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                <Megaphone className="h-3 w-3" />
+                exposure reward
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </NeonCard>

@@ -105,11 +105,11 @@ function DominanceBoard({ pixels }: { pixels: (PixelRow | null)[] }) {
 
 /* ------------------------------------------------------------------ */
 /* Cinematic stage — pinned scroll, single canvas zooming through     */
-/* progressively revealed scales (pixel → cluster → board → dom)      */
+/* progressively revealed scales (pixel → foothold → board → dom)     */
 /* ------------------------------------------------------------------ */
 const STAGES = [
   { key: "pixel", label: "01 · Pixel", title: "One pixel.", sub: "0.01% of supply. A single on-chain cell — yours to color, yours to defend." },
-  { key: "cluster", label: "02 · Cluster", title: "A cluster.", sub: "Stack tokens. Stack pixels. Plant a mark the whole board can recognize." },
+  { key: "foothold", label: "02 · Foothold", title: "A foothold.", sub: "Stack tokens. Stack pixels. Build a position the whole board can recognize." },
   { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells under one wallet. A region of the canvas with your name on it." },
   { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas — every round." },
   { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on PIXL." },
@@ -145,7 +145,7 @@ function CinematicNarrative() {
     restDelta: 0.0005,
   });
 
-  // 5 stages → focused on a single cell → cluster → territory → board → settled wide
+  // 5 stages → focused on a single cell → foothold → territory → board → settled wide
   // Curve eased for cinematic deceleration as we pull back
   const scaleRaw = useTransform(
     smoothProgress,
