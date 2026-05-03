@@ -322,7 +322,7 @@ export default function Leaderboard() {
                 />
                 {!loading && filteredPointsRows.length === 0 && (
                   <div className="px-4 py-12 text-center text-muted-foreground font-mono text-sm">
-                    No point earners yet — claim territory and start the first streak.
+                    No point earners yet - claim territory and start the first streak.
                   </div>
                 )}
               </NeonCard>
@@ -362,7 +362,7 @@ export default function Leaderboard() {
                 />
                 {!loading && filteredPixelRows.length === 0 && (
                   <div className="px-4 py-12 text-center text-muted-foreground font-mono text-sm">
-                    No marks on the board yet — be the first to paint.
+                    No marks on the board yet - be the first to paint.
                   </div>
                 )}
               </NeonCard>
@@ -396,3 +396,4 @@ export default function Leaderboard() {
     </Layout>
   );
 }
+

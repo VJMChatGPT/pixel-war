@@ -314,7 +314,7 @@ export default function Profile() {
               <h3 className="font-display font-semibold text-sm mb-3">Recent paints</h3>
               {history.length === 0 && (
                 <div className="text-xs text-muted-foreground font-mono text-center py-6">
-                  No paints yet — go leave your first mark.
+                  No paints yet - go leave your first mark.
                 </div>
               )}
               <div className="space-y-1.5">
@@ -336,3 +336,4 @@ export default function Profile() {
     </Layout>
   );
 }
+
