@@ -108,11 +108,11 @@ function DominanceBoard({ pixels }: { pixels: (PixelRow | null)[] }) {
 /* progressively revealed scales (pixel → cluster → board → dom)      */
 /* ------------------------------------------------------------------ */
 const STAGES = [
-  { key: "pixel", label: "01 · Pixel", title: "One pixel.", sub: "0.01% of supply. A single on-chain cell, yours to color." },
-  { key: "cluster", label: "02 · Cluster", title: "A cluster.", sub: "Stack tokens. Stack pixels. Build a recognizable mark." },
-  { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells. A region of the board with your name on it." },
-  { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas." },
-  { key: "dominance", label: "05 · Dominance", title: "Dominance.", sub: "The biggest wallet rules the most pixels — until someone takes them." },
+  { key: "pixel", label: "01 · Pixel", title: "One pixel.", sub: "0.01% of supply. A single on-chain cell — yours to color, yours to defend." },
+  { key: "cluster", label: "02 · Cluster", title: "A cluster.", sub: "Stack tokens. Stack pixels. Plant a mark the whole board can recognize." },
+  { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells under one wallet. A region of the canvas with your name on it." },
+  { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas — every round." },
+  { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on PIXL." },
 ];
 
 const MECHANIC_PIXEL_COUNT = 60;
@@ -251,31 +251,44 @@ function CinematicNarrative() {
           </div>
         </motion.div>
 
-        {/* HUD — bottom: stage title */}
+        {/* Center text scrim — keeps copy readable while board stays visible */}
+        <motion.div
+          style={{ opacity: boundaryContentOpacity }}
+          className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_60%_45%_at_50%_50%,hsl(var(--background)/0.78)_0%,hsl(var(--background)/0.55)_45%,transparent_75%)]"
+          aria-hidden
+        />
+
+        {/* HERO STAGE TEXT — centered, dominant */}
         <motion.div
           style={{ opacity: boundaryContentOpacity, willChange: "opacity", backfaceVisibility: "hidden" }}
-          className="absolute bottom-0 left-0 right-0 pb-12 md:pb-16 px-6 md:px-12 z-10 transform-gpu"
+          className="absolute inset-0 z-10 flex items-center justify-center px-6 md:px-12 transform-gpu"
         >
-          <div className="container">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentStage.key}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                className="px-6 md:px-12 absolute left-0 right-0 bottom-12"
-              >
-                <div className="container">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent mb-3">{currentStage.label}</div>
-                  <h3 className="font-display font-bold text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight max-w-4xl">
-                    {currentStage.title}
-                  </h3>
-                  <p className="mt-4 text-base md:text-lg text-muted-foreground max-w-xl">{currentStage.sub}</p>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStage.key}
+              initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -16, filter: "blur(6px)" }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-3xl text-center"
+            >
+              <div className="font-mono text-[11px] md:text-xs uppercase tracking-[0.4em] text-accent mb-5 drop-shadow-[0_0_12px_hsl(var(--accent)/0.6)]">
+                {currentStage.label}
+              </div>
+              <h3 className="font-display font-bold text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.88] tracking-tight text-gradient-hero drop-shadow-[0_2px_30px_hsl(var(--primary)/0.45)]">
+                {currentStage.title}
+              </h3>
+              <p className="mt-7 mx-auto text-lg md:text-2xl leading-snug text-foreground/90 max-w-2xl font-medium">
+                {currentStage.sub}
+              </p>
+              {currentStage.key === "dominance" && (
+                <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-accent backdrop-blur-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                  winner gets the homepage ad slot
                 </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
 
         {/* progress rail */}
