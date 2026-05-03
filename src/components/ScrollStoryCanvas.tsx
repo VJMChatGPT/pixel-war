@@ -343,43 +343,26 @@ export const ScrollStoryCanvas = memo(function ScrollStoryCanvas({ className }: 
     if (!baseCtx) return;
     drawBaseBoard(baseCtx, board);
 
-    let frameId = 0;
-    let lastPaint = 0;
-    const targetFrameMs = 1000 / 30;
+    ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
+    ctx.drawImage(baseCanvas, 0, 0);
 
-    const render = (time: number) => {
-      if (time - lastPaint >= targetFrameMs) {
-        lastPaint = time;
-        ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
-        ctx.drawImage(baseCanvas, 0, 0);
-
-        // animated live pulses
-        for (let i = 0; i < LIVE_CELLS.length; i++) {
-          const [x, y, color] = LIVE_CELLS[i];
-          const t = time / 900 + i * 0.55;
-          const pulse = 0.5 + 0.5 * Math.sin(t);
-          const alpha = 0.55 + pulse * 0.45;
-          ctx.fillStyle = `${color}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
-          ctx.fillRect(x, y, 1, 1);
-          // soft halo
-          ctx.fillStyle = `${color}${Math.round((0.08 + pulse * 0.14) * 255).toString(16).padStart(2, "0")}`;
-          ctx.fillRect(x - 0.5, y - 0.5, 2, 2);
-        }
-      }
-      frameId = window.requestAnimationFrame(render);
-    };
-    render(0);
-    return () => window.cancelAnimationFrame(frameId);
+    for (let i = 0; i < LIVE_CELLS.length; i++) {
+      const [x, y, color] = LIVE_CELLS[i];
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, 1, 1);
+      ctx.fillStyle = `${color}2e`;
+      ctx.fillRect(x - 0.5, y - 0.5, 2, 2);
+    }
   }, []);
 
   return (
-    <div className={cn("relative w-full h-full overflow-hidden rounded-md bg-white", className)}>
+    <div className={cn("relative w-full h-full overflow-hidden rounded-md bg-white isolate transform-gpu [backface-visibility:hidden]", className)}>
       <canvas
         ref={canvasRef}
         width={BOARD_SIZE}
         height={BOARD_SIZE}
         className="absolute inset-0 h-full w-full"
-        style={{ imageRendering: "pixelated" }}
+        style={{ imageRendering: "pixelated", transform: "translateZ(0)", backfaceVisibility: "hidden" }}
         aria-hidden="true"
       />
       {/* subtle inner shadow for depth */}

@@ -11,7 +11,7 @@ import { ScrollStoryCanvas } from "@/components/ScrollStoryCanvas";
 import { RoundCountdownBanner, RoundSystemSection } from "@/components/RoundSystem";
 import { useWallet } from "@/hooks/useWallet";
 import { getWalletConnectionErrorMessage } from "@/services/wallet";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, useSpring, useInView } from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, useSpring, useInView, type MotionValue } from "framer-motion";
 import { useMemo, useRef, useState } from "react";
 import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
@@ -115,6 +115,23 @@ const STAGES = [
   { key: "dominance", label: "05 · Dominance", title: "Dominance.", sub: "The biggest wallet rules the most pixels — until someone takes them." },
 ];
 
+const MECHANIC_PIXEL_COUNT = 60;
+const MECHANIC_PIXEL_INDICES = Array.from({ length: MECHANIC_PIXEL_COUNT }, (_, index) => index);
+
+function MechanicPixelCell({ progress, index }: { progress: MotionValue<number>; index: number }) {
+  const opacity = useTransform(progress, (value) => (index / MECHANIC_PIXEL_COUNT < value ? 1 : 0.08));
+
+  return (
+    <motion.div
+      style={{
+        opacity,
+        backgroundColor: APP_CONFIG.palette[index % APP_CONFIG.palette.length],
+      }}
+      className="aspect-square rounded-[1px]"
+    />
+  );
+}
+
 function CinematicNarrative() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
@@ -133,20 +150,24 @@ function CinematicNarrative() {
   const scaleRaw = useTransform(
     smoothProgress,
     [0, 0.18, 0.4, 0.62, 0.82, 1],
-    [28, 12, 4.6, 1.9, 1.04, 0.96],
+    [2.65, 2.05, 1.48, 1.12, 0.96, 0.88],
   );
   const scale = useSpring(scaleRaw, { stiffness: 70, damping: 26, mass: 0.5 });
 
   // Subtle pan that drifts toward center as we zoom out
-  const x = useTransform(smoothProgress, [0, 0.35, 1], ["22%", "8%", "0%"]);
-  const y = useTransform(smoothProgress, [0, 0.35, 1], ["-14%", "-4%", "0%"]);
-  const vignette = useTransform(smoothProgress, [0, 0.3, 1], [0.85, 0.5, 0.22]);
+  const x = useTransform(smoothProgress, [0, 0.5, 1], ["12%", "4%", "0%"]);
+  const y = useTransform(smoothProgress, [0, 0.5, 1], ["-12%", "-4%", "0%"]);
+  const rotate = useTransform(smoothProgress, [0, 0.5, 1], ["-1.2deg", "0deg", "1.2deg"]);
+  const haloScale = useTransform(smoothProgress, [0, 0.45, 1], [0.85, 1.08, 1.2]);
+  const haloOpacity = useTransform(smoothProgress, [0, 0.14, 0.5, 0.88, 1], [0.25, 0.8, 0.55, 0.85, 0.3]);
+  const sweepX = useTransform(smoothProgress, [0, 1], ["-45%", "145%"]);
+  const sweepOpacity = useTransform(smoothProgress, [0, 0.08, 0.88, 1], [0, 0.8, 0.8, 0]);
   const vignetteOpacity = useTransform(smoothProgress, (v) => {
     const vg = 0.85 + (0.22 - 0.85) * Math.min(1, Math.max(0, v / 1));
     const b = v < 0.04 ? v / 0.04 : v > 0.96 ? (1 - v) / 0.04 : 1;
     return Math.max(0, vg * b);
   });
-  const boundaryOpacity = useTransform(smoothProgress, [0, 0.04, 0.96, 1], [0, 1, 1, 0]);
+  const boundaryContentOpacity = useTransform(smoothProgress, [0, 0.08, 0.92, 1], [0.35, 1, 1, 0.35]);
   const boundaryGlowOpacity = useTransform(smoothProgress, [0, 0.06, 0.94, 1], [0, 0.4, 0.4, 0]);
   const currentStage = STAGES[activeStage];
 
@@ -156,19 +177,35 @@ function CinematicNarrative() {
   });
 
   return (
-    <section ref={ref} className="relative" style={{ height: `${STAGES.length * 100}vh` }}>
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-background">
+    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * 100}vh` }}>
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-background isolate">
         {/* ambient grid */}
         <div className="absolute inset-0 grid-bg opacity-[0.05]" />
         <div className="absolute inset-0 bg-radial-glow opacity-40" />
 
         {/* the zooming canvas */}
         <motion.div
-          style={{ scale, x, y, opacity: boundaryOpacity }}
-          className="absolute inset-0 flex items-center justify-center will-change-transform"
+          style={{ scale, x, y, rotate, willChange: "transform", backfaceVisibility: "hidden" }}
+          className="pointer-events-none absolute inset-0 flex items-center justify-center will-change-transform transform-gpu"
         >
-          <div className="aspect-square w-[min(82vh,82vw)] rounded-md overflow-hidden ring-1 ring-primary/30 shadow-[0_0_120px_hsl(var(--primary)/0.35)] bg-[#06040d]">
+          <motion.div
+            style={{ opacity: haloOpacity, scale: haloScale, willChange: "transform, opacity" }}
+            className="absolute aspect-square w-[min(90vh,90vw)] rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.38)_0%,hsl(var(--accent)/0.22)_36%,transparent_68%)] blur-2xl transform-gpu"
+            aria-hidden
+          />
+          <div className="scanlines relative aspect-square w-[min(82vh,82vw)] overflow-hidden rounded-md bg-[#06040d] ring-1 ring-primary/40 shadow-[0_0_42px_hsl(var(--accent)/0.32),0_0_150px_hsl(var(--primary)/0.45)] [backface-visibility:hidden] transform-gpu">
             <ScrollStoryCanvas />
+            <motion.div
+              style={{ x: sweepX, opacity: sweepOpacity, willChange: "transform, opacity" }}
+              className="pointer-events-none absolute inset-y-[-12%] left-0 w-1/3 rotate-12 bg-gradient-to-r from-transparent via-white/25 to-transparent blur-sm mix-blend-screen transform-gpu"
+              aria-hidden
+            />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_48%,hsl(var(--primary)/0.12)_72%,hsl(var(--background)/0.76)_100%)]" aria-hidden />
+            <div className="pointer-events-none absolute inset-2 rounded border border-white/10 shadow-[inset_0_0_32px_hsl(var(--primary)/0.18)]" aria-hidden />
+            <div className="pointer-events-none absolute left-4 top-4 h-10 w-10 border-l border-t border-accent/70" aria-hidden />
+            <div className="pointer-events-none absolute right-4 top-4 h-10 w-10 border-r border-t border-accent/70" aria-hidden />
+            <div className="pointer-events-none absolute bottom-4 left-4 h-10 w-10 border-b border-l border-accent/70" aria-hidden />
+            <div className="pointer-events-none absolute bottom-4 right-4 h-10 w-10 border-b border-r border-accent/70" aria-hidden />
           </div>
         </motion.div>
 
@@ -194,8 +231,8 @@ function CinematicNarrative() {
 
         {/* HUD — top */}
         <motion.div
-          style={{ opacity: boundaryOpacity }}
-          className="absolute top-6 left-0 right-0 px-6 md:px-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground z-10"
+          style={{ opacity: boundaryContentOpacity, willChange: "opacity", backfaceVisibility: "hidden" }}
+          className="absolute top-6 left-0 right-0 px-6 md:px-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground z-10 transform-gpu"
         >
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
@@ -216,8 +253,8 @@ function CinematicNarrative() {
 
         {/* HUD — bottom: stage title */}
         <motion.div
-          style={{ opacity: boundaryOpacity }}
-          className="absolute bottom-0 left-0 right-0 pb-12 md:pb-16 px-6 md:px-12 z-10"
+          style={{ opacity: boundaryContentOpacity, willChange: "opacity", backfaceVisibility: "hidden" }}
+          className="absolute bottom-0 left-0 right-0 pb-12 md:pb-16 px-6 md:px-12 z-10 transform-gpu"
         >
           <div className="container">
             <AnimatePresence mode="wait">
@@ -243,8 +280,8 @@ function CinematicNarrative() {
 
         {/* progress rail */}
         <motion.div
-          style={{ opacity: boundaryOpacity }}
-          className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-3 z-10"
+          style={{ opacity: boundaryContentOpacity, willChange: "opacity", backfaceVisibility: "hidden" }}
+          className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-3 z-10 transform-gpu"
         >
           {STAGES.map((stage, i) => (
             <span
@@ -584,8 +621,8 @@ export default function Landing() {
               {
                 n: "03",
                 icon: <Trophy className="w-5 h-5" />,
-                title: "Defend & dominate",
-                desc: "Hold to keep your pixels. Sell and lose them. Climb the public leaderboard.",
+                title: "Earn points & dominate",
+                desc: "Pixels are territory. Points are the score. Hold more area to earn faster and climb the leaderboard.",
                 visual: (
                   <div className="mt-6 space-y-2">
                     {[80, 60, 38, 22].map((w, i) => (
@@ -635,13 +672,13 @@ export default function Landing() {
             <div>
               <SectionEyebrow>dominance</SectionEyebrow>
               <h2 className="mt-5 font-display font-bold text-5xl md:text-7xl leading-[0.95] tracking-tight">
-                The board has
+                The score has
                 <br />
                 <span className="text-gradient-hero">a king.</span>
               </h2>
               <p className="mt-6 text-muted-foreground text-lg leading-relaxed max-w-md">
-                Every wallet's grip on the canvas is public, visible, and contestable. The biggest holders own the
-                biggest zones — until someone takes them.
+                Every wallet's grip on the canvas creates passive points. Pixels show territory, but points decide who
+                is really leading.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="h-12 px-6 rounded-xl bg-gradient-neon text-primary-foreground glow-primary">
@@ -700,15 +737,8 @@ export default function Landing() {
                   Each {APP_CONFIG.rules.supplyPercentPerPixel}% of supply you accumulate adds another claimable cell to your wallet.
                 </p>
                 <div className="grid grid-cols-12 gap-1">
-                  {Array.from({ length: 60 }).map((_, i) => (
-                    <motion.div
-                      key={i}
-                      style={{
-                        opacity: useTransform(buyBars, (v) => (i / 60 < v ? 1 : 0.08)),
-                        backgroundColor: APP_CONFIG.palette[i % APP_CONFIG.palette.length],
-                      }}
-                      className="aspect-square rounded-[1px]"
-                    />
+                  {MECHANIC_PIXEL_INDICES.map((i) => (
+                    <MechanicPixelCell key={i} progress={buyBars} index={i} />
                   ))}
                 </div>
               </NeonCard>
@@ -727,15 +757,8 @@ export default function Landing() {
                   Drop below the threshold and your pixels become claimable again. Territory you can't defend, you don't keep.
                 </p>
                 <div className="grid grid-cols-12 gap-1">
-                  {Array.from({ length: 60 }).map((_, i) => (
-                    <motion.div
-                      key={i}
-                      style={{
-                        opacity: useTransform(sellBars, (v) => (i / 60 < v ? 1 : 0.08)),
-                        backgroundColor: APP_CONFIG.palette[i % APP_CONFIG.palette.length],
-                      }}
-                      className="aspect-square rounded-[1px]"
-                    />
+                  {MECHANIC_PIXEL_INDICES.map((i) => (
+                    <MechanicPixelCell key={i} progress={sellBars} index={i} />
                   ))}
                 </div>
               </NeonCard>

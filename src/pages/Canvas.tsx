@@ -93,7 +93,6 @@ export default function CanvasPage() {
   const [pendingPaints, setPendingPaints] = useState(0);
   const [focusKey, setFocusKey] = useState(0);
   const [focusMine, setFocusMine] = useState(false);
-  const [hasAutoFocused, setHasAutoFocused] = useState(false);
   const [pointsSnapshotAtMs, setPointsSnapshotAtMs] = useState(() => Date.now());
   const [pointsDisplayNowMs, setPointsDisplayNowMs] = useState(() => Date.now());
 
@@ -149,14 +148,8 @@ export default function CanvasPage() {
   useEffect(() => {
     if (!wallet) {
       setFocusMine(false);
-      setHasAutoFocused(false);
-      return;
     }
-    if (ownedPixelCount <= 0 || hasAutoFocused) return;
-    setFocusMine(true);
-    setFocusKey((key) => key + 1);
-    setHasAutoFocused(true);
-  }, [wallet, ownedPixelCount, hasAutoFocused]);
+  }, [wallet]);
 
   const paintOnePixel = async (
     x: number,
@@ -191,7 +184,7 @@ export default function CanvasPage() {
 
     setPendingPaints((value) => value + 1);
     const optimisticUpdatedAt = new Date().toISOString();
-    const previousPixel = patchPixel(x, y, null);
+    const previousPixel = pixels[y * APP_CONFIG.canvas.width + x];
     const optimisticPixel: PixelRow = {
       id: previousPixel?.id ?? -(Date.now() + x + y),
       x,

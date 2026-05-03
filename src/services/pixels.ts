@@ -14,6 +14,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { estimatePointsPerSecond } from "@/lib/format";
 
 export type PixelRow = Database["public"]["Tables"]["pixels"]["Row"];
 export type WalletStateRow = Database["public"]["Tables"]["wallet_state"]["Row"];
@@ -118,12 +119,42 @@ export async function fetchPointsLeaderboard(limit = 100): Promise<PointsLeaderb
   const { data, error } = await supabase
     .from("public_wallet_state")
     .select("*")
-    .gt("total_points", 0)
     .order("total_points", { ascending: false })
     .order("pixels_used", { ascending: false })
-    .limit(limit);
+    .limit(Math.max(limit * 5, 500));
   if (error) throw error;
-  return data ?? [];
+
+  const now = Date.now();
+
+  return (data ?? [])
+    .map((row) => {
+      const pixelsUsed = Number(row.pixels_used ?? 0);
+      const storedPointsPerSecond = Number(row.points_per_second ?? 0);
+      const effectivePointsPerSecond =
+        storedPointsPerSecond > 0 ? storedPointsPerSecond : estimatePointsPerSecond(pixelsUsed);
+      const baseTotalPoints = Number(row.total_points ?? 0);
+      const lastPointsUpdateAt = row.last_points_update_at
+        ? new Date(row.last_points_update_at).getTime()
+        : row.updated_at
+          ? new Date(row.updated_at).getTime()
+          : now;
+      const elapsedSeconds = Number.isFinite(lastPointsUpdateAt)
+        ? Math.max(0, (now - lastPointsUpdateAt) / 1000)
+        : 0;
+
+      return {
+        ...row,
+        total_points: baseTotalPoints + effectivePointsPerSecond * elapsedSeconds,
+        points_per_second: effectivePointsPerSecond,
+      };
+    })
+    .filter((row) => Number(row.total_points ?? 0) > 0 || Number(row.points_per_second ?? 0) > 0 || Number(row.pixels_used ?? 0) > 0)
+    .sort((a, b) => {
+      const pointsDiff = Number(b.total_points ?? 0) - Number(a.total_points ?? 0);
+      if (pointsDiff !== 0) return pointsDiff;
+      return Number(b.pixels_used ?? 0) - Number(a.pixels_used ?? 0);
+    })
+    .slice(0, limit);
 }
 
 export async function fetchWalletPaints(wallet: string, limit = 20): Promise<PaintHistoryRow[]> {
