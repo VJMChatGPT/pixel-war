@@ -17,6 +17,7 @@ import {
   type PaintHistoryRow,
 } from "@/services/pixels";
 import { compactNumber, formatPoints, timeAgo, walletGradient } from "@/lib/format";
+import { primeWalletDisplayNameCache } from "@/lib/wallet-display-cache";
 import { formatWalletDisplayName } from "@/lib/wallet-display";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -143,6 +144,7 @@ export default function Profile() {
       }
 
       setWalletStateData(result.walletState);
+      primeWalletDisplayNameCache(wallet.address, result.walletState.display_name);
       setDisplayNameDraft(result.walletState.display_name ?? "");
       void invalidateWalletState();
       toast.success(result.walletState.display_name ? "Display name updated" : "Display name cleared");

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchRecentPaints, fetchWalletDisplayNames, type PaintHistoryRow } from "@/services/pixels";
+import { fetchRecentPaints, type PaintHistoryRow } from "@/services/pixels";
+import { getCachedWalletDisplayNames, resolveWalletDisplayNames } from "@/lib/wallet-display-cache";
 
 /** useRecentPaints — live activity feed. */
 export function useRecentPaints(limit = 20) {
@@ -16,9 +17,20 @@ export function useRecentPaints(limit = 20) {
     setError(null);
 
     const syncDisplayNames = async (rows: PaintHistoryRow[]) => {
-      const walletMap = await fetchWalletDisplayNames(rows.map((row) => row.wallet));
-      if (mounted) {
-        setDisplayNamesByWallet(walletMap);
+      const wallets = rows.map((row) => row.wallet);
+      const cachedWalletMap = getCachedWalletDisplayNames(wallets);
+
+      if (mounted && Object.keys(cachedWalletMap).length > 0) {
+        setDisplayNamesByWallet((prev) => ({ ...prev, ...cachedWalletMap }));
+      }
+
+      try {
+        const resolvedWalletMap = await resolveWalletDisplayNames(wallets);
+        if (mounted && Object.keys(resolvedWalletMap).length > 0) {
+          setDisplayNamesByWallet((prev) => ({ ...prev, ...resolvedWalletMap }));
+        }
+      } catch {
+        // Fall back to shortened wallet addresses when name lookups fail.
       }
     };
 
