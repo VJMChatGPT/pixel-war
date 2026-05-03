@@ -163,12 +163,10 @@ function CinematicNarrative() {
   const sweepX = useTransform(smoothProgress, [0, 1], ["-45%", "145%"]);
   const sweepOpacity = useTransform(smoothProgress, [0, 0.08, 0.88, 1], [0, 0.8, 0.8, 0]);
   const vignetteOpacity = useTransform(smoothProgress, (v) => {
-    const vg = 0.85 + (0.22 - 0.85) * Math.min(1, Math.max(0, v / 1));
-    const b = v < 0.04 ? v / 0.04 : v > 0.96 ? (1 - v) / 0.04 : 1;
-    return Math.max(0, vg * b);
+    return 0.85 + (0.22 - 0.85) * Math.min(1, Math.max(0, v));
   });
-  const boundaryContentOpacity = useTransform(smoothProgress, [0, 0.08, 0.92, 1], [0.35, 1, 1, 0.35]);
-  const boundaryGlowOpacity = useTransform(smoothProgress, [0, 0.06, 0.94, 1], [0, 0.4, 0.4, 0]);
+  const boundaryContentOpacity = useTransform(smoothProgress, [0, 0.02, 0.98, 1], [1, 1, 1, 1]);
+  const boundaryGlowOpacity = useTransform(smoothProgress, [0, 0.06, 0.94, 1], [0.4, 0.4, 0.4, 0.4]);
   const currentStage = STAGES[activeStage];
 
   useMotionValueEvent(smoothProgress, "change", (value) => {
