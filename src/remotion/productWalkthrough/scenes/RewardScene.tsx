@@ -57,7 +57,7 @@ export const RewardScene = () => {
             Top players earn a featured ad spot
           </div>
           <div style={{...textStyle, color: "#aaa1bd", fontSize: 18, lineHeight: 1.42, marginTop: 14, textAlign: "center"}}>
-            Win premium visibility on the PIXL website with your wallet, project and pixel identity featured inside the product.
+          Win premium visibility on the Pixel War website with your wallet, project and pixel identity featured inside the product.
           </div>
         </GlassPanel>
       </div>

@@ -252,7 +252,7 @@ export const GlassPanel = ({
 );
 
 export const BrowserFrame = ({
-  title = "pixl.app",
+  title = "pixelwarcoin.com",
   children,
   style,
 }: {
@@ -582,7 +582,7 @@ export const WalletModalMock = ({progress}: {progress: number}) => {
 };
 
 export const AppChromeMock = ({progress = 1}: {progress?: number}) => (
-  <BrowserFrame title="pixl.app/canvas" style={{width: 1180, height: 690}}>
+  <BrowserFrame title="pixelwarcoin.com/canvas" style={{width: 1180, height: 690}}>
     <div style={{position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 340px", gap: 18, padding: 22}}>
       <div>
         <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16}}>
@@ -769,7 +769,7 @@ export const FeaturedAdSpotMock = ({
   const height = compact ? 300 : 430;
 
   return (
-    <BrowserFrame title="pixl.app" style={{width, height, borderRadius: compact ? 20 : 24}}>
+  <BrowserFrame title="pixelwarcoin.com" style={{width, height, borderRadius: compact ? 20 : 24}}>
       <div style={{position: "absolute", inset: 0, padding: compact ? 18 : 24}}>
         <div
           style={{
@@ -801,7 +801,7 @@ export const FeaturedAdSpotMock = ({
                 Top players earn a featured ad spot
               </div>
               <div style={{...textStyle, color: COLORS.muted, fontSize: compact ? 14 : 17, lineHeight: 1.4, marginTop: 10, maxWidth: compact ? 290 : 420}}>
-                Win premium visibility on the PIXL website.
+                Win premium visibility on the Pixel War website.
               </div>
             </div>
             <div
@@ -871,7 +871,7 @@ export const FeaturedAdSpotMock = ({
                   and on the site
                 </div>
                 <div style={{...textStyle, color: COLORS.muted, fontSize: compact ? 13 : 15, lineHeight: 1.45, marginTop: 12}}>
-                  Featured winners can be promoted directly inside PIXL with their identity, project and pixel style.
+                  Featured winners can be promoted directly inside Pixel War with their identity, project and pixel style.
                 </div>
                 <div style={{display: "flex", gap: 10, marginTop: 16}}>
                   <div

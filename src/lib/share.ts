@@ -1,7 +1,7 @@
 import { APP_CONFIG } from "../config/app";
 import { formatPoints, shortAddress } from "./format";
 
-const DEFAULT_SITE_URL = "https://pixel-propaganda-project.vercel.app";
+const DEFAULT_SITE_URL = "https://pixelwarcoin.com";
 
 type ShareWalletState = Pick<
   {

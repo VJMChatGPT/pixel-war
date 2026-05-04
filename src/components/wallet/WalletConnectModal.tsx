@@ -102,11 +102,11 @@ export function WalletConnectModal({ open, connecting, wallets, onOpenChange, on
         </div>
 
         <div className="border-t border-border/60 px-5 py-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Wallet className="h-3.5 w-3.5" />
-            <span>Only Phantom, Solflare, and Backpack are supported.</span>
-          </div>
+        <div className="flex items-center gap-2">
+          <Wallet className="h-3.5 w-3.5" />
+          <span>Only Phantom, Solflare, Backpack, and Jupiter are supported.</span>
         </div>
+      </div>
       </DialogContent>
     </Dialog>
   );

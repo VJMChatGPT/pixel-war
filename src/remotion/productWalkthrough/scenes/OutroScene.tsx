@@ -32,7 +32,7 @@ export const OutroScene = () => {
           Conquer.
         </div>
         <div style={{...textStyle, color: COLORS.muted, fontSize: 24, lineHeight: 1.42, marginTop: 24, maxWidth: 620}}>
-          Compete for rewards and featured placement. Top players can win premium visibility on the PIXL website.
+          Compete for rewards and featured placement. Top players can win premium visibility on the Pixel War website.
         </div>
         <div style={{display: "flex", gap: 18, alignItems: "center", marginTop: 40}}>
           <WalletButtonMock large />

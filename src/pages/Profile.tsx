@@ -37,15 +37,17 @@ export default function Profile() {
   const { pixels, revision, error: canvasError } = useCanvas();
   const [copied, setCopied] = useState(false);
   const cooldown = useCooldown(walletState?.last_paint_at);
+  const territoryCap = walletState?.pixels_allowed ?? allowedPixels;
   const ownedPixelCount = useMemo(
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, revision, wallet]
   );
-  const displayUsedPixels = Math.min(
-    allowedPixels,
+  const pointsSourcePixels = Math.min(
+    territoryCap,
     Math.max(ownedPixelCount, walletState?.pixels_used ?? 0)
   );
-  const { animatedPointsTotal, pointsPerSecond } = useAnimatedWalletPoints(displayUsedPixels);
+  const liveControlledNow = Math.min(territoryCap, ownedPixelCount);
+  const { animatedPointsTotal, pointsPerSecond } = useAnimatedWalletPoints(pointsSourcePixels);
 
   useEffect(() => {
     if (!wallet) {
@@ -94,8 +96,6 @@ export default function Profile() {
     displayName: walletState?.display_name,
     currentWallet: wallet!.address,
   });
-  const projectedPointsPerMinute = pointsPerSecond * 60;
-  const projectedPointsPerHour = pointsPerSecond * 3600;
   const trimmedDisplayNameDraft = displayNameDraft.trim();
   const previewDisplayLabel = formatWalletDisplayName({
     wallet: wallet!.address,
@@ -184,10 +184,18 @@ export default function Profile() {
             <div className="font-mono text-xs text-muted-foreground mt-1 break-all">
               {wallet!.address}
             </div>
-            <div className="flex flex-wrap gap-2 mt-4">
-              <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
-              <PixelBadge count={displayUsedPixels} label="painted" variant="secondary" />
-              <PixelBadge count={Number(supplyPercent.toFixed(3))} label="% supply" variant="accent" />
+            <div className="grid gap-2 mt-4">
+              <div className="flex flex-wrap gap-2">
+                <PixelBadge count={territoryCap} label="territory cap" variant="primary" />
+                <PixelBadge count={liveControlledNow} total={territoryCap} label="controlled now" variant="secondary" />
+                <PixelBadge count={Number(supplyPercent.toFixed(3))} label="% supply" variant="accent" />
+              </div>
+              <div className="rounded-xl border border-accent/30 bg-accent/10 px-4 py-3 max-w-xl">
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent/80">paint timing</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  You can paint 1 pixel every 15 minutes.
+                </div>
+              </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-3 mt-5">
               <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
@@ -276,29 +284,6 @@ export default function Profile() {
             </NeonCard>
 
             <NeonCard className="p-5 flex flex-col items-center">
-              <div className="w-full rounded-xl border border-border bg-muted/20 px-4 py-4 mb-4">
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
-                  Territory bonus
-                </div>
-                <div className="text-sm text-muted-foreground leading-relaxed">
-                  You are earning <span className="font-mono text-foreground font-semibold">{formatPoints(pointsPerSecond, 2)} pts/s</span> from{" "}
-                  <span className="font-mono text-foreground font-semibold">{displayUsedPixels}</span> controlled pixels.
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">per minute</div>
-                    <div className="font-display font-bold text-lg mt-1">+{formatPoints(projectedPointsPerMinute, 1)}</div>
-                  </div>
-                  <div className="rounded-lg border border-border bg-background/60 px-3 py-2">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">per hour</div>
-                    <div className="font-display font-bold text-lg mt-1">+{formatPoints(projectedPointsPerHour, 1)}</div>
-                  </div>
-                </div>
-                <div className="font-mono text-[10px] text-muted-foreground mt-3">
-                  More territory means more passive points every second.
-                </div>
-              </div>
-
               <CooldownRing
                 remainingMs={cooldown.remainingMs}
                 totalMs={APP_CONFIG.rules.cooldownMs}

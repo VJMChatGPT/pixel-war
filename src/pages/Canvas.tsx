@@ -96,17 +96,19 @@ export default function CanvasPage() {
   const [focusMine, setFocusMine] = useState(false);
 
   const cooldown = useCooldown(walletState?.last_paint_at);
-  const usedPixels = walletState?.pixels_used ?? 0;
+  const territoryCap = walletState?.pixels_allowed ?? allowedPixels;
+  const walletStatePixelsUsed = walletState?.pixels_used ?? 0;
   const ownedPixelCount = useMemo(
     () => (wallet ? pixels.filter((pixel) => pixel?.owner_wallet === wallet.address).length : 0),
     [pixels, revision, wallet]
   );
-  const displayUsedPixels = Math.min(allowedPixels, Math.max(ownedPixelCount, usedPixels));
-  const displayLoadedOwnedPixels = Math.min(allowedPixels, ownedPixelCount);
-  const { animatedPointsTotal, pointsPerSecond } = useAnimatedWalletPoints(Math.max(ownedPixelCount, usedPixels));
+  const controlledNow = Math.min(territoryCap, ownedPixelCount);
+  const displayLoadedOwnedPixels = controlledNow;
+  const pointsSourcePixels = Math.min(territoryCap, Math.max(ownedPixelCount, walletStatePixelsUsed));
+  const { animatedPointsTotal, pointsPerSecond } = useAnimatedWalletPoints(pointsSourcePixels);
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
-  const canPaint = isConnected && hasPaintAuth && cooldown.ready && allowedPixels > 0;
-  const canvasSyncIssue = !canvasLoading && !canvasError && usedPixels > 0 && ownedPixelCount === 0;
+  const canPaint = isConnected && hasPaintAuth && cooldown.ready && territoryCap > 0;
+  const canvasSyncIssue = !canvasLoading && !canvasError && walletStatePixelsUsed > 0 && ownedPixelCount === 0;
 
   useEffect(() => {
     if (!wallet) {
@@ -322,7 +324,7 @@ export default function CanvasPage() {
                 <p className="font-mono text-xs text-muted-foreground mt-1">ready to leave your mark? drag to pan · scroll to zoom · click to paint</p>
               </div>
               <div className="hidden md:flex items-center gap-2">
-                {wallet && usedPixels > 0 && (
+                {wallet && walletStatePixelsUsed > 0 && (
                   <Button
                     type="button"
                     variant="outline"
@@ -365,7 +367,7 @@ export default function CanvasPage() {
               <Alert variant="destructive" className="border-destructive/40 bg-destructive/10">
                 <AlertTitle>Canvas data is out of sync</AlertTitle>
                 <AlertDescription>
-                  Wallet state reports {usedPixels} painted pixels, but the canvas query loaded 0 cells for wallet {shortAddress(wallet?.address ?? "")}.
+                  Wallet state reports {walletStatePixelsUsed} controlled pixels, but the canvas query loaded 0 cells for wallet {shortAddress(wallet?.address ?? "")}.
                 </AlertDescription>
               </Alert>
             )}
@@ -412,21 +414,20 @@ export default function CanvasPage() {
                       <div className="font-display font-bold text-2xl mt-1">{formatPoints(pointsPerSecond, 2)}</div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <PixelBadge count={allowedPixels} label="allowed" variant="primary" />
-                    <PixelBadge count={displayUsedPixels} total={allowedPixels} label="used" variant="secondary" />
+                  <div className="grid gap-2 mb-4">
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      <PixelBadge count={territoryCap} label="territory cap" variant="primary" />
+                      <PixelBadge count={controlledNow} total={territoryCap} label="controlled now" variant="secondary" />
+                    </div>
+                    <div className="rounded-xl border border-accent/30 bg-accent/10 px-4 py-3">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent/80">paint timing</div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        You can paint 1 pixel every 15 minutes.
+                      </div>
+                    </div>
                   </div>
                   <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     canvas loaded: {displayLoadedOwnedPixels} owned pixels
-                  </div>
-                  <div className="mb-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                      territory bonus
-                    </div>
-                    <div className="text-sm text-muted-foreground leading-relaxed">
-                      You are earning <span className="font-mono text-foreground font-semibold">{formatPoints(pointsPerSecond, 2)} pts/s</span> from{" "}
-                      <span className="font-mono text-foreground font-semibold">{displayUsedPixels}</span> controlled pixels.
-                    </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between font-mono text-[11px]">

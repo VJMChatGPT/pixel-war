@@ -50,7 +50,7 @@ export const ConnectWalletScene = () => {
           transform: `scale(${interpolate(enter, [0, 1], [0.96, 1])})`,
         }}
       >
-        <BrowserFrame title="pixl.app/canvas" style={{width: 800, height: 650}}>
+        <BrowserFrame title="pixelwarcoin.com/canvas" style={{width: 800, height: 650}}>
           <div style={{padding: 34}}>
             <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
               <div>

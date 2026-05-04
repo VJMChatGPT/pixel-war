@@ -27,7 +27,7 @@ export const PaintScene = () => {
           transform: `translateY(${interpolate(enter, [0, 1], [42, 0])}px)`,
         }}
       >
-        <BrowserFrame title="pixl.app/canvas" style={{width: 1260, height: 820}}>
+        <BrowserFrame title="pixelwarcoin.com/canvas" style={{width: 1260, height: 820}}>
           <div style={{display: "grid", gridTemplateColumns: "760px 1fr", gap: 28, padding: 30}}>
             <div>
               <div style={{display: "flex", justifyContent: "space-between", marginBottom: 20}}>
