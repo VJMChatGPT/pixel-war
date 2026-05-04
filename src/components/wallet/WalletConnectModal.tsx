@@ -16,6 +16,7 @@ const walletPresentation: WalletPresentation[] = [
   { id: "phantom", description: "Most popular Solana wallet", tag: "Recommended" },
   { id: "solflare", description: "Solana wallet", tag: "Solana wallet" },
   { id: "backpack", description: "Best for multi-extension setups", tag: "Advanced users" },
+  { id: "jupiter", description: "Jupiter wallet", tag: "Jupiter wallet" },
 ];
 
 type Props = {

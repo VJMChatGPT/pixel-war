@@ -1,9 +1,10 @@
 import { APP_CONFIG } from "@/config/app";
 import { supabase } from "@/integrations/supabase/client";
+import { createJupiterStandardWalletAdapter, isJupiterWalletAvailable } from "@/lib/solanaWalletStandard";
 
 type WalletMode = "auto" | "phantom" | "mock";
 
-export type SupportedWalletId = "phantom" | "solflare" | "backpack";
+export type SupportedWalletId = "phantom" | "solflare" | "backpack" | "jupiter";
 export type WalletId = SupportedWalletId | "mock";
 
 type SolanaPublicKey = {
@@ -241,20 +242,117 @@ function createInjectedWalletAdapter(walletId: SupportedWalletId): WalletAdapter
 export const phantomWalletAdapter = createInjectedWalletAdapter("phantom");
 export const solflareWalletAdapter = createInjectedWalletAdapter("solflare");
 export const backpackWalletAdapter = createInjectedWalletAdapter("backpack");
+export const jupiterWalletAdapter: WalletAdapter = {
+  id: "jupiter",
+  isAvailable: () => isJupiterWalletAvailable(),
+  async connect(existing) {
+    const restoredSession = existing?.sessionToken
+      ? await resumeWalletSession(existing.sessionToken).catch(() => null)
+      : null;
+
+    if (restoredSession) {
+      return {
+        address: restoredSession.address,
+        balance: restoredSession.balance,
+        totalSupply: restoredSession.totalSupply,
+        sessionToken: existing?.sessionToken,
+        sessionExpiresAt: restoredSession.sessionExpiresAt,
+        walletId: "jupiter",
+      };
+    }
+
+    const walletAdapter = createJupiterStandardWalletAdapter();
+    if (!walletAdapter) {
+      throw new Error("Selected wallet was not detected.");
+    }
+
+    try {
+      await walletAdapter.connect();
+    } catch (error) {
+      throw normalizeSolanaConnectError(error, "jupiter");
+    }
+
+    const publicKey = walletAdapter.publicKey;
+    if (!publicKey?.toString()) {
+      throw new Error("Selected wallet connected without returning a public address.");
+    }
+
+    const address = publicKey.toString();
+    const challenge = await requestWalletChallenge(address);
+
+    if (!walletAdapter.signMessage) {
+      throw new Error("Selected wallet does not support message signing.");
+    }
+
+    const encodedMessage = new TextEncoder().encode(challenge.message);
+    let signatureBytes: Uint8Array;
+    try {
+      signatureBytes = await walletAdapter.signMessage(encodedMessage);
+    } catch (error) {
+      throw normalizeWalletError(error, "Selected wallet could not sign the authentication message.");
+    }
+
+    const signature = encodeBase64(signatureBytes);
+    const verified = await verifyWalletChallenge(address, challenge.nonce, signature);
+
+    return {
+      address: verified.wallet,
+      balance: verified.balance,
+      totalSupply: verified.totalSupply,
+      sessionToken: verified.sessionToken,
+      sessionExpiresAt: verified.sessionExpiresAt,
+      walletId: "jupiter",
+    };
+  },
+  async disconnect(wallet) {
+    if (wallet?.sessionToken) {
+      await revokeWalletSession(wallet.sessionToken).catch(() => undefined);
+    }
+
+    const walletAdapter = createJupiterStandardWalletAdapter();
+    if (walletAdapter) {
+      await walletAdapter.disconnect().catch(() => undefined);
+    }
+  },
+  async getBalance(wallet) {
+    if (!wallet.sessionToken) {
+      throw new Error("Wallet session missing. Reconnect your wallet.");
+    }
+
+    const snapshot = await resumeWalletSession(wallet.sessionToken);
+    return snapshot.balance;
+  },
+  async getTotalSupply(wallet) {
+    if (!wallet.sessionToken) {
+      throw new Error("Wallet session missing. Reconnect your wallet.");
+    }
+
+    const snapshot = await resumeWalletSession(wallet.sessionToken);
+    return snapshot.totalSupply;
+  },
+};
 
 const walletAdapters: Record<WalletId, WalletAdapter> = {
   phantom: phantomWalletAdapter,
   solflare: solflareWalletAdapter,
   backpack: backpackWalletAdapter,
+  jupiter: jupiterWalletAdapter,
   mock: mockWalletAdapter,
 };
 
 export function getSupportedWallets(): WalletOption[] {
-  return WALLET_PROVIDERS.map((provider) => ({
-    id: provider.id,
-    label: provider.label,
-    available: !!provider.detect(),
-  }));
+  return [
+    ...WALLET_PROVIDERS.map((provider) => ({
+      id: provider.id,
+      label: provider.label,
+      available: !!provider.detect(),
+    })),
+    {
+      id: "jupiter",
+      label: "Jupiter",
+      available: isJupiterWalletAvailable(),
+    },
+  ];
 }
 
 export function getWalletAdapter(preferredWallet?: WalletInfo | null, requestedWalletId?: WalletId): WalletAdapter {
