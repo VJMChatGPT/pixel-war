@@ -36,8 +36,8 @@ const CANVAS_WIDTH = Math.floor(Math.sqrt(TOTAL_PIXELS));
 const CANVAS_HEIGHT = Math.ceil(TOTAL_PIXELS / CANVAS_WIDTH);
 
 export const APP_CONFIG = {
-  name: "PixelDAO",
-  tagline: "Own the pixels. Paint the future.",
+  name: "Pixel War",
+  tagline: "Paint territory. Win the war.",
 
   canvas: {
     width: CANVAS_WIDTH,

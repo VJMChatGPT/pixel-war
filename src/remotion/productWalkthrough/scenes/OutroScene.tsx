@@ -1,6 +1,6 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {COLORS, clamp, easeOut} from "../constants";
-import {BrandBug, MascotActor, PixelBoard, SceneShell, WalletButtonMock} from "../components/visuals";
+import {BrandBug, FeaturedAdSpotMock, MascotActor, PixelBoard, SceneShell, WalletButtonMock} from "../components/visuals";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 export const OutroScene = () => {
@@ -31,6 +31,9 @@ export const OutroScene = () => {
           <br />
           Conquer.
         </div>
+        <div style={{...textStyle, color: COLORS.muted, fontSize: 24, lineHeight: 1.42, marginTop: 24, maxWidth: 620}}>
+          Compete for rewards and featured placement. Top players can win premium visibility on the PIXL website.
+        </div>
         <div style={{display: "flex", gap: 18, alignItems: "center", marginTop: 40}}>
           <WalletButtonMock large />
           <div
@@ -55,14 +58,12 @@ export const OutroScene = () => {
       <div
         style={{
           position: "absolute",
-          right: 124,
-          top: 150,
-          width: 650,
-          opacity: enter * 0.88,
-          transform: `perspective(1100px) rotateY(-13deg) rotateX(8deg)`,
+          right: 92,
+          top: 116,
+          opacity: enter * 0.96,
         }}
       >
-        <PixelBoard mode="battle" progress={board} />
+        <FeaturedAdSpotMock compact progress={board} />
       </div>
       <div style={{position: "absolute", right: 295, bottom: 90, opacity: enter}}>
         <MascotActor mood="normal" size={235} reactAt={64} rotate={-3} />
@@ -80,7 +81,7 @@ export const OutroScene = () => {
           opacity: fade(frame, 90, 136),
         }}
       >
-        {["100 x 100 canvas", "wallet identity", "live leaderboard"].map((item) => (
+        {["100 x 100 canvas", "featured visibility", "live leaderboard"].map((item) => (
           <span key={item} style={{...monoStyle, color: COLORS.muted, fontSize: 13, textTransform: "uppercase"}}>
             {item}
           </span>

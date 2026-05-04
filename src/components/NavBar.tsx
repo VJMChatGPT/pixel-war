@@ -3,9 +3,11 @@ import { PixlMascot } from "./PixlMascot";
 import { WalletConnectButton } from "./WalletConnectButton";
 import { HeaderShareOnXButton } from "./HeaderShareOnXButton";
 import { cn } from "@/lib/utils";
+import { APP_CONFIG } from "@/config/app";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { ArrowUpRight, Menu } from "lucide-react";
 
 const links = [
   { to: "/", label: "Home" },
@@ -14,6 +16,8 @@ const links = [
   { to: "/profile", label: "Profile" },
   { to: "/rules", label: "Rules" },
 ];
+
+const TRADE_URL = "https://trade.padre.gg/trenches";
 
 export function NavBar() {
   const [scrolled, setScrolled] = useState(false);
@@ -38,10 +42,10 @@ export function NavBar() {
           <PixlMascot size={40} mood="idle" />
           <div className="leading-none">
             <div className="font-display font-bold text-xl tracking-tight">
-              Pixel<span className="text-gradient-neon">DAO</span>
+              {APP_CONFIG.name}
             </div>
             <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5">
-              paint to own
+              paint territory. win the war.
             </div>
           </div>
         </Link>
@@ -71,6 +75,16 @@ export function NavBar() {
         <div className="hidden md:flex items-center gap-3">
           <HeaderShareOnXButton />
           <WalletConnectButton />
+          <Button
+            asChild
+            size="lg"
+            className="h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] hover:opacity-95"
+          >
+            <a href={TRADE_URL} target="_blank" rel="noopener noreferrer">
+              <span>Buy $PIXL</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </a>
+          </Button>
         </div>
 
         <div className="md:hidden">
@@ -97,6 +111,16 @@ export function NavBar() {
                 <div className="mt-4 space-y-3">
                   <HeaderShareOnXButton />
                   <WalletConnectButton />
+                  <Button
+                    asChild
+                    size="lg"
+                    className="w-full h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] hover:opacity-95"
+                  >
+                    <a href={TRADE_URL} target="_blank" rel="noopener noreferrer">
+                      <span>Buy $PIXL</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                  </Button>
                 </div>
               </div>
             </SheetContent>

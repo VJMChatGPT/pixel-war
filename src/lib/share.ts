@@ -66,7 +66,7 @@ export function buildXShareText({
   const totalPoints = formatPoints(Number(walletState?.total_points ?? 0), 1);
   const pointsPerSecond = formatPoints(Number(walletState?.points_per_second ?? 0), 2);
 
-  return `${label} is earning ${totalPoints} points on PIXL at ${pointsPerSecond} pts/s while holding ${ownedPixels} pixels on the live territory board. Territory = points.`;
+  return `${label} is earning ${totalPoints} points in Pixel War at ${pointsPerSecond} pts/s while holding ${ownedPixels} pixels on the live territory board. $PIXL fuels territory. Territory fuels points.`;
 }
 
 export function buildXIntentUrl({

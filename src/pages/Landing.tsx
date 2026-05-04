@@ -112,7 +112,7 @@ const STAGES = [
   { key: "foothold", label: "02 · Foothold", title: "A foothold.", sub: "Stack tokens. Stack pixels. Build a position the whole board can recognize." },
   { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells under one wallet. A region of the canvas with your name on it." },
   { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas for every round." },
-  { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on PIXL." },
+  { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on Pixel War." },
 ];
 
 const MECHANIC_PIXEL_COUNT = 60;
@@ -434,7 +434,7 @@ export default function Landing() {
               className="mt-7 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed"
             >
               A live, on-chain canvas where <span className="text-foreground font-semibold">$PIXL</span> becomes
-              public dominance. Every {APP_CONFIG.rules.supplyPercentPerPixel}% of supply = 1 pixel you own,
+              territory, territory becomes points, and points become public dominance. Every {APP_CONFIG.rules.supplyPercentPerPixel}% of supply = 1 pixel you own,
               recolor, and defend.
             </motion.p>
 

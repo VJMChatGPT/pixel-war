@@ -39,7 +39,7 @@ export function WalletConnectModal({ open, connecting, wallets, onOpenChange, on
         <DialogHeader className="space-y-3 border-b border-border/60 px-5 pb-4 pt-5 text-left">
           <DialogTitle className="font-display text-2xl font-bold tracking-tight">Connect wallet</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Choose a Solana wallet to verify your PIXL access.
+            Choose a Solana wallet to verify your Pixel War access.
           </DialogDescription>
           <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
             You will only sign a message to authenticate. No transaction will be sent.
