@@ -3,18 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 
 type WalletMode = "auto" | "phantom" | "mock";
 
-type PhantomPublicKey = {
+export type SupportedWalletId = "phantom" | "solflare" | "backpack";
+export type WalletId = SupportedWalletId | "mock";
+
+type SolanaPublicKey = {
   toString(): string;
 };
 
-type PhantomProvider = {
+type SolanaProvider = {
   isPhantom?: boolean;
-  publicKey?: PhantomPublicKey | null;
-  providers?: PhantomProvider[];
-  connect(options?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: PhantomPublicKey }>;
+  isSolflare?: boolean;
+  isBackpack?: boolean;
+  publicKey?: SolanaPublicKey | null;
+  providers?: SolanaProvider[];
+  connect(options?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: SolanaPublicKey }>;
   disconnect(): Promise<void>;
   signMessage?(message: Uint8Array, display?: "utf8" | "hex"): Promise<{
-    publicKey: PhantomPublicKey;
+    publicKey: SolanaPublicKey;
     signature: Uint8Array;
   }>;
 };
@@ -22,9 +27,15 @@ type PhantomProvider = {
 declare global {
   interface Window {
     phantom?: {
-      solana?: PhantomProvider;
+      solana?: SolanaProvider;
     };
-    solana?: PhantomProvider;
+    solflare?: {
+      solana?: SolanaProvider;
+    };
+    backpack?: {
+      solana?: SolanaProvider;
+    };
+    solana?: SolanaProvider;
     sui?: unknown;
     suiWallet?: unknown;
     suiWallets?: unknown;
@@ -38,15 +49,29 @@ export interface WalletInfo {
   sessionToken?: string;
   sessionExpiresAt?: string;
   isMock?: boolean;
+  walletId?: WalletId;
+}
+
+export interface WalletOption {
+  id: SupportedWalletId;
+  label: string;
+  available: boolean;
 }
 
 export interface WalletAdapter {
+  id: WalletId;
   connect(existing?: WalletInfo | null): Promise<WalletInfo>;
   disconnect(wallet?: WalletInfo | null): Promise<void>;
   getBalance(wallet: WalletInfo): Promise<number>;
   getTotalSupply(wallet: WalletInfo): Promise<number>;
   isAvailable(): boolean;
 }
+
+type WalletProviderDescriptor = {
+  id: SupportedWalletId;
+  label: string;
+  detect: () => SolanaProvider | undefined;
+};
 
 const MOCK_TOTAL_SUPPLY = 1_000_000_000;
 const MOCK_ADDRESSES = [
@@ -59,7 +84,41 @@ const WALLET_MODE: WalletMode = ["auto", "phantom", "mock"].includes(configuredW
   ? (configuredWalletMode as WalletMode)
   : "auto";
 
+const WALLET_PROVIDERS: WalletProviderDescriptor[] = [
+  {
+    id: "phantom",
+    label: "Phantom",
+    detect: () => {
+      if (typeof window === "undefined") return undefined;
+      if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
+      if (window.solana?.isPhantom) return window.solana;
+      return window.solana?.providers?.find((provider) => provider?.isPhantom);
+    },
+  },
+  {
+    id: "solflare",
+    label: "Solflare",
+    detect: () => {
+      if (typeof window === "undefined") return undefined;
+      if (window.solflare?.solana?.isSolflare) return window.solflare.solana;
+      if (window.solana?.isSolflare) return window.solana;
+      return window.solana?.providers?.find((provider) => provider?.isSolflare);
+    },
+  },
+  {
+    id: "backpack",
+    label: "Backpack",
+    detect: () => {
+      if (typeof window === "undefined") return undefined;
+      if (window.backpack?.solana?.isBackpack) return window.backpack.solana;
+      if (window.solana?.isBackpack) return window.solana;
+      return window.solana?.providers?.find((provider) => provider?.isBackpack);
+    },
+  },
+];
+
 export const mockWalletAdapter: WalletAdapter = {
+  id: "mock",
   isAvailable: () => true,
   async connect(existing) {
     await delay(200);
@@ -72,6 +131,7 @@ export const mockWalletAdapter: WalletAdapter = {
       sessionToken: "mock-session",
       sessionExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       isMock: true,
+      walletId: "mock",
     };
   },
   async disconnect() {
@@ -86,102 +146,146 @@ export const mockWalletAdapter: WalletAdapter = {
   },
 };
 
-export const phantomWalletAdapter: WalletAdapter = {
-  isAvailable: () => !!getInjectedPhantomProvider(),
-  async connect(existing) {
-    const provider = getPhantomProvider();
-    const restoredSession = existing?.sessionToken
-      ? await resumeWalletSession(existing.sessionToken).catch(() => null)
-      : null;
+function createInjectedWalletAdapter(walletId: SupportedWalletId): WalletAdapter {
+  return {
+    id: walletId,
+    isAvailable: () => !!getProviderDescriptor(walletId)?.detect(),
+    async connect(existing) {
+      const provider = getSolanaProvider(walletId);
+      const restoredSession = existing?.sessionToken
+        ? await resumeWalletSession(existing.sessionToken).catch(() => null)
+        : null;
 
-    if (restoredSession) {
-      return {
-        address: restoredSession.address,
-        balance: restoredSession.balance,
-        totalSupply: restoredSession.totalSupply,
-        sessionToken: existing?.sessionToken,
-        sessionExpiresAt: restoredSession.sessionExpiresAt,
-      };
-    }
-
-    let publicKey: PhantomPublicKey | null | undefined;
-    try {
-      const connectResult = await provider.connect();
-      publicKey = connectResult?.publicKey ?? provider.publicKey;
-    } catch (error) {
-      publicKey = provider.publicKey;
-      if (!publicKey?.toString()) {
-        throw normalizePhantomConnectError(error);
+      if (restoredSession) {
+        return {
+          address: restoredSession.address,
+          balance: restoredSession.balance,
+          totalSupply: restoredSession.totalSupply,
+          sessionToken: existing?.sessionToken,
+          sessionExpiresAt: restoredSession.sessionExpiresAt,
+          walletId,
+        };
       }
-    }
 
-    if (!publicKey?.toString()) {
-      throw new Error("Phantom connected without returning a wallet address.");
-    }
+      let publicKey: SolanaPublicKey | null | undefined;
+      try {
+        const connectResult = await provider.connect();
+        publicKey = connectResult?.publicKey ?? provider.publicKey;
+      } catch (error) {
+        publicKey = provider.publicKey;
+        if (!publicKey?.toString()) {
+          throw normalizeSolanaConnectError(error, walletId);
+        }
+      }
 
-    const address = publicKey.toString();
-    const challenge = await requestWalletChallenge(address);
+      if (!publicKey?.toString()) {
+        throw new Error("Selected wallet connected without returning a public address.");
+      }
 
-    if (!provider.signMessage) {
-      throw new Error("Your wallet does not support message signing.");
-    }
+      const address = publicKey.toString();
+      const challenge = await requestWalletChallenge(address);
 
-    const encodedMessage = new TextEncoder().encode(challenge.message);
-    let signed: { publicKey: PhantomPublicKey; signature: Uint8Array };
-    try {
-      signed = await provider.signMessage(encodedMessage, "utf8");
-    } catch (error) {
-      throw normalizeWalletError(error, "Phantom could not sign the authentication message.");
-    }
-    const signature = encodeBase64(signed.signature);
-    const verified = await verifyWalletChallenge(address, challenge.nonce, signature);
+      if (!provider.signMessage) {
+        throw new Error("Selected wallet does not support message signing.");
+      }
 
-    return {
-      address: verified.wallet,
-      balance: verified.balance,
-      totalSupply: verified.totalSupply,
-      sessionToken: verified.sessionToken,
-      sessionExpiresAt: verified.sessionExpiresAt,
-    };
-  },
-  async disconnect(wallet) {
-    if (wallet?.sessionToken) {
-      await revokeWalletSession(wallet.sessionToken).catch(() => undefined);
-    }
+      const encodedMessage = new TextEncoder().encode(challenge.message);
+      let signed: { publicKey: SolanaPublicKey; signature: Uint8Array };
+      try {
+        signed = await provider.signMessage(encodedMessage, "utf8");
+      } catch (error) {
+        throw normalizeWalletError(error, "Selected wallet could not sign the authentication message.");
+      }
 
-    const provider = getPhantomProvider();
-    await provider.disconnect();
-  },
-  async getBalance(wallet) {
-    if (!wallet.sessionToken) {
-      throw new Error("Wallet session missing. Reconnect your wallet.");
-    }
+      const signature = encodeBase64(signed.signature);
+      const verified = await verifyWalletChallenge(address, challenge.nonce, signature);
 
-    const snapshot = await resumeWalletSession(wallet.sessionToken);
-    return snapshot.balance;
-  },
-  async getTotalSupply(wallet) {
-    if (!wallet.sessionToken) {
-      throw new Error("Wallet session missing. Reconnect your wallet.");
-    }
+      return {
+        address: verified.wallet,
+        balance: verified.balance,
+        totalSupply: verified.totalSupply,
+        sessionToken: verified.sessionToken,
+        sessionExpiresAt: verified.sessionExpiresAt,
+        walletId,
+      };
+    },
+    async disconnect(wallet) {
+      if (wallet?.sessionToken) {
+        await revokeWalletSession(wallet.sessionToken).catch(() => undefined);
+      }
 
-    const snapshot = await resumeWalletSession(wallet.sessionToken);
-    return snapshot.totalSupply;
-  },
+      const provider = getProviderDescriptor(walletId)?.detect();
+      if (provider) {
+        await provider.disconnect().catch(() => undefined);
+      }
+    },
+    async getBalance(wallet) {
+      if (!wallet.sessionToken) {
+        throw new Error("Wallet session missing. Reconnect your wallet.");
+      }
+
+      const snapshot = await resumeWalletSession(wallet.sessionToken);
+      return snapshot.balance;
+    },
+    async getTotalSupply(wallet) {
+      if (!wallet.sessionToken) {
+        throw new Error("Wallet session missing. Reconnect your wallet.");
+      }
+
+      const snapshot = await resumeWalletSession(wallet.sessionToken);
+      return snapshot.totalSupply;
+    },
+  };
+}
+
+export const phantomWalletAdapter = createInjectedWalletAdapter("phantom");
+export const solflareWalletAdapter = createInjectedWalletAdapter("solflare");
+export const backpackWalletAdapter = createInjectedWalletAdapter("backpack");
+
+const walletAdapters: Record<WalletId, WalletAdapter> = {
+  phantom: phantomWalletAdapter,
+  solflare: solflareWalletAdapter,
+  backpack: backpackWalletAdapter,
+  mock: mockWalletAdapter,
 };
 
-export function getWalletAdapter(preferredWallet?: WalletInfo | null): WalletAdapter {
-  if (preferredWallet?.isMock || WALLET_MODE === "mock") return mockWalletAdapter;
-  if (phantomWalletAdapter.isAvailable()) return phantomWalletAdapter;
-  if (WALLET_MODE === "phantom" || WALLET_MODE === "auto") {
-    if (hasLikelyNonSolanaWalletInstalled()) {
-      throw new Error("This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use Phantom or another Solana-compatible wallet.");
-    }
+export function getSupportedWallets(): WalletOption[] {
+  return WALLET_PROVIDERS.map((provider) => ({
+    id: provider.id,
+    label: provider.label,
+    available: !!provider.detect(),
+  }));
+}
 
-    throw new Error("Phantom was not detected. Please install or enable Phantom. This app only supports Solana wallets.");
+export function getWalletAdapter(preferredWallet?: WalletInfo | null, requestedWalletId?: WalletId): WalletAdapter {
+  if (preferredWallet?.isMock || requestedWalletId === "mock" || WALLET_MODE === "mock") {
+    return mockWalletAdapter;
   }
 
-  return mockWalletAdapter;
+  const desiredWalletId = requestedWalletId ?? preferredWallet?.walletId ?? "phantom";
+  const adapter = walletAdapters[desiredWalletId];
+
+  if (!adapter) {
+    throw new Error("Selected wallet is not supported.");
+  }
+
+  if (adapter.isAvailable()) {
+    return adapter;
+  }
+
+  if (desiredWalletId === "phantom" && !requestedWalletId && !preferredWallet?.walletId && WALLET_MODE === "auto") {
+    if (hasLikelyNonSolanaWalletInstalled()) {
+      throw new Error("This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use a Solana-compatible wallet.");
+    }
+
+    throw new Error("Selected wallet was not detected.");
+  }
+
+  if (hasLikelyNonSolanaWalletInstalled()) {
+    throw new Error("This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use a Solana-compatible wallet.");
+  }
+
+  throw new Error("Selected wallet was not detected.");
 }
 
 export function computeAllowedPixels(balance: number, totalSupply: number): number {
@@ -194,28 +298,26 @@ export function getWalletConnectionErrorMessage(error: unknown) {
   const normalized = normalizeWalletError(error, "Wallet connection failed before authentication started.");
   const message = normalized.message.trim();
 
-  if (isMissingPhantomMessage(message)) {
-    return hasLikelyNonSolanaWalletInstalled()
-      ? "This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use Phantom or another Solana-compatible wallet."
-      : "Phantom was not detected. Please install or enable Phantom. This app only supports Solana wallets.";
+  if (message === "Selected wallet was not detected.") {
+    return "Selected wallet was not detected. Install or enable it, then try again.";
   }
 
   if (isUserRejectedMessage(message)) {
-    return "Phantom is detected, but the connection was rejected or cancelled. Unlock Phantom and approve the Solana wallet connection request.";
+    return "Connection rejected. Unlock your wallet and approve the request to continue.";
   }
 
   if (isLockedWalletMessage(message)) {
-    return "Phantom is installed but appears to be locked. Unlock Phantom first, then try connecting again.";
+    return "Wallet connection failed before authentication. Unlock your wallet first, then try again.";
   }
 
-  if (message === "Your wallet does not support message signing.") {
-    return "This app only supports Solana wallets that can sign messages. Please use Phantom or another Solana-compatible wallet.";
+  if (message === "Selected wallet does not support message signing.") {
+    return "Selected wallet does not support message signing. Please use a Solana wallet that supports signMessage.";
   }
 
   if (message.includes("Unexpected error")) {
     return hasMultipleSolanaProviders()
-      ? "Wallet connection failed before authentication. Multiple wallet extensions may be interfering. Try disabling other wallet extensions and use Phantom with a Solana wallet, not a Sui wallet."
-      : "Wallet connection failed before authentication. Make sure you are using a Solana wallet, not a Sui wallet, and try again with Phantom.";
+      ? "Multiple wallet extensions may be interfering. Try disabling other wallet extensions and use one Solana wallet at a time."
+      : "Wallet connection failed before authentication. Make sure you are using a Solana wallet and try again.";
   }
 
   return message;
@@ -304,42 +406,38 @@ async function revokeWalletSession(sessionToken: string) {
   }
 }
 
-function getPhantomProvider(): PhantomProvider {
-  const provider = getInjectedPhantomProvider();
-  if (!provider?.isPhantom) {
+function getProviderDescriptor(walletId: SupportedWalletId) {
+  return WALLET_PROVIDERS.find((provider) => provider.id === walletId);
+}
+
+function getSolanaProvider(walletId: SupportedWalletId): SolanaProvider {
+  const descriptor = getProviderDescriptor(walletId);
+  const provider = descriptor?.detect();
+
+  if (!provider) {
     if (hasLikelyNonSolanaWalletInstalled()) {
-      throw new Error("This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use Phantom or another Solana-compatible wallet.");
+      throw new Error("This app only supports Solana wallets. A non-Solana wallet appears to be installed or active. Please use a Solana-compatible wallet.");
     }
 
-    throw new Error("Phantom was not detected. Please install or enable Phantom to connect a real wallet.");
+    throw new Error("Selected wallet was not detected.");
   }
 
   if (typeof provider.connect !== "function") {
-    throw new Error("The detected wallet provider does not expose a Solana connection API. Please use Phantom or another Solana-compatible wallet.");
+    throw new Error("Selected wallet was not detected.");
   }
 
   return provider;
-}
-
-function getInjectedPhantomProvider() {
-  if (typeof window === "undefined") return undefined;
-
-  if (window.phantom?.solana?.isPhantom) {
-    return window.phantom.solana;
-  }
-
-  if (window.solana?.isPhantom) {
-    return window.solana;
-  }
-
-  return window.solana?.providers?.find((provider) => provider?.isPhantom);
 }
 
 function hasMultipleSolanaProviders() {
   if (typeof window === "undefined") return false;
 
   const providers = window.solana?.providers;
-  return Array.isArray(providers) && providers.filter(Boolean).length > 1;
+  if (Array.isArray(providers) && providers.filter(Boolean).length > 1) {
+    return true;
+  }
+
+  return getSupportedWallets().filter((wallet) => wallet.available).length > 1;
 }
 
 function hasLikelyNonSolanaWalletInstalled() {
@@ -420,12 +518,14 @@ function normalizeWalletError(error: unknown, fallbackMessage: string) {
   return new Error(fallbackMessage);
 }
 
-function normalizePhantomConnectError(error: unknown) {
-  const normalized = normalizeWalletError(error, "Phantom connection failed before authentication started.");
+function normalizeSolanaConnectError(error: unknown, walletId: SupportedWalletId) {
+  const normalized = normalizeWalletError(error, "Wallet connection failed before authentication started.");
 
   if (normalized.message === "Unexpected error") {
     return new Error(
-      'Phantom returned "Unexpected error" before PixelDAO could start wallet-auth. This is coming from the Phantom provider, not Supabase. Make sure you are using a Solana wallet, not a Sui wallet, and try unlocking Phantom, refreshing the page, or temporarily disabling other wallet extensions.',
+      hasMultipleSolanaProviders()
+        ? `Selected wallet returned "Unexpected error" before wallet-auth could start. Multiple wallet extensions may be interfering.`
+        : `${getWalletLabel(walletId)} returned "Unexpected error" before wallet-auth could start.`,
     );
   }
 
@@ -442,17 +542,17 @@ function isLockedWalletMessage(message: string) {
   return lower.includes("locked") || lower.includes("unlock");
 }
 
-function isMissingPhantomMessage(message: string) {
-  const lower = message.toLowerCase();
-  return lower.includes("phantom wallet not found") || lower.includes("phantom was not detected");
-}
-
 function isUserRejectedMessage(message: string) {
   const lower = message.toLowerCase();
   return (
     lower.includes("user rejected") ||
     lower.includes("rejected the request") ||
     lower.includes("cancelled") ||
-    lower.includes("canceled")
+    lower.includes("canceled") ||
+    lower.includes("declined")
   );
+}
+
+function getWalletLabel(walletId: SupportedWalletId) {
+  return getProviderDescriptor(walletId)?.label ?? walletId;
 }
