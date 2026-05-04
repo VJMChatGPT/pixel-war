@@ -1,6 +1,6 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {COLORS, clamp, easeOut} from "../constants";
-import {GlassPanel, LeaderboardMock, MascotActor, SceneShell} from "../components/visuals";
+import {GlassPanel, LeaderboardAnimatedMock, MascotActor, SceneShell} from "../components/visuals";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 export const LeaderboardScene = () => {
@@ -12,7 +12,7 @@ export const LeaderboardScene = () => {
   return (
     <SceneShell label="07 / leaderboard">
       <div style={{position: "absolute", left: 114, top: 142, opacity: enter}}>
-        <LeaderboardMock promoted={promote > 0.5} progress={boardProgress} />
+        <LeaderboardAnimatedMock progress={boardProgress} transitionProgress={promote} />
       </div>
       <div
         style={{

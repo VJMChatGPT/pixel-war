@@ -43,7 +43,7 @@ export const IntroScene = () => {
             transform: `translateY(${interpolate(title, [0, 1], [22, 0])}px)`,
           }}
         >
-          the public canvas for PIXL holders
+          the public canvas for $PIXL holders
         </div>
         <div
           style={{

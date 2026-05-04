@@ -1,4 +1,7 @@
 import type {CSSProperties, ReactNode} from "react";
+import {BackpackWalletAdapter} from "@solana/wallet-adapter-backpack";
+import {PhantomWalletAdapter} from "@solana/wallet-adapter-phantom";
+import {SolflareWalletAdapter} from "@solana/wallet-adapter-solflare";
 import {
   AbsoluteFill,
   Img,
@@ -19,6 +22,7 @@ import {
   userPaintPath,
 } from "../mockData";
 import {fade, monoStyle, textStyle} from "../primitives";
+import jupiterOfficialIcon from "../../../assets/wallets/jupiter.png";
 
 export type MascotMood = "normal" | "waving" | "happy" | "sleeping";
 
@@ -28,6 +32,33 @@ const mascotSrc: Record<MascotMood, string> = {
   happy: "assets/mascot/pixl-happy.png",
   sleeping: "assets/mascot/pixl-sleeping.png",
 };
+
+const walletModalOptions = [
+  {
+    name: "Phantom",
+    hint: "Recommended",
+    color: COLORS.purple,
+    icon: new PhantomWalletAdapter().icon,
+  },
+  {
+    name: "Solflare",
+    hint: "Available",
+    color: COLORS.gold,
+    icon: new SolflareWalletAdapter().icon,
+  },
+  {
+    name: "Backpack",
+    hint: "Available",
+    color: COLORS.blue,
+    icon: new BackpackWalletAdapter().icon,
+  },
+  {
+    name: "Jupiter",
+    hint: "Available",
+    color: COLORS.lavender,
+    icon: jupiterOfficialIcon,
+  },
+];
 
 export const PremiumBackground = ({intensity = 1}: {intensity?: number}) => {
   const frame = useCurrentFrame();
@@ -95,13 +126,27 @@ export const BrandBug = ({minimal = false}: {minimal?: boolean}) => (
   >
     <div
       style={{
-        width: 38,
-        height: 38,
-        borderRadius: 8,
-        background: `linear-gradient(135deg, ${COLORS.lavender}, ${COLORS.purple})`,
-        boxShadow: "0 0 26px rgba(138,77,255,0.46)",
+        width: minimal ? 36 : 40,
+        height: minimal ? 36 : 40,
+        borderRadius: 10,
+        background: "radial-gradient(circle, rgba(138,77,255,0.34), rgba(138,77,255,0) 74%)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0 0 26px rgba(138,77,255,0.26)",
       }}
-    />
+    >
+      <Img
+        src={staticFile(mascotSrc.normal)}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          imageRendering: "pixelated",
+          filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.28))",
+        }}
+      />
+    </div>
     <div style={{...textStyle, fontWeight: 900, fontSize: minimal ? 30 : 38}}>PIXL</div>
     {!minimal && (
       <div
@@ -581,6 +626,94 @@ export const WalletModalMock = ({progress}: {progress: number}) => {
   );
 };
 
+export const WalletModalMockRich = ({progress}: {progress: number}) => {
+  const phantom = interpolate(progress, [0.32, 0.55], [0, 1], {...clamp, easing: easeOut});
+  const connected = progress > 0.62;
+
+  return (
+    <GlassPanel
+      style={{
+        width: 500,
+        borderRadius: 28,
+        padding: 26,
+      }}
+    >
+      <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24}}>
+        <div>
+          <div style={{...textStyle, fontWeight: 850, fontSize: 30}}>Connect wallet</div>
+          <div style={{...monoStyle, color: COLORS.muted, fontSize: 13, marginTop: 6}}>mocked video flow</div>
+        </div>
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 12,
+            border: `1px solid ${COLORS.border}`,
+            display: "grid",
+            placeItems: "center",
+            color: COLORS.muted,
+          }}
+        >
+          ×
+        </div>
+      </div>
+      {walletModalOptions.map((wallet, index) => {
+        const selected = wallet.name === "Phantom";
+        return (
+          <div
+            key={wallet.name}
+            style={{
+              height: 68,
+              borderRadius: 18,
+              border: selected ? `1px solid rgba(201,168,255,${0.28 + phantom * 0.42})` : `1px solid ${COLORS.border}`,
+              background: selected ? `rgba(138,77,255,${0.06 + phantom * 0.12})` : "rgba(255,255,255,0.035)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 18px",
+              marginTop: 12,
+              transform: selected ? `scale(${1 + phantom * 0.018})` : "scale(1)",
+              boxShadow: selected ? `0 0 ${phantom * 38}px rgba(138,77,255,0.28)` : "none",
+              opacity: index === 0 ? 1 : 0.82,
+            }}
+          >
+            <div style={{display: "flex", alignItems: "center", gap: 14}}>
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 12,
+                  background: `linear-gradient(135deg, ${wallet.color}33, ${COLORS.panelLift})`,
+                  border: `1px solid ${selected ? `${wallet.color}66` : COLORS.border}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  flexShrink: 0,
+                }}
+              >
+                <Img
+                  src={wallet.icon}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    objectFit: "contain",
+                    borderRadius: 6,
+                  }}
+                />
+              </div>
+              <div style={{...textStyle, fontSize: 18, fontWeight: 780}}>{wallet.name}</div>
+            </div>
+            <div style={{...monoStyle, color: selected && connected ? COLORS.green : COLORS.muted, fontSize: 12}}>
+              {selected && connected ? "Connected" : wallet.hint}
+            </div>
+          </div>
+        );
+      })}
+    </GlassPanel>
+  );
+};
+
 export const AppChromeMock = ({progress = 1}: {progress?: number}) => (
   <BrowserFrame title="pixelwarcoin.com/canvas" style={{width: 1180, height: 690}}>
     <div style={{position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 340px", gap: 18, padding: 22}}>
@@ -675,9 +808,9 @@ export const ColorSwatches = ({active = 5}: {active?: number}) => (
 
 export const CapacityBars = ({progress}: {progress: number}) => {
   const rows = [
-    {label: "12K PIXL", pixels: 12, width: 38, color: COLORS.lavender},
-    {label: "48K PIXL", pixels: 48, width: 68, color: COLORS.purple},
-    {label: "92K PIXL", pixels: 92, width: 92, color: COLORS.pink},
+    {label: "12K $PIXL", pixels: 12, width: 38, color: COLORS.lavender},
+    {label: "48K $PIXL", pixels: 48, width: 68, color: COLORS.purple},
+    {label: "92K $PIXL", pixels: 92, width: 92, color: COLORS.pink},
   ];
   return (
     <div style={{display: "flex", flexDirection: "column", gap: 20}}>
@@ -747,6 +880,100 @@ export const LeaderboardMock = ({promoted = false, progress = 1}: {promoted?: bo
               </div>
               <div style={{...monoStyle, color: COLORS.text, fontSize: 16, textAlign: "right"}}>{row.pixels} px</div>
               <div style={{...monoStyle, color: COLORS.muted, fontSize: 16, textAlign: "right"}}>{row.points}</div>
+            </div>
+          );
+        })}
+      </div>
+    </GlassPanel>
+  );
+};
+
+const parseCompactPoints = (value: string) => {
+  const normalized = value.trim().toUpperCase();
+  if (normalized.endsWith("K")) {
+    return Number.parseFloat(normalized.slice(0, -1)) * 1000;
+  }
+
+  return Number.parseFloat(normalized);
+};
+
+const formatCompactPoints = (value: number) => `${(value / 1000).toFixed(1)}K`;
+
+export const LeaderboardAnimatedMock = ({
+  progress = 1,
+  transitionProgress = 0,
+}: {
+  progress?: number;
+  transitionProgress?: number;
+}) => {
+  const rowHeight = 74;
+  const rowGap = 12;
+  const stackHeight = leaderboard.length * rowHeight + (leaderboard.length - 1) * rowGap;
+  const endMap = new Map(promotedLeaderboard.map((row) => [row.wallet, row]));
+  const rows = leaderboard
+    .map((row, index) => {
+      const target = endMap.get(row.wallet) ?? row;
+      const enter = interpolate(progress, [index * 0.08, 0.38 + index * 0.08], [0, 1], {...clamp, easing: easeOut});
+      const lane = interpolate(transitionProgress, [0, 1], [row.rank - 1, target.rank - 1], {...clamp, easing: easeOut});
+      return {
+        ...row,
+        currentRank: Math.round(interpolate(transitionProgress, [0, 1], [row.rank, target.rank], clamp)),
+        currentPixels: Math.round(interpolate(transitionProgress, [0, 1], [row.pixels, target.pixels], clamp)),
+        currentPoints: formatCompactPoints(
+          interpolate(
+            transitionProgress,
+            [0, 1],
+            [parseCompactPoints(row.points), parseCompactPoints(target.points)],
+            clamp,
+          ),
+        ),
+        y: lane * (rowHeight + rowGap),
+        enter,
+      };
+    })
+    .sort((a, b) => a.y - b.y);
+
+  return (
+    <GlassPanel style={{borderRadius: 26, padding: 24, width: 660}}>
+      <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20}}>
+        <div>
+          <div style={{...textStyle, fontSize: 30, fontWeight: 900}}>Leaderboard</div>
+          <div style={{...monoStyle, color: COLORS.muted, fontSize: 12, marginTop: 5}}>pixels controlled · points earned</div>
+        </div>
+        <div style={{...monoStyle, color: COLORS.lavender, fontSize: 12, textTransform: "uppercase"}}>live ranking</div>
+      </div>
+      <div style={{position: "relative", height: stackHeight}}>
+        {rows.map((row) => {
+          const isUser = row.wallet === featuredWallet;
+          return (
+            <div
+              key={row.wallet}
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: 0,
+                height: rowHeight,
+                borderRadius: 18,
+                border: isUser ? `1px solid ${COLORS.lavender}` : `1px solid ${COLORS.border}`,
+                background: isUser ? "rgba(138,77,255,0.17)" : "rgba(255,255,255,0.035)",
+                display: "grid",
+                gridTemplateColumns: "64px 1fr 110px 110px",
+                alignItems: "center",
+                gap: 14,
+                padding: "0 16px",
+                opacity: row.enter,
+                transform: `translateY(${row.y + interpolate(row.enter, [0, 1], [18, 0])}px) scale(${isUser ? interpolate(transitionProgress, [0, 1], [1, 1.02], clamp) : 1})`,
+                boxShadow: isUser ? "0 0 38px rgba(138,77,255,0.25)" : "none",
+              }}
+            >
+              <div style={{...textStyle, fontWeight: 900, fontSize: 28, color: isUser ? COLORS.lavender : COLORS.muted}}>#{row.currentRank}</div>
+              <div style={{display: "flex", alignItems: "center", gap: 12, minWidth: 0}}>
+                <span style={{width: 34, height: 34, borderRadius: 10, background: `linear-gradient(135deg, ${row.color}, ${COLORS.panelLift})`}} />
+                <span style={{...monoStyle, color: COLORS.text, fontSize: 16, fontWeight: 800}}>{row.wallet}</span>
+              </div>
+              <div style={{...monoStyle, color: COLORS.text, fontSize: 16, textAlign: "right"}}>{row.currentPixels} px</div>
+              <div style={{...monoStyle, color: COLORS.muted, fontSize: 16, textAlign: "right"}}>{row.currentPoints}</div>
             </div>
           );
         })}

@@ -6,7 +6,7 @@ import {
   MascotActor,
   SceneShell,
   WalletButtonMock,
-  WalletModalMock,
+  WalletModalMockRich,
 } from "../components/visuals";
 import {fade, monoStyle, textStyle} from "../primitives";
 
@@ -99,7 +99,7 @@ export const ConnectWalletScene = () => {
           transform: `translateY(${interpolate(modal, [0, 1], [42, 0])}px) scale(${interpolate(modal, [0, 1], [0.94, 1])})`,
         }}
       >
-        <WalletModalMock progress={interpolate(frame, [48, 158], [0, 1], clamp)} />
+        <WalletModalMockRich progress={interpolate(frame, [48, 158], [0, 1], clamp)} />
       </div>
     </SceneShell>
   );

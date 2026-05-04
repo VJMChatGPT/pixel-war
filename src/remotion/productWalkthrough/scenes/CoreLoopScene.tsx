@@ -1,6 +1,6 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {COLORS, clamp} from "../constants";
-import {CapacityBars, GlassPanel, MascotActor, PixelBoard, SceneShell} from "../components/visuals";
+import {CapacityBars, GlassPanel, MascotActor, SceneShell} from "../components/visuals";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 const FormulaTile = ({label, value, color}: {label: string; value: string; color: string}) => (
@@ -22,12 +22,12 @@ export const CoreLoopScene = () => {
           simple incentive
         </div>
         <div style={{...textStyle, fontSize: 76, fontWeight: 950, lineHeight: 0.94}}>
-          More PIXL
+          More $PIXL
           <br />
           means more presence.
         </div>
         <div style={{...textStyle, color: COLORS.muted, fontSize: 25, lineHeight: 1.42, marginTop: 24}}>
-          Holding PIXL unlocks capacity to paint. Painting creates territory. Territory pushes you up the board.
+          Holding $PIXL unlocks capacity to paint. Painting creates territory. Territory pushes you up the board.
         </div>
         <div style={{display: "flex", gap: 16, marginTop: 34}}>
           <FormulaTile label="hold" value="$PIXL" color={COLORS.lavender} />
@@ -63,10 +63,6 @@ export const CoreLoopScene = () => {
             })}
           </div>
         </GlassPanel>
-      </div>
-
-      <div style={{position: "absolute", right: 586, bottom: 50, width: 230, opacity: fade(frame, 82, 122)}}>
-        <PixelBoard mode="overview" progress={progress} />
       </div>
     </SceneShell>
   );
