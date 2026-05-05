@@ -37,9 +37,24 @@ export function Footer() {
         <div>
           <h4 className="font-display font-semibold text-sm mb-3">Community</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><a className="hover:text-foreground" href="#">X / Twitter</a></li>
-            <li><a className="hover:text-foreground" href="#">Discord</a></li>
-            <li><a className="hover:text-foreground" href="#">Telegram</a></li>
+            <li>
+              <a
+                className="hover:text-foreground"
+                href="https://x.com/pixelwarcoin"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                X / Twitter
+              </a>
+            </li>
+            <li>
+              <span className="inline-flex items-center gap-2 text-muted-foreground/90">
+                <span>Telegram Bot</span>
+                <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+                  Soon
+                </span>
+              </span>
+            </li>
           </ul>
         </div>
       </div>

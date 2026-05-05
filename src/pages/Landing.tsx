@@ -14,7 +14,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useLaunchState } from "@/hooks/useLaunchState";
 import { getWalletConnectionErrorMessage } from "@/services/wallet";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, useSpring, useInView, type MotionValue } from "framer-motion";
-import { useMemo, useRef, useState } from "react";
+import { memo, useMemo, useRef, useState } from "react";
 import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
 import { toast } from "sonner";
@@ -134,7 +134,9 @@ function MechanicPixelCell({ progress, index }: { progress: MotionValue<number>;
   );
 }
 
-function CinematicNarrative() {
+const CINEMATIC_STAGE_HEIGHT_VH = 150;
+
+const CinematicNarrative = memo(function CinematicNarrative() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const [activeStage, setActiveStage] = useState(0);
@@ -167,8 +169,6 @@ function CinematicNarrative() {
   const vignetteOpacity = useTransform(smoothProgress, (v) => {
     return 0.85 + (0.22 - 0.85) * Math.min(1, Math.max(0, v));
   });
-  const boundaryContentOpacity = useTransform(smoothProgress, [0, 0.02, 0.98, 1], [1, 1, 1, 1]);
-  const boundaryGlowOpacity = useTransform(smoothProgress, [0, 0.06, 0.94, 1], [0.4, 0.4, 0.4, 0.4]);
   const currentStage = STAGES[activeStage];
 
   useMotionValueEvent(smoothProgress, "change", (value) => {
@@ -177,7 +177,7 @@ function CinematicNarrative() {
   });
 
   return (
-    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * 165}vh` }}>
+    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * CINEMATIC_STAGE_HEIGHT_VH}vh` }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-background isolate">
         {/* ambient grid */}
         <div className="absolute inset-0 grid-bg opacity-[0.05]" />
@@ -193,7 +193,7 @@ function CinematicNarrative() {
             className="absolute aspect-square w-[min(90vh,90vw)] rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.38)_0%,hsl(var(--accent)/0.22)_36%,transparent_68%)] blur-2xl transform-gpu"
             aria-hidden
           />
-          <div className="scanlines relative aspect-square w-[min(82vh,82vw)] overflow-hidden rounded-md bg-[#06040d] ring-1 ring-primary/40 shadow-[0_0_42px_hsl(var(--accent)/0.32),0_0_150px_hsl(var(--primary)/0.45)] [backface-visibility:hidden] transform-gpu">
+          <div className="scanlines relative aspect-square w-[min(82vh,82vw)] overflow-hidden rounded-md bg-[#06040d] ring-1 ring-primary/40 shadow-[0_0_40px_hsl(var(--accent)/0.3),0_0_132px_hsl(var(--primary)/0.42)] [backface-visibility:hidden] [contain:layout_paint_style] transform-gpu">
             <ScrollStoryCanvas />
             <motion.div
               style={{ x: sweepX, opacity: sweepOpacity, willChange: "transform, opacity" }}
@@ -218,22 +218,17 @@ function CinematicNarrative() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,hsl(var(--background))_85%)]" />
         </motion.div>
 
-        <motion.div
-          style={{ opacity: boundaryGlowOpacity }}
+        <div
           className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background via-background/75 to-transparent"
           aria-hidden
         />
-        <motion.div
-          style={{ opacity: boundaryGlowOpacity }}
+        <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background via-background/75 to-transparent"
           aria-hidden
         />
 
         {/* HUD — top */}
-        <motion.div
-          style={{ opacity: boundaryContentOpacity, willChange: "opacity", backfaceVisibility: "hidden" }}
-          className="absolute top-6 left-0 right-0 px-6 md:px-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground z-10 transform-gpu"
-        >
+        <div className="absolute top-6 left-0 right-0 px-6 md:px-10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground z-10">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             story · field
@@ -249,28 +244,24 @@ function CinematicNarrative() {
               </span>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Center text scrim — stronger, keeps copy crisply readable over the board */}
-        <motion.div
-          style={{ opacity: boundaryContentOpacity }}
+        <div
           className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_70%_55%_at_50%_50%,hsl(var(--background)/0.92)_0%,hsl(var(--background)/0.78)_38%,hsl(var(--background)/0.4)_65%,transparent_82%)]"
           aria-hidden
         />
 
         {/* HERO STAGE TEXT — centered, dominant */}
-        <motion.div
-          style={{ opacity: boundaryContentOpacity, willChange: "opacity", backfaceVisibility: "hidden" }}
-          className="absolute inset-0 z-10 flex items-center justify-center px-6 md:px-12 transform-gpu"
-        >
+        <div className="absolute inset-0 z-10 flex items-center justify-center px-6 md:px-12">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStage.key}
-              initial={{ opacity: 0, y: 18, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="relative max-w-3xl text-center"
+              className="relative max-w-3xl px-4 py-5 text-center"
             >
               {/* Soft solid backing panel directly behind text for guaranteed legibility */}
               <div
@@ -282,7 +273,7 @@ function CinematicNarrative() {
                 {currentStage.label}
               </div>
               <h3
-                className="font-display font-bold text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.88] tracking-tight text-gradient-hero"
+                className="font-display font-bold text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.92] tracking-tight text-gradient-hero"
                 style={{ filter: "drop-shadow(0 2px 18px hsl(var(--background))) drop-shadow(0 0 28px hsl(var(--primary) / 0.55))" }}
               >
                 {currentStage.title}
@@ -301,13 +292,10 @@ function CinematicNarrative() {
               )}
             </motion.div>
           </AnimatePresence>
-        </motion.div>
+        </div>
 
         {/* progress rail */}
-        <motion.div
-          style={{ opacity: boundaryContentOpacity, willChange: "opacity", backfaceVisibility: "hidden" }}
-          className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-3 z-10 transform-gpu"
-        >
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:flex flex-col gap-3 z-10">
           {STAGES.map((stage, i) => (
             <span
               key={stage.key}
@@ -315,11 +303,11 @@ function CinematicNarrative() {
               className="block w-px h-8 bg-foreground origin-center transition-opacity duration-200"
             />
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
-}
+});
 
 /* ================================================================== */
 /* LANDING                                                            */
