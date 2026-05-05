@@ -1,13 +1,18 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {COLORS, clamp, easeOut} from "../constants";
 import {GlassPanel, LeaderboardAnimatedMock, MascotActor, SceneShell} from "../components/visuals";
+import {getLeaderboardStage} from "../leaderboardMotion";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 export const LeaderboardScene = () => {
   const frame = useCurrentFrame();
-  const enter = fade(frame, 0, 32);
-  const promote = fade(frame, 90, 138);
-  const boardProgress = interpolate(frame, [14, 166], [0, 1], {...clamp, easing: easeOut});
+  const pace = 0.6;
+  const at = (value: number) => Math.round(value * pace);
+  const enter = fade(frame, 0, at(32));
+  const promote = interpolate(frame, [at(88), at(116), at(132), at(164)], [0, 0.48, 0.56, 1], clamp);
+  const boardProgress = interpolate(frame, [at(14), at(166)], [0, 1], {...clamp, easing: easeOut});
+  const rankStage = getLeaderboardStage(promote);
+  const stagedRank = rankStage === "start" ? 3 : rankStage === "mid" ? 2 : 1;
 
   return (
     <SceneShell label="07 / leaderboard">
@@ -38,7 +43,7 @@ export const LeaderboardScene = () => {
             <div>
               <div style={{...monoStyle, color: COLORS.muted, fontSize: 12, textTransform: "uppercase"}}>your rank</div>
               <div style={{...textStyle, fontSize: 68, fontWeight: 950, marginTop: 6}}>
-                #{Math.round(interpolate(promote, [0, 1], [3, 1]))}
+                #{stagedRank}
               </div>
             </div>
             <div style={{...monoStyle, color: COLORS.green, fontSize: 18, fontWeight: 900, opacity: promote}}>
@@ -48,7 +53,7 @@ export const LeaderboardScene = () => {
         </GlassPanel>
       </div>
       <div style={{position: "absolute", right: 206, bottom: 70}}>
-        <MascotActor mood={promote > 0.5 ? "happy" : "normal"} size={165} reactAt={112} rotate={-5} />
+        <MascotActor mood={promote > 0.5 ? "happy" : "normal"} size={165} reactAt={at(112)} rotate={-5} />
       </div>
     </SceneShell>
   );

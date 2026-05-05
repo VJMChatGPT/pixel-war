@@ -8,6 +8,13 @@ export const IntroScene = () => {
   const title = fade(frame, 28, 74) * fadeOut(frame, 132, 158);
   const board = fade(frame, 0, 80);
   const wake = fade(frame, 38, 84);
+  const mascotSwap = interpolate(frame, [22, 58], [0, 1], {...clamp, easing: easeOut});
+  const normalOpacity = interpolate(mascotSwap, [0, 0.52, 1], [1, 1, 0], clamp);
+  const normalLift = interpolate(mascotSwap, [0, 1], [0, -16], clamp);
+  const normalScale = interpolate(mascotSwap, [0, 1], [1, 0.96], clamp);
+  const wavingOpacity = interpolate(mascotSwap, [0, 0.35, 1], [0, 0, 1], clamp);
+  const wavingLift = interpolate(mascotSwap, [0, 1], [18, 0], clamp);
+  const wavingScale = interpolate(mascotSwap, [0, 1], [0.94, 1], clamp);
 
   return (
     <SceneShell label="01 / hero">
@@ -64,11 +71,25 @@ export const IntroScene = () => {
           <span style={{color: COLORS.lavender}}>Climb the leaderboard.</span>
         </div>
       </div>
-      <div style={{position: "absolute", right: 246, bottom: 95}}>
-        <div style={{opacity: 1 - wake}}>
-          <MascotActor mood="sleeping" size={206} delay={4} rotate={-3} />
+      <div style={{position: "absolute", right: 246, bottom: 95, width: 218, height: 218}}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: normalOpacity,
+            transform: `translateY(${normalLift}px) scale(${normalScale})`,
+          }}
+        >
+          <MascotActor mood="normal" size={214} delay={0} rotate={-3} />
         </div>
-        <div style={{position: "absolute", inset: 0, opacity: wake}}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: wavingOpacity,
+            transform: `translateY(${wavingLift}px) scale(${wavingScale})`,
+          }}
+        >
           <MascotActor mood="waving" size={218} delay={0} reactAt={62} rotate={-2} />
         </div>
       </div>

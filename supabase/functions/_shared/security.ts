@@ -3,6 +3,10 @@ import bs58 from "https://esm.sh/bs58@6.0.0";
 import nacl from "https://esm.sh/tweetnacl@1.0.3";
 
 const CANVAS_PIXELS = 10_000;
+const PRODUCTION_ALLOWED_ORIGINS = new Set([
+  "https://pixelwarcoin.com",
+  "https://www.pixelwarcoin.com",
+]);
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -37,6 +41,26 @@ export function json(req: Request, payload: unknown, status = 200) {
     status,
     headers: buildCorsHeaders(origin),
   });
+}
+
+export function assertProductionSafety() {
+  if (!isProduction()) return;
+
+  if (isDemoModeEnabled()) {
+    throw new HttpError(
+      500,
+      "PRODUCTION_CONFIG_INVALID",
+      "DEMO_MODE must be false when APP_ENV=production.",
+    );
+  }
+
+  if (isAllowAllOriginsEnabled()) {
+    throw new HttpError(
+      500,
+      "PRODUCTION_CONFIG_INVALID",
+      "ALLOW_ALL_ORIGINS must be false when APP_ENV=production.",
+    );
+  }
 }
 
 export function assertAllowedOrigin(req: Request) {
@@ -163,6 +187,47 @@ export async function requireSession(req: Request, supabase: ReturnType<typeof c
   };
 }
 
+export function assertTokenMintConfigured() {
+  const tokenMintAddress = Deno.env.get("TOKEN_MINT_ADDRESS")?.trim();
+  if (!tokenMintAddress) {
+    throw new HttpError(
+      500,
+      "TOKEN_MINT_MISSING",
+      "TOKEN_MINT_ADDRESS is not configured in Edge Function secrets.",
+    );
+  }
+}
+
+export async function requireLiveLaunch(supabase: ReturnType<typeof createServiceClient>) {
+  const { data, error } = await supabase
+    .from("launch_config")
+    .select("id, phase, countdown_started_at, countdown_ends_at, mechanics_enabled")
+    .eq("id", "global")
+    .maybeSingle();
+
+  if (error) {
+    throw new HttpError(500, "LAUNCH_STATE_FAILED", error.message);
+  }
+
+  if (!data || data.phase !== "live") {
+    throw new HttpError(403, "LAUNCH_NOT_LIVE", "Pixel War is not live yet.");
+  }
+
+  if (!data.mechanics_enabled) {
+    throw new HttpError(403, "MECHANICS_DISABLED", "Pixel War mechanics are currently disabled.");
+  }
+
+  const startsAt = data.countdown_started_at ? new Date(data.countdown_started_at).getTime() : NaN;
+  const endsAt = data.countdown_ends_at ? new Date(data.countdown_ends_at).getTime() : NaN;
+  const now = Date.now();
+
+  if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || now < startsAt || now >= endsAt) {
+    throw new HttpError(403, "LAUNCH_NOT_LIVE", "Pixel War is not live yet.");
+  }
+
+  return data;
+}
+
 export async function revokeSessionByToken(
   supabase: ReturnType<typeof createServiceClient>,
   token: string,
@@ -270,6 +335,10 @@ function getDemoWalletSnapshot(wallet: string) {
 }
 
 function isAllowedOrigin(origin: string) {
+  if (isProduction()) {
+    return PRODUCTION_ALLOWED_ORIGINS.has(origin);
+  }
+
   if (DEFAULT_ALLOWED_ORIGINS.has(origin)) return true;
 
   const configured = Deno.env.get("ALLOWED_APP_ORIGINS");
@@ -287,9 +356,19 @@ function isDemoModeEnabled() {
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
-function shouldAllowAllOrigins() {
+function isProduction() {
+  return (Deno.env.get("APP_ENV") ?? "").trim().toLowerCase() === "production";
+}
+
+function isAllowAllOriginsEnabled() {
   const raw = (Deno.env.get("ALLOW_ALL_ORIGINS") ?? "").trim().toLowerCase();
   if (raw === "1" || raw === "true" || raw === "yes" || raw === "on") return true;
+  return false;
+}
+
+function shouldAllowAllOrigins() {
+  if (isProduction()) return false;
+  if (isAllowAllOriginsEnabled()) return true;
   return isDemoModeEnabled();
 }
 

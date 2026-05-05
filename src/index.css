@@ -5,13 +5,13 @@
 @tailwind utilities;
 
 /* ============================================================
-   PixelDAO design system — premium dark arcade / web3 aesthetic
+   Pixel War design system, premium dark arcade / web3 aesthetic
    All colors are HSL. Use semantic tokens, never raw colors.
    ============================================================ */
 
 @layer base {
   :root {
-    /* Core surfaces — deep violet-tinted midnight (Phantom-inspired) */
+    /* Core surfaces, deep violet-tinted midnight (Phantom-inspired) */
     --background: 260 35% 5%;
     --foreground: 270 30% 96%;
 

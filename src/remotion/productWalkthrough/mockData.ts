@@ -94,3 +94,11 @@ export const promotedLeaderboard = [
   {rank: 4, wallet: "Gm42...Lv5", pixels: 521, points: "30.6K", color: COLORS.green},
   {rank: 5, wallet: "2vP7...nA9", pixels: 386, points: "24.9K", color: COLORS.gold},
 ];
+
+export const promotedLeaderboardMid = [
+  {rank: 1, wallet: "4b7Q...e91", pixels: 836, points: "43.9K", color: COLORS.lavender},
+  {rank: 2, wallet: featuredWallet, pixels: 782, points: "41.2K", color: COLORS.purple},
+  {rank: 3, wallet: "7hC2...91q", pixels: 694, points: "39.4K", color: COLORS.blue},
+  {rank: 4, wallet: "Gm42...Lv5", pixels: 521, points: "30.6K", color: COLORS.green},
+  {rank: 5, wallet: "2vP7...nA9", pixels: 386, points: "24.9K", color: COLORS.gold},
+];

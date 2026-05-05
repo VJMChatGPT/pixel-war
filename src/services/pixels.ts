@@ -168,6 +168,17 @@ export async function fetchWalletPaints(wallet: string, limit = 20): Promise<Pai
   return data ?? [];
 }
 
+export async function fetchWalletPaintsInWindow(wallet: string, sinceIso: string): Promise<PaintHistoryRow[]> {
+  const { data, error } = await supabase
+    .from("paint_history")
+    .select("*")
+    .eq("wallet", wallet)
+    .gt("painted_at", sinceIso)
+    .order("painted_at", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function paintPixel(params: {
   x: number;
   y: number;

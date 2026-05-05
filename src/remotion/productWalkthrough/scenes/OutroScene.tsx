@@ -1,40 +1,51 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {COLORS, clamp, easeOut} from "../constants";
-import {BrandBug, FeaturedAdSpotMock, MascotActor, PixelBoard, SceneShell, WalletButtonMock} from "../components/visuals";
+import {BrandBug, MascotActor, SceneShell, WalletButtonMock} from "../components/visuals";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 export const OutroScene = () => {
   const frame = useCurrentFrame();
   const enter = fade(frame, 0, 44);
-  const board = interpolate(frame, [0, 170], [0.65, 1], {...clamp, easing: easeOut});
+  const lines = fade(frame, 18, 82);
 
   return (
     <SceneShell label="09 / cta">
       <BrandBug minimal />
-      <div style={{position: "absolute", left: 0, top: 0, width: "100%", height: "100%", background: "radial-gradient(circle at 74% 42%, rgba(138,77,255,0.20), transparent 34%)"}} />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(circle at 72% 48%, rgba(138,77,255,0.24), transparent 30%), radial-gradient(circle at 30% 18%, rgba(201,168,255,0.08), transparent 24%)",
+        }}
+      />
+
       <div
         style={{
           position: "absolute",
           left: 126,
-          top: 198,
-          width: 850,
+          top: 170,
+          width: 860,
           opacity: enter,
-          transform: `translateY(${interpolate(enter, [0, 1], [46, 0])}px)`,
+          transform: `translateY(${interpolate(enter, [0, 1], [40, 0])}px)`,
         }}
       >
-        <div style={{...textStyle, fontSize: 118, fontWeight: 950, lineHeight: 0.9}}>
-          PIXL
-          <br />
-          <span style={{color: COLORS.lavender}}>Paint.</span>
-          <br />
-          Compete.
-          <br />
-          Conquer.
+        <div style={{...textStyle, fontSize: 124, fontWeight: 950, lineHeight: 0.88}}>PIXL</div>
+        <div style={{display: "grid", gap: 8, marginTop: 18, opacity: lines}}>
+          {[
+            {label: "Paint.", color: COLORS.text},
+            {label: "Compete.", color: COLORS.lavender},
+            {label: "Get featured.", color: COLORS.white},
+          ].map((item) => (
+            <div key={item.label} style={{...textStyle, fontSize: 78, fontWeight: 930, lineHeight: 0.95, color: item.color}}>
+              {item.label}
+            </div>
+          ))}
         </div>
-        <div style={{...textStyle, color: COLORS.muted, fontSize: 24, lineHeight: 1.42, marginTop: 24, maxWidth: 620}}>
-          Compete for rewards and featured placement. Top players can win premium visibility on the Pixel War website.
+        <div style={{...textStyle, color: COLORS.muted, fontSize: 24, lineHeight: 1.42, marginTop: 28, maxWidth: 640}}>
+          Compete for rewards, visibility and your place on the board.
         </div>
-        <div style={{display: "flex", gap: 18, alignItems: "center", marginTop: 40}}>
+        <div style={{display: "flex", gap: 18, alignItems: "center", marginTop: 42}}>
           <WalletButtonMock large />
           <div
             style={{
@@ -54,38 +65,37 @@ export const OutroScene = () => {
             Join the canvas
           </div>
         </div>
+        <div style={{display: "flex", gap: 12, marginTop: 28, opacity: fade(frame, 84, 132)}}>
+          {["100 × 100 canvas", "featured rewards", "live leaderboard"].map((item) => (
+            <div
+              key={item}
+              style={{
+                ...monoStyle,
+                color: COLORS.muted,
+                fontSize: 12,
+                textTransform: "uppercase",
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 999,
+                padding: "10px 14px",
+                background: "rgba(255,255,255,0.035)",
+              }}
+            >
+              {item}
+            </div>
+          ))}
+        </div>
       </div>
+
       <div
         style={{
           position: "absolute",
-          right: 92,
-          top: 116,
-          opacity: enter * 0.96,
+          right: 170,
+          bottom: 96,
+          opacity: fade(frame, 20, 58),
+          transform: `translateY(${interpolate(fade(frame, 20, 58), [0, 1], [34, 0])}px)`,
         }}
       >
-        <FeaturedAdSpotMock compact progress={board} />
-      </div>
-      <div style={{position: "absolute", right: 295, bottom: 90, opacity: enter}}>
-        <MascotActor mood="normal" size={235} reactAt={64} rotate={-3} />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          left: 128,
-          bottom: 70,
-          right: 128,
-          display: "flex",
-          justifyContent: "space-between",
-          borderTop: `1px solid ${COLORS.border}`,
-          paddingTop: 22,
-          opacity: fade(frame, 90, 136),
-        }}
-      >
-        {["100 x 100 canvas", "featured visibility", "live leaderboard"].map((item) => (
-          <span key={item} style={{...monoStyle, color: COLORS.muted, fontSize: 13, textTransform: "uppercase"}}>
-            {item}
-          </span>
-        ))}
+        <MascotActor mood="normal" size={300} reactAt={64} rotate={-3} />
       </div>
     </SceneShell>
   );

@@ -1,5 +1,6 @@
 import {
   HttpError,
+  assertProductionSafety,
   assertAllowedOrigin,
   createServiceClient,
   enforceRateLimit,
@@ -38,6 +39,15 @@ const REFRESH_IP_LIMIT = "RATE_LIMIT_REFRESH_IP_MAX";
 const REFRESH_IP_WINDOW = "RATE_LIMIT_REFRESH_IP_WINDOW_SECONDS";
 
 Deno.serve(async (req) => {
+  try {
+    assertProductionSafety();
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return json(req, { ok: false, code: error.code, message: error.message, ...error.details }, error.status);
+    }
+    return json(req, { ok: false, code: "UNEXPECTED_ERROR", message: "Production safety check failed." }, 500);
+  }
+
   if (req.method === "OPTIONS") {
     return preflight(req);
   }
@@ -104,14 +114,14 @@ async function issueChallenge(
   const nonce = crypto.randomUUID();
   const origin = req.headers.get("origin") ?? "unknown-origin";
   const message = [
-    "PixelDAO wallet login",
+    "Pixel War wallet login",
     `Origin: ${origin}`,
     `Wallet: ${wallet}`,
     `Nonce: ${nonce}`,
     `Issued At: ${issuedAt.toISOString()}`,
     `Expires At: ${expiresAt.toISOString()}`,
     "",
-    "Sign this message to authenticate with PixelDAO.",
+    "Sign this message to authenticate with Pixel War.",
   ].join("\n");
 
   const { error } = await supabase.from("wallet_auth_nonces").insert({
@@ -196,6 +206,7 @@ async function verifyChallenge(
   }
 
   const snapshot = await getWalletSnapshot(wallet);
+  await reconcileWalletCapacity(supabase, wallet, snapshot.balance, snapshot.pixelsAllowed);
   const sessionToken = randomToken(32);
   const sessionHash = await sha256Hex(sessionToken);
   const sessionExpiresAt = new Date(
@@ -235,6 +246,7 @@ async function refreshSession(req: Request, supabase: ReturnType<typeof createSe
 
   const session = await requireSession(req, supabase);
   const snapshot = await getWalletSnapshot(session.wallet);
+  const reconciled = await reconcileWalletCapacity(supabase, session.wallet, snapshot.balance, snapshot.pixelsAllowed);
 
   return json(req, {
     ok: true,
@@ -242,6 +254,7 @@ async function refreshSession(req: Request, supabase: ReturnType<typeof createSe
     balance: snapshot.balance,
     totalSupply: snapshot.totalSupply,
     sessionExpiresAt: session.expiresAt,
+    walletState: reconciled.walletState,
   });
 }
 
@@ -255,4 +268,28 @@ async function revokeSession(req: Request, supabase: ReturnType<typeof createSer
 function getSessionTtlSeconds() {
   const raw = Number(Deno.env.get("WALLET_SESSION_TTL_SECONDS") ?? DEFAULT_SESSION_TTL_SECONDS);
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_SESSION_TTL_SECONDS;
+}
+
+async function reconcileWalletCapacity(
+  supabase: ReturnType<typeof createServiceClient>,
+  wallet: string,
+  balance: number,
+  pixelsAllowed: number,
+) {
+  const { data, error } = await supabase.rpc("reconcile_wallet_capacity", {
+    p_wallet: wallet,
+    p_balance: balance,
+    p_pixels_allowed: pixelsAllowed,
+    p_cooldown_seconds: 15 * 60,
+  });
+
+  if (error) {
+    throw new HttpError(500, "WALLET_RECONCILE_FAILED", error.message);
+  }
+
+  return (data ?? { ok: true }) as {
+    ok: boolean;
+    removedPixels?: number;
+    walletState?: Record<string, unknown>;
+  };
 }

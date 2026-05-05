@@ -34,18 +34,26 @@ export function useRecentPaints(limit = 20) {
       }
     };
 
-    fetchRecentPaints(limit)
-      .then(async (data) => {
+    const loadRecentPaints = async (showLoading = false) => {
+      if (showLoading && mounted) {
+        setLoading(true);
+      }
+
+      try {
+        const data = await fetchRecentPaints(limit);
         if (!mounted) return;
         setPaints(data);
         await syncDisplayNames(data);
         setLoading(false);
-      })
-      .catch((err: Error) => {
+        setError(null);
+      } catch (err) {
         if (!mounted) return;
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Could not load recent paints.");
         setLoading(false);
-      });
+      }
+    };
+
+    void loadRecentPaints(true);
 
     const channel = supabase
       .channel(channelNameRef.current)
@@ -62,8 +70,28 @@ export function useRecentPaints(limit = 20) {
       )
       .subscribe();
 
+    const intervalId = window.setInterval(() => {
+      void loadRecentPaints(false);
+    }, 15_000);
+
+    const handleFocus = () => {
+      void loadRecentPaints(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void loadRecentPaints(false);
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       mounted = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       void supabase.removeChannel(channel);
     };
   }, [limit]);

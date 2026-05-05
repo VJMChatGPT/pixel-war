@@ -12,13 +12,14 @@ import {
   useVideoConfig,
 } from "remotion";
 import {COLORS, PIXL_PALETTE, clamp, easeOut, popEase} from "../constants";
+import {getLeaderboardStage, interpolateLeaderboardValue} from "../leaderboardMotion";
 import {
   activityEvents,
   boardPixels,
   featuredWallet,
   leaderboard,
+  promotedLeaderboardMid,
   promotedLeaderboard,
-  territoryBlocks,
   userPaintPath,
 } from "../mockData";
 import {fade, monoStyle, textStyle} from "../primitives";
@@ -363,7 +364,6 @@ export const PixelBoard = ({
 }) => {
   const frame = useCurrentFrame();
   const paintCount = Math.floor(interpolate(progress, [0, 1], [0, userPaintPath.length], clamp));
-  const pulse = 0.7 + Math.sin(frame / 10) * 0.22;
   const current = userPaintPath[Math.min(userPaintPath.length - 1, Math.max(0, paintCount - 1))];
 
   return (
@@ -388,36 +388,10 @@ export const PixelBoard = ({
         </defs>
         <rect width="100" height="100" fill={mode === "quiet" ? "#fff" : COLORS.canvas} />
         <rect width="100" height="100" fill={`url(#grid-${mode})`} opacity={mode === "quiet" ? 0.55 : 1} />
-        {mode !== "quiet" &&
-          territoryBlocks.map((block, index) => {
-            const reveal = interpolate(progress, [0, 0.38 + index * 0.045, 0.7 + index * 0.035], [0.06, 0.06, 1], clamp);
-            const fight = mode === "battle" ? interpolate(progress, [0.18, 1], [0, 1], clamp) : 0;
-            return (
-              <g key={block.owner} opacity={0.2 + reveal * 0.72}>
-                <rect
-                  x={block.x}
-                  y={block.y}
-                  width={block.w * reveal + fight * (index % 2 === 0 ? 5 : -3)}
-                  height={block.h * reveal + fight * (index % 2 === 1 ? 4 : -2)}
-                  fill={block.color}
-                  opacity={0.72}
-                />
-                <rect
-                  x={block.x}
-                  y={block.y}
-                  width={block.w * reveal + fight * (index % 2 === 0 ? 5 : -3)}
-                  height={block.h * reveal + fight * (index % 2 === 1 ? 4 : -2)}
-                  fill="none"
-                  stroke={block.color}
-                  strokeWidth={0.5 + pulse * 0.16}
-                />
-              </g>
-            );
-          })}
         {boardPixels.map((pixel, index) => {
           const visible =
             mode === "quiet"
-              ? index % 19 === 0 && progress > 0.55
+              ? progress > 0.2 && (index % 6 === 0 || index < 320 * progress)
               : mode === "battle"
                 ? frame > pixel.delay * 0.45
                 : frame > pixel.delay || index < 260 * progress;
@@ -431,7 +405,7 @@ export const PixelBoard = ({
               width="1"
               height="1"
               fill={pixel.color}
-              opacity={mode === "quiet" ? 0.35 : flicker}
+              opacity={mode === "quiet" ? 0.22 + ((index % 5) * 0.07) + progress * 0.18 : flicker}
             />
           );
         })}
@@ -448,13 +422,6 @@ export const PixelBoard = ({
             <animate attributeName="opacity" values="1;0.72;1" dur={`${0.7 + index * 0.03}s`} repeatCount="indefinite" />
           </rect>
         ))}
-        {mode === "battle" && (
-          <g opacity={interpolate(progress, [0.2, 0.8], [0, 0.86], clamp)}>
-            <rect x="44" y="42" width={interpolate(progress, [0.2, 1], [0, 27], clamp)} height="6" fill={COLORS.purple} />
-            <rect x="47" y="49" width={interpolate(progress, [0.3, 1], [0, 24], clamp)} height="5" fill={COLORS.lavender} />
-            <rect x="69" y="39" width="1" height="18" fill={COLORS.white} opacity={0.86} />
-          </g>
-        )}
       </svg>
       {showCursor && (
         <Cursor
@@ -909,22 +876,32 @@ export const LeaderboardAnimatedMock = ({
   const rowHeight = 74;
   const rowGap = 12;
   const stackHeight = leaderboard.length * rowHeight + (leaderboard.length - 1) * rowGap;
+  const midMap = new Map(promotedLeaderboardMid.map((row) => [row.wallet, row]));
   const endMap = new Map(promotedLeaderboard.map((row) => [row.wallet, row]));
+  const stage = getLeaderboardStage(transitionProgress);
   const rows = leaderboard
     .map((row, index) => {
+      const middle = midMap.get(row.wallet) ?? row;
       const target = endMap.get(row.wallet) ?? row;
       const enter = interpolate(progress, [index * 0.08, 0.38 + index * 0.08], [0, 1], {...clamp, easing: easeOut});
-      const lane = interpolate(transitionProgress, [0, 1], [row.rank - 1, target.rank - 1], {...clamp, easing: easeOut});
+      const lane = interpolateLeaderboardValue(
+        transitionProgress,
+        row.rank - 1,
+        middle.rank - 1,
+        target.rank - 1,
+      );
       return {
         ...row,
-        currentRank: Math.round(interpolate(transitionProgress, [0, 1], [row.rank, target.rank], clamp)),
-        currentPixels: Math.round(interpolate(transitionProgress, [0, 1], [row.pixels, target.pixels], clamp)),
+        currentRank: stage === "start" ? row.rank : stage === "mid" ? middle.rank : target.rank,
+        currentPixels: Math.round(
+          interpolateLeaderboardValue(transitionProgress, row.pixels, middle.pixels, target.pixels),
+        ),
         currentPoints: formatCompactPoints(
-          interpolate(
+          interpolateLeaderboardValue(
             transitionProgress,
-            [0, 1],
-            [parseCompactPoints(row.points), parseCompactPoints(target.points)],
-            clamp,
+            parseCompactPoints(row.points),
+            parseCompactPoints(middle.points),
+            parseCompactPoints(target.points),
           ),
         ),
         y: lane * (rowHeight + rowGap),
@@ -991,169 +968,197 @@ export const FeaturedAdSpotMock = ({
 }) => {
   const frame = useCurrentFrame();
   const reveal = interpolate(progress, [0, 1], [0, 1], {...clamp, easing: easeOut});
-  const shimmer = 0.55 + Math.sin(frame / 22) * 0.12;
-  const width = compact ? 520 : 780;
-  const height = compact ? 300 : 430;
+  const shimmer = 0.5 + Math.sin(frame / 24) * 0.08;
+  const width = compact ? 420 : 600;
+  const boardSize = compact ? 92 : 132;
+  const identitySize = compact ? 10 : 12;
 
   return (
-  <BrowserFrame title="pixelwarcoin.com" style={{width, height, borderRadius: compact ? 20 : 24}}>
-      <div style={{position: "absolute", inset: 0, padding: compact ? 18 : 24}}>
+    <GlassPanel
+      style={{
+        width,
+        borderRadius: compact ? 24 : 30,
+        padding: compact ? 20 : 28,
+        position: "relative",
+        overflow: "hidden",
+        borderColor: `rgba(201,168,255,${0.22 + reveal * 0.18})`,
+        background:
+          "linear-gradient(180deg, rgba(19,17,31,0.96), rgba(8,7,14,0.98)), radial-gradient(circle at 16% 18%, rgba(138,77,255,0.18), transparent 30%)",
+        boxShadow: "0 34px 110px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.06)",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `linear-gradient(118deg, transparent 14%, rgba(255,255,255,${shimmer * 0.09}) 44%, transparent 72%)`,
+          transform: `translateX(${interpolate(reveal, [0, 1], [-42, 68], clamp)}%)`,
+        }}
+      />
+      <div style={{position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+        <div style={{...monoStyle, color: COLORS.lavender, fontSize: compact ? 11 : 12, textTransform: "uppercase"}}>
+          featured placement
+        </div>
         <div
           style={{
-            height: compact ? 108 : 148,
-            borderRadius: 22,
-            border: `1px solid rgba(201,168,255,${0.3 + reveal * 0.3})`,
-            background:
-              "linear-gradient(135deg, rgba(138,77,255,0.28), rgba(255,111,174,0.18) 46%, rgba(255,255,255,0.06) 100%)",
-            boxShadow: "0 24px 70px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08)",
-            padding: compact ? 16 : 22,
-            position: "relative",
-            overflow: "hidden",
+            ...monoStyle,
+            color: COLORS.text,
+            fontSize: compact ? 10 : 11,
+            textTransform: "uppercase",
+            border: `1px solid rgba(201,168,255,0.24)`,
+            borderRadius: 999,
+            padding: compact ? "7px 11px" : "8px 12px",
+            background: "rgba(255,255,255,0.04)",
           }}
         >
+          premium visibility
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: "relative",
+          display: "grid",
+          gridTemplateColumns: compact ? "1fr" : "1.1fr 0.9fr",
+          gap: compact ? 16 : 20,
+          alignItems: "stretch",
+          marginTop: compact ? 18 : 22,
+        }}
+      >
+        <div>
+          <div style={{...textStyle, fontSize: compact ? 28 : 34, fontWeight: 930, lineHeight: 0.98}}>
+            Get featured on
+            <br />
+            the PIXL website.
+          </div>
           <div
             style={{
-              position: "absolute",
-              inset: 0,
-              background: `linear-gradient(110deg, transparent 12%, rgba(255,255,255,${shimmer * 0.18}) 42%, transparent 72%)`,
-              transform: `translateX(${interpolate(reveal, [0, 1], [-40, 65], clamp)}%)`,
+              ...textStyle,
+              color: COLORS.muted,
+              fontSize: compact ? 14 : 16,
+              lineHeight: 1.45,
+              marginTop: 14,
+              maxWidth: compact ? 310 : 360,
             }}
-          />
-          <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative"}}>
+          >
+            Top players earn premium visibility with their wallet, identity and pixel style showcased in the spotlight.
+          </div>
+          <div style={{display: "flex", gap: 10, marginTop: compact ? 16 : 18, flexWrap: "wrap"}}>
+            {["spotlight", "homepage placement", "winner identity"].map((label) => (
+              <div
+                key={label}
+                style={{
+                  ...monoStyle,
+                  color: COLORS.muted,
+                  fontSize: compact ? 10 : 11,
+                  textTransform: "uppercase",
+                  border: `1px solid ${COLORS.border}`,
+                  borderRadius: 999,
+                  padding: compact ? "8px 10px" : "9px 12px",
+                  background: "rgba(255,255,255,0.035)",
+                }}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div
+          style={{
+            borderRadius: compact ? 18 : 22,
+            border: `1px solid rgba(201,168,255,0.22)`,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025))",
+            padding: compact ? 14 : 18,
+            display: "grid",
+            gridTemplateRows: "auto 1fr auto",
+            gap: compact ? 12 : 14,
+          }}
+        >
+          <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
             <div>
-              <div style={{...monoStyle, color: COLORS.lavender, fontSize: compact ? 11 : 12, textTransform: "uppercase"}}>
-                featured placement
+              <div style={{...monoStyle, color: COLORS.quiet, fontSize: compact ? 10 : 11, textTransform: "uppercase"}}>
+                winner preview
               </div>
-              <div style={{...textStyle, fontSize: compact ? 24 : 32, fontWeight: 930, marginTop: 10}}>
-                Top players earn a featured ad spot
-              </div>
-              <div style={{...textStyle, color: COLORS.muted, fontSize: compact ? 14 : 17, lineHeight: 1.4, marginTop: 10, maxWidth: compact ? 290 : 420}}>
-                Win premium visibility on the Pixel War website.
+              <div style={{...monoStyle, color: COLORS.text, fontSize: compact ? 12 : 13, fontWeight: 800, marginTop: 6}}>
+                {featuredWallet}
               </div>
             </div>
             <div
               style={{
                 ...monoStyle,
-                color: COLORS.ink,
-                fontSize: compact ? 10 : 12,
-                fontWeight: 900,
-                background: COLORS.lavender,
-                borderRadius: 999,
-                padding: compact ? "8px 12px" : "10px 14px",
+                color: COLORS.green,
+                fontSize: compact ? 10 : 11,
+                fontWeight: 800,
               }}
             >
-              winner spotlight
+              now featured
             </div>
           </div>
-        </div>
-
-        <div style={{display: "grid", gridTemplateColumns: compact ? "150px 1fr" : "180px 1fr", gap: compact ? 14 : 18, marginTop: compact ? 16 : 18}}>
-          <div
-            style={{
-              borderRadius: 18,
-              border: `1px solid ${COLORS.border}`,
-              background: "rgba(255,255,255,0.04)",
-              padding: compact ? 14 : 16,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div style={{...monoStyle, color: COLORS.muted, fontSize: 10, textTransform: "uppercase"}}>winner identity</div>
-              <div style={{marginTop: 14, display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4}}>
+          <div style={{display: "grid", gridTemplateColumns: `${boardSize}px 1fr`, gap: compact ? 12 : 16, alignItems: "center"}}>
+            <div
+              style={{
+                width: boardSize,
+                height: boardSize,
+                borderRadius: compact ? 14 : 16,
+                border: `1px solid ${COLORS.border}`,
+                background: "rgba(255,255,255,0.04)",
+                padding: compact ? 8 : 10,
+              }}
+            >
+              <div style={{display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 3, height: "100%"}}>
                 {Array.from({length: 25}, (_, index) => (
                   <span
                     key={index}
                     style={{
-                      aspectRatio: "1 / 1",
-                      borderRadius: 3,
+                      borderRadius: 2,
                       background: [COLORS.purple, COLORS.lavender, COLORS.blue, COLORS.pink, COLORS.gold][index % 5],
-                      opacity: index / 25 < 0.88 ? 0.95 : 0.18,
+                      opacity: index % 6 === 0 || index % 7 === 0 ? 0.98 : 0.36 + ((index % 5) * 0.12),
                     }}
                   />
                 ))}
               </div>
             </div>
-            <div style={{marginTop: 14}}>
-              <div style={{...monoStyle, color: COLORS.text, fontSize: compact ? 12 : 13, fontWeight: 800}}>{featuredWallet}</div>
-              <div style={{...monoStyle, color: COLORS.quiet, fontSize: compact ? 10 : 11, marginTop: 5}}>project: PIXL Alpha Guild</div>
+            <div>
+              <div style={{...textStyle, fontSize: compact ? 18 : 22, fontWeight: 900, lineHeight: 1}}>
+                Featured placement secured
+              </div>
+              <div style={{...textStyle, color: COLORS.muted, fontSize: compact ? 13 : 14, lineHeight: 1.45, marginTop: 10}}>
+                A premium slot for top performers, built to signal prestige across the PIXL experience.
+              </div>
             </div>
           </div>
-
-          <div
-            style={{
-              borderRadius: 18,
-              border: `1px solid ${COLORS.border}`,
-              background: "rgba(255,255,255,0.035)",
-              padding: compact ? 14 : 18,
-            }}
-          >
-            <div style={{...monoStyle, color: COLORS.muted, fontSize: 10, textTransform: "uppercase"}}>homepage promo slot</div>
-            <div style={{display: "grid", gridTemplateColumns: compact ? "1fr" : "1.05fr 0.95fr", gap: 14, marginTop: 14}}>
-              <div>
-                <div style={{...textStyle, fontSize: compact ? 22 : 28, fontWeight: 930, lineHeight: 1}}>
-                  Earn your place on the board
-                  <br />
-                  and on the site
-                </div>
-                <div style={{...textStyle, color: COLORS.muted, fontSize: compact ? 13 : 15, lineHeight: 1.45, marginTop: 12}}>
-                  Featured winners can be promoted directly inside Pixel War with their identity, project and pixel style.
-                </div>
-                <div style={{display: "flex", gap: 10, marginTop: 16}}>
-                  <div
-                    style={{
-                      ...textStyle,
-                      height: compact ? 36 : 40,
-                      borderRadius: 12,
-                      padding: compact ? "0 14px" : "0 16px",
-                      display: "flex",
-                      alignItems: "center",
-                      fontSize: compact ? 13 : 14,
-                      fontWeight: 850,
-                      color: COLORS.ink,
-                      background: `linear-gradient(120deg, ${COLORS.lavender}, ${COLORS.white})`,
-                    }}
-                  >
-                    Featured winner
-                  </div>
-                  <div
-                    style={{
-                      ...monoStyle,
-                      height: compact ? 36 : 40,
-                      borderRadius: 12,
-                      padding: compact ? "0 14px" : "0 16px",
-                      display: "flex",
-                      alignItems: "center",
-                      fontSize: compact ? 12 : 13,
-                      color: COLORS.muted,
-                      border: `1px solid ${COLORS.border}`,
-                    }}
-                  >
-                    homepage visibility
-                  </div>
-                </div>
-              </div>
-              {!compact && (
+          <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+            <div style={{display: "flex", gap: 8}}>
+              {[
+                {label: "visibility", value: "high"},
+                {label: "status", value: "#1"},
+              ].map((item) => (
                 <div
+                  key={item.label}
                   style={{
-                    borderRadius: 16,
-                    background: "linear-gradient(160deg, rgba(255,255,255,0.08), rgba(138,77,255,0.09))",
+                    borderRadius: 12,
                     border: `1px solid ${COLORS.border}`,
-                    padding: 14,
+                    background: "rgba(255,255,255,0.035)",
+                    padding: compact ? "8px 10px" : "9px 12px",
                   }}
                 >
-                  <div style={{...monoStyle, color: COLORS.muted, fontSize: 10, textTransform: "uppercase", marginBottom: 10}}>
-                    spotlight preview
+                  <div style={{...monoStyle, color: COLORS.quiet, fontSize: compact ? 9 : 10, textTransform: "uppercase"}}>
+                    {item.label}
                   </div>
-                  <PixelBoard mode="overview" progress={0.86} style={{width: 170, margin: "0 auto"}} />
+                  <div style={{...monoStyle, color: COLORS.text, fontSize: compact ? 11 : 12, fontWeight: 800, marginTop: 5}}>
+                    {item.value}
+                  </div>
                 </div>
-              )}
+              ))}
+            </div>
+            <div style={{...monoStyle, color: COLORS.lavender, fontSize: compact ? 10 : 11, textTransform: "uppercase"}}>
+              get featured
             </div>
           </div>
         </div>
       </div>
-    </BrowserFrame>
+    </GlassPanel>
   );
 };
 

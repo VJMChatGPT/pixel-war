@@ -6,6 +6,7 @@ import { ColorPicker } from "@/components/ColorPicker";
 import { CooldownRing } from "@/components/CooldownRing";
 import { PixelBadge } from "@/components/PixelBadge";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { LaunchStatusBanner } from "@/components/LaunchStatusBanner";
 import { PixlMascot } from "@/components/PixlMascot";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,11 @@ import { useCanvas } from "@/hooks/useCanvas";
 import { useWallet } from "@/hooks/useWallet";
 import { useAnimatedWalletPoints, useWalletState } from "@/hooks/useWalletState";
 import { useCooldown } from "@/hooks/useCooldown";
+import { useLaunchState } from "@/hooks/useLaunchState";
+import { usePaintAvailability } from "@/hooks/usePaintAvailability";
 import { paintPixel, type PixelRow } from "@/services/pixels";
 import { APP_CONFIG } from "@/config/app";
-import { compactNumber, formatPoints, shortAddress } from "@/lib/format";
+import { compactNumber, formatCountdown, formatPoints, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Brush, LocateFixed, Sparkles } from "lucide-react";
@@ -94,6 +97,7 @@ export default function CanvasPage() {
   const [pendingPaints, setPendingPaints] = useState(0);
   const [focusKey, setFocusKey] = useState(0);
   const [focusMine, setFocusMine] = useState(false);
+  const launch = useLaunchState();
 
   const cooldown = useCooldown(walletState?.last_paint_at);
   const territoryCap = walletState?.pixels_allowed ?? allowedPixels;
@@ -106,9 +110,18 @@ export default function CanvasPage() {
   const displayLoadedOwnedPixels = controlledNow;
   const pointsSourcePixels = Math.min(territoryCap, Math.max(ownedPixelCount, walletStatePixelsUsed));
   const { animatedPointsTotal, pointsPerSecond } = useAnimatedWalletPoints(pointsSourcePixels);
+  const {
+    paintsLeft,
+    nextPaintReadyInMs,
+    followingPaintReadyInMs,
+    registerSuccessfulPaint,
+  } = usePaintAvailability(wallet?.address, territoryCap);
   const hasPaintAuth = !!wallet && (wallet.isMock || !!wallet.sessionToken);
-  const canPaint = isConnected && hasPaintAuth && cooldown.ready && territoryCap > 0;
+  const canPaint = launch.canPaint && isConnected && hasPaintAuth && cooldown.ready && territoryCap > 0;
   const canvasSyncIssue = !canvasLoading && !canvasError && walletStatePixelsUsed > 0 && ownedPixelCount === 0;
+  const secondarySlotLabel = paintsLeft === 0 ? "then +1" : "next slot";
+  const secondarySlotCountdown = paintsLeft === 0 ? followingPaintReadyInMs : nextPaintReadyInMs;
+  const showSecondarySlot = secondarySlotCountdown > 0;
 
   useEffect(() => {
     if (!wallet) {
@@ -124,6 +137,15 @@ export default function CanvasPage() {
     if (!wallet) {
       if (!options?.silentError) {
         toast.error("Connect your wallet to paint");
+      }
+      return false;
+    }
+
+    if (!launch.canPaint) {
+      if (!options?.silentError) {
+        toast.error("Painting unavailable", {
+          description: launch.title === "Pixel War is live" ? launch.description : "Pixel War is not live yet.",
+        });
       }
       return false;
     }
@@ -223,6 +245,8 @@ export default function CanvasPage() {
         void invalidateWalletState();
       }
 
+      registerSuccessfulPaint(res.pixel?.updated_at ?? new Date().toISOString());
+
       if (!options?.silentSuccess) {
         toast.success("Pixel painted!", {
           description: (
@@ -315,6 +339,7 @@ export default function CanvasPage() {
 
   return (
     <Layout footer={false}>
+      <LaunchStatusBanner compact />
       <div className="container py-6 md:py-8">
         <div className="grid lg:grid-cols-[1fr_360px] gap-6">
           <div className="space-y-3">
@@ -369,6 +394,12 @@ export default function CanvasPage() {
                 <AlertDescription>
                   Wallet state reports {walletStatePixelsUsed} controlled pixels, but the canvas query loaded 0 cells for wallet {shortAddress(wallet?.address ?? "")}.
                 </AlertDescription>
+              </Alert>
+            )}
+            {!launch.loading && !launch.canPaint && (
+              <Alert className="border-primary/35 bg-primary/10">
+                <AlertTitle>{launch.title}</AlertTitle>
+                <AlertDescription>{launch.description}</AlertDescription>
               </Alert>
             )}
             <NeonCard shimmer={canPaint} className="p-2 md:p-3 aspect-square md:aspect-auto md:h-[calc(100vh-180px)] glow-primary">
@@ -450,12 +481,37 @@ export default function CanvasPage() {
             </NeonCard>
 
             {isConnected && (
-              <NeonCard className="p-5 flex flex-col items-center">
-                <CooldownRing
-                  remainingMs={cooldown.remainingMs}
-                  totalMs={APP_CONFIG.rules.cooldownMs}
-                  size={150}
-                />
+              <NeonCard className="p-5">
+                <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <CooldownRing
+                    remainingMs={cooldown.remainingMs}
+                    totalMs={APP_CONFIG.rules.cooldownMs}
+                    size={150}
+                  />
+                  <div className="w-full max-w-[180px] space-y-3 text-center sm:text-left">
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                        ready to paint
+                      </div>
+                      <div className="mt-1 font-display text-3xl font-bold text-gradient-neon tabular-nums">
+                        {paintsLeft}
+                      </div>
+                      <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                        pixels left to paint
+                      </div>
+                    </div>
+                    {showSecondarySlot && (
+                      <div className="rounded-xl border border-primary/25 bg-primary/10 px-3 py-2">
+                        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary/80">
+                          {secondarySlotLabel}
+                        </div>
+                        <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-foreground">
+                          {`${formatCountdown(secondarySlotCountdown)} min`}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </NeonCard>
             )}
 

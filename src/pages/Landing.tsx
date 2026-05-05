@@ -8,8 +8,10 @@ import { useCanvas } from "@/hooks/useCanvas";
 import { APP_CONFIG } from "@/config/app";
 import { CanvasGrid } from "@/components/CanvasGrid";
 import { ScrollStoryCanvas } from "@/components/ScrollStoryCanvas";
-import { RoundCountdownBanner, RoundSystemSection } from "@/components/RoundSystem";
+import { LaunchStatusBanner } from "@/components/LaunchStatusBanner";
+import { RoundSystemSection } from "@/components/RoundSystem";
 import { useWallet } from "@/hooks/useWallet";
+import { useLaunchState } from "@/hooks/useLaunchState";
 import { getWalletConnectionErrorMessage } from "@/services/wallet";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, useSpring, useInView, type MotionValue } from "framer-motion";
 import { useMemo, useRef, useState } from "react";
@@ -325,6 +327,7 @@ function CinematicNarrative() {
 export default function Landing() {
   const { pixels, revision } = useCanvas();
   const { connect, connecting, isConnected } = useWallet();
+  const launch = useLaunchState();
 
   const stats = useMemo(() => {
     const painted = pixels.filter((p) => p && p.owner_wallet).length;
@@ -372,7 +375,7 @@ export default function Landing() {
       {/* ============================================================ */}
       {/* 0. ROUND COUNTDOWN BANNER — round-system intro                */}
       {/* ============================================================ */}
-      <RoundCountdownBanner />
+      <LaunchStatusBanner />
 
       {/* ============================================================ */}
       {/* 1. HERO — full-bleed cinematic                              */}
@@ -455,7 +458,7 @@ export default function Landing() {
                   Claim your pixels
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </Button>
-              ) : (
+              ) : launch.canPaint ? (
                 <Button
                   size="lg"
                   asChild
@@ -465,6 +468,14 @@ export default function Landing() {
                     Enter the canvas
                     <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                   </Link>
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  disabled
+                  className="h-14 px-8 text-base font-semibold rounded-xl"
+                >
+                  {launch.title}
                 </Button>
               )}
               <Button size="lg" variant="outline" asChild className="h-14 px-8 rounded-xl border-border hover:bg-muted/40">
@@ -833,9 +844,13 @@ export default function Landing() {
                 >
                   <Wallet className="w-5 h-5" /> Connect wallet
                 </Button>
-              ) : (
+              ) : launch.canPaint ? (
                 <Button asChild size="lg" className="h-16 px-10 text-base bg-gradient-neon glow-primary rounded-xl text-primary-foreground font-semibold">
                   <Link to="/canvas"><Zap className="w-5 h-5" /> Enter the canvas</Link>
+                </Button>
+              ) : (
+                <Button disabled size="lg" className="h-16 px-10 text-base rounded-xl font-semibold">
+                  {launch.title}
                 </Button>
               )}
               <Button asChild size="lg" variant="outline" className="h-16 px-10 text-base rounded-xl">

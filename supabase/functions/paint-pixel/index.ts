@@ -1,5 +1,7 @@
 import {
   HttpError,
+  assertProductionSafety,
+  assertTokenMintConfigured,
   assertAllowedOrigin,
   createServiceClient,
   enforceRateLimit,
@@ -8,6 +10,7 @@ import {
   getWalletSnapshot,
   json,
   preflight,
+  requireLiveLaunch,
   requireSession,
 } from "../_shared/security.ts";
 
@@ -18,6 +21,10 @@ const PAINT_IP_LIMIT = "RATE_LIMIT_PAINT_IP_MAX";
 const PAINT_IP_WINDOW = "RATE_LIMIT_PAINT_IP_WINDOW_SECONDS";
 const PAINT_WALLET_LIMIT = "RATE_LIMIT_PAINT_WALLET_MAX";
 const PAINT_WALLET_WINDOW = "RATE_LIMIT_PAINT_WALLET_WINDOW_SECONDS";
+const MIN_PAINT_IP_LIMIT = 6_000;
+const MIN_PAINT_WALLET_LIMIT = 1_000;
+const PAINT_WALLET_BURST_BUFFER = 60;
+const PAINT_WALLET_ATTEMPTS_PER_SLOT = 3;
 const ALLOWED_COLORS = new Set([
   "#f3e8ff",
   "#e0c8ff",
@@ -44,6 +51,15 @@ type PaintRequest = {
 };
 
 Deno.serve(async (req) => {
+  try {
+    assertProductionSafety();
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return json(req, { ok: false, code: error.code, message: error.message, ...error.details }, error.status);
+    }
+    return json(req, { ok: false, code: "UNEXPECTED_ERROR", message: "Production safety check failed." }, 500);
+  }
+
   if (req.method === "OPTIONS") {
     return preflight(req);
   }
@@ -62,14 +78,8 @@ Deno.serve(async (req) => {
     await enforceRateLimit(
       supabase,
       `paint:ip:${clientIp}`,
-      getEnvInt(PAINT_IP_LIMIT, 600),
+      Math.max(getEnvInt(PAINT_IP_LIMIT, MIN_PAINT_IP_LIMIT), MIN_PAINT_IP_LIMIT),
       getEnvInt(PAINT_IP_WINDOW, 60),
-    );
-    await enforceRateLimit(
-      supabase,
-      `paint:wallet:${session.wallet}`,
-      getEnvInt(PAINT_WALLET_LIMIT, 120),
-      getEnvInt(PAINT_WALLET_WINDOW, 900),
     );
 
     const body = (await req.json()) as PaintRequest;
@@ -85,10 +95,24 @@ Deno.serve(async (req) => {
       throw new HttpError(400, "INVALID_COLOR", "Choose a valid palette color.");
     }
 
+    await requireLiveLaunch(supabase);
+    assertTokenMintConfigured();
+
     const snapshot = await getWalletSnapshot(session.wallet);
     if (snapshot.pixelsAllowed <= 0) {
       throw new HttpError(403, "INSUFFICIENT_BALANCE", "Token balance is required to paint.");
     }
+
+    const adaptiveWalletLimit = Math.max(
+      Math.max(getEnvInt(PAINT_WALLET_LIMIT, MIN_PAINT_WALLET_LIMIT), MIN_PAINT_WALLET_LIMIT),
+      snapshot.pixelsAllowed * PAINT_WALLET_ATTEMPTS_PER_SLOT + PAINT_WALLET_BURST_BUFFER,
+    );
+    await enforceRateLimit(
+      supabase,
+      `paint:wallet:${session.wallet}`,
+      adaptiveWalletLimit,
+      getEnvInt(PAINT_WALLET_WINDOW, COOLDOWN_SECONDS),
+    );
 
     const { data, error } = await supabase.rpc("paint_pixel_transaction", {
       p_wallet: session.wallet,

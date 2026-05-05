@@ -1,14 +1,15 @@
-import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import {
   getWalletAdapter,
   computeAllowedPixels,
   getSupportedWallets,
+  resumeWalletSession,
   type WalletInfo,
   type WalletOption,
   type WalletId,
 } from "@/services/wallet";
 
-const STORAGE_KEY = "pixeldao.wallet";
+const STORAGE_KEY = "pixelwar.wallet";
 
 interface StoredWallet {
   address: string;
@@ -101,15 +102,53 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setAvailableWallets(getSupportedWallets());
   };
 
-  const refreshBalance = async () => {
+  const refreshBalance = useCallback(async () => {
     if (!wallet) return;
+
+    if (!wallet.isMock && wallet.sessionToken) {
+      const snapshot = await resumeWalletSession(wallet.sessionToken);
+      setWallet((w) =>
+        w
+          ? {
+              ...w,
+              balance: snapshot.balance,
+              totalSupply: snapshot.totalSupply,
+              sessionExpiresAt: snapshot.sessionExpiresAt,
+            }
+          : w,
+      );
+      return;
+    }
+
     const adapter = getWalletAdapter(wallet, wallet.walletId);
-    const [balance, totalSupply] = await Promise.all([
-      adapter.getBalance(wallet),
-      adapter.getTotalSupply(wallet),
-    ]);
+    const [balance, totalSupply] = await Promise.all([adapter.getBalance(wallet), adapter.getTotalSupply(wallet)]);
     setWallet((w) => (w ? { ...w, balance, totalSupply } : w));
-  };
+  }, [wallet]);
+
+  useEffect(() => {
+    if (!wallet || wallet.isMock || !wallet.sessionToken) return;
+
+    const refresh = () => {
+      void refreshBalance().catch(() => undefined);
+    };
+
+    const intervalId = window.setInterval(refresh, 20_000);
+    const handleFocus = () => refresh();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refreshBalance, wallet]);
 
   const allowedPixels = wallet ? computeAllowedPixels(wallet.balance, wallet.totalSupply) : 0;
   const supplyPercent = wallet ? (wallet.balance / wallet.totalSupply) * 100 : 0;

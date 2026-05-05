@@ -18,11 +18,10 @@
  * ---------------------------------------------------------------------------
  * SERVER-SIDE ONLY SECRETS (never imported into client code)
  * ---------------------------------------------------------------------------
- * Future server-only secrets — used only inside Supabase Edge Functions
- * (`supabase/functions/<name>/index.ts`). Add them via the Lovable Cloud
- * Secrets manager. They are NEVER read from the frontend.
+ * Future server-only secrets are used only inside Supabase Edge Functions
+ * (`supabase/functions/<name>/index.ts`). Add them via Supabase or deployment secret management. They are NEVER read from the frontend.
  *
- *   SUPABASE_SERVICE_ROLE_KEY   (full admin access — edge functions only)
+ *   SUPABASE_SERVICE_ROLE_KEY   (full admin access, edge functions only)
  *   SOLANA_RPC_URL              (token balance reads, rate-limited keys)
  *   TOKEN_MINT_ADDRESS          (the project's SPL token mint)
  *   ALLOWED_APP_ORIGINS         (comma-separated allowed browser origins)

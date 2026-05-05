@@ -1,7 +1,11 @@
 import {
   HttpError,
+  assertProductionSafety,
   assertAllowedOrigin,
   createServiceClient,
+  enforceRateLimit,
+  getClientIp,
+  getEnvInt,
   json,
   preflight,
   requireSession,
@@ -12,8 +16,21 @@ type ProfileRequest = {
 };
 
 const MAX_DISPLAY_NAME_LENGTH = 32;
+const PROFILE_IP_LIMIT = "RATE_LIMIT_PROFILE_IP_MAX";
+const PROFILE_IP_WINDOW = "RATE_LIMIT_PROFILE_IP_WINDOW_SECONDS";
+const PROFILE_WALLET_LIMIT = "RATE_LIMIT_PROFILE_WALLET_MAX";
+const PROFILE_WALLET_WINDOW = "RATE_LIMIT_PROFILE_WALLET_WINDOW_SECONDS";
 
 Deno.serve(async (req) => {
+  try {
+    assertProductionSafety();
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return json(req, { ok: false, code: error.code, message: error.message, ...error.details }, error.status);
+    }
+    return json(req, { ok: false, code: "UNEXPECTED_ERROR", message: "Production safety check failed." }, 500);
+  }
+
   if (req.method === "OPTIONS") {
     return preflight(req);
   }
@@ -26,7 +43,24 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createServiceClient();
+    const clientIp = getClientIp(req);
+
+    await enforceRateLimit(
+      supabase,
+      `profile:ip:${clientIp}`,
+      getEnvInt(PROFILE_IP_LIMIT, 120),
+      getEnvInt(PROFILE_IP_WINDOW, 60),
+    );
+
     const session = await requireSession(req, supabase);
+
+    await enforceRateLimit(
+      supabase,
+      `profile:wallet:${session.wallet}`,
+      getEnvInt(PROFILE_WALLET_LIMIT, 20),
+      getEnvInt(PROFILE_WALLET_WINDOW, 300),
+    );
+
     const body = (await req.json()) as ProfileRequest;
 
     const normalizedDisplayName = normalizeDisplayName(body.displayName);

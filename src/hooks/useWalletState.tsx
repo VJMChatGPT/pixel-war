@@ -78,7 +78,7 @@ export function WalletStateProvider({ children }: { children: ReactNode }) {
     }
 
     void refreshWalletState();
-  }, [refreshWalletState, setWalletStateData, wallet?.address]);
+  }, [refreshWalletState, setWalletStateData, wallet?.address, wallet?.balance, wallet?.totalSupply]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {

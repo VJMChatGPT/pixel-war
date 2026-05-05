@@ -302,7 +302,7 @@ export default function Leaderboard() {
               <Podium
                 rows={pointsPodium}
                 metricLabel="total points"
-                metricValue={(row) => compactNumber(Number((row as PointsBoardEntry).total_points) ?? 0)}
+                metricValue={(row) => compactNumber(Number((row as PointsBoardEntry).total_points ?? 0))}
                 currentWallet={wallet?.address}
               />
 
@@ -342,7 +342,7 @@ export default function Leaderboard() {
               <Podium
                 rows={pixelPodium}
                 metricLabel="pixels controlled"
-                metricValue={(row) => compactNumber(Number((row as LeaderboardRow).controlled_pixels) ?? 0)}
+                metricValue={(row) => compactNumber(Number((row as LeaderboardRow).controlled_pixels ?? 0))}
                 currentWallet={wallet?.address}
               />
 
