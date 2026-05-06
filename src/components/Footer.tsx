@@ -30,7 +30,6 @@ export function Footer() {
         <div>
           <h4 className="font-display font-semibold text-sm mb-3">Token</h4>
           <ul className="space-y-2 text-sm text-muted-foreground font-mono">
-            <li>CA: <span className="text-foreground/70">44J8EvXF4LW1huEd32hnPP21Pph4CWqs1QFGGPKdpump</span></li>
             <li>Network: Solana</li>
             <li>Supply: 1,000,000,000</li>
           </ul>
