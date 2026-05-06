@@ -17,7 +17,7 @@ const links = [
   { to: "/rules", label: "Rules" },
 ];
 
-const TRADE_URL = "https://trade.padre.gg/trenches";
+const TRADE_URL = "https://trade.padre.gg/trade/solana/3q6JVmScnth28vmLtagB5EirPG64K6mjZSKSn9NeDcq1";
 
 export function NavBar() {
   const [scrolled, setScrolled] = useState(false);
