@@ -13,8 +13,8 @@ import { RoundSystemSection } from "@/components/RoundSystem";
 import { useWallet } from "@/hooks/useWallet";
 import { useLaunchState } from "@/hooks/useLaunchState";
 import { getWalletConnectionErrorMessage } from "@/services/wallet";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform, useSpring, useInView, type MotionValue } from "framer-motion";
-import { memo, useMemo, useRef, useState } from "react";
+import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform, useSpring, useInView, type MotionValue } from "framer-motion";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
 import { toast } from "sonner";
@@ -140,12 +140,27 @@ const CinematicNarrative = memo(function CinematicNarrative() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const [activeStage, setActiveStage] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
+  const [isMobileNarrative, setIsMobileNarrative] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobileNarrative(mediaQuery.matches);
+    update();
+
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
+  const lightweightMode = prefersReducedMotion || isMobileNarrative;
 
   // Smooth the raw scroll progress first — produces buttery motion across all derived values
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 110,
-    damping: 32,
-    mass: 0.55,
+    stiffness: lightweightMode ? 90 : 110,
+    damping: lightweightMode ? 26 : 32,
+    mass: lightweightMode ? 0.48 : 0.55,
     restDelta: 0.0005,
   });
 
@@ -154,20 +169,26 @@ const CinematicNarrative = memo(function CinematicNarrative() {
   const scaleRaw = useTransform(
     smoothProgress,
     [0, 0.18, 0.4, 0.62, 0.82, 1],
-    [2.65, 2.05, 1.48, 1.12, 0.96, 0.88],
+    lightweightMode ? [2.2, 1.84, 1.38, 1.08, 0.98, 0.92] : [2.65, 2.05, 1.48, 1.12, 0.96, 0.88],
   );
-  const scale = useSpring(scaleRaw, { stiffness: 70, damping: 26, mass: 0.5 });
+  const scale = useSpring(scaleRaw, {
+    stiffness: lightweightMode ? 62 : 70,
+    damping: lightweightMode ? 24 : 26,
+    mass: lightweightMode ? 0.42 : 0.5,
+  });
 
   // Subtle pan that drifts toward center as we zoom out
-  const x = useTransform(smoothProgress, [0, 0.5, 1], ["12%", "4%", "0%"]);
-  const y = useTransform(smoothProgress, [0, 0.5, 1], ["-12%", "-4%", "0%"]);
-  const rotate = useTransform(smoothProgress, [0, 0.5, 1], ["-1.2deg", "0deg", "1.2deg"]);
-  const haloScale = useTransform(smoothProgress, [0, 0.45, 1], [0.85, 1.08, 1.2]);
-  const haloOpacity = useTransform(smoothProgress, [0, 0.14, 0.5, 0.88, 1], [0.25, 0.8, 0.55, 0.85, 0.3]);
+  const x = useTransform(smoothProgress, [0, 0.5, 1], lightweightMode ? ["8%", "2%", "0%"] : ["12%", "4%", "0%"]);
+  const y = useTransform(smoothProgress, [0, 0.5, 1], lightweightMode ? ["-8%", "-2%", "0%"] : ["-12%", "-4%", "0%"]);
+  const rotate = useTransform(smoothProgress, [0, 0.5, 1], lightweightMode ? ["-0.6deg", "0deg", "0.4deg"] : ["-1.2deg", "0deg", "1.2deg"]);
+  const haloScale = useTransform(smoothProgress, [0, 0.45, 1], lightweightMode ? [0.92, 1.02, 1.08] : [0.85, 1.08, 1.2]);
+  const haloOpacity = useTransform(smoothProgress, [0, 0.14, 0.5, 0.88, 1], lightweightMode ? [0.12, 0.34, 0.28, 0.36, 0.14] : [0.25, 0.8, 0.55, 0.85, 0.3]);
   const sweepX = useTransform(smoothProgress, [0, 1], ["-45%", "145%"]);
-  const sweepOpacity = useTransform(smoothProgress, [0, 0.08, 0.88, 1], [0, 0.8, 0.8, 0]);
+  const sweepOpacity = useTransform(smoothProgress, [0, 0.08, 0.88, 1], lightweightMode ? [0, 0.24, 0.24, 0] : [0, 0.55, 0.55, 0]);
   const vignetteOpacity = useTransform(smoothProgress, (v) => {
-    return 0.85 + (0.22 - 0.85) * Math.min(1, Math.max(0, v));
+    const start = lightweightMode ? 0.7 : 0.85;
+    const end = lightweightMode ? 0.28 : 0.22;
+    return start + (end - start) * Math.min(1, Math.max(0, v));
   });
   const currentStage = STAGES[activeStage];
 
@@ -177,7 +198,7 @@ const CinematicNarrative = memo(function CinematicNarrative() {
   });
 
   return (
-    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * CINEMATIC_STAGE_HEIGHT_VH}vh` }}>
+    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * (lightweightMode ? 138 : CINEMATIC_STAGE_HEIGHT_VH)}vh` }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-background isolate">
         {/* ambient grid */}
         <div className="absolute inset-0 grid-bg opacity-[0.05]" />
@@ -190,18 +211,18 @@ const CinematicNarrative = memo(function CinematicNarrative() {
         >
           <motion.div
             style={{ opacity: haloOpacity, scale: haloScale, willChange: "transform, opacity" }}
-            className="absolute aspect-square w-[min(90vh,90vw)] rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.38)_0%,hsl(var(--accent)/0.22)_36%,transparent_68%)] blur-2xl transform-gpu"
+            className={`absolute aspect-square rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.38)_0%,hsl(var(--accent)/0.22)_36%,transparent_68%)] transform-gpu ${lightweightMode ? "w-[min(76vh,76vw)] blur-lg" : "w-[min(90vh,90vw)] blur-xl"}`}
             aria-hidden
           />
-          <div className="scanlines relative aspect-square w-[min(82vh,82vw)] overflow-hidden rounded-md bg-[#06040d] ring-1 ring-primary/40 shadow-[0_0_40px_hsl(var(--accent)/0.3),0_0_132px_hsl(var(--primary)/0.42)] [backface-visibility:hidden] [contain:layout_paint_style] transform-gpu">
+          <div className={`scanlines relative aspect-square w-[min(82vh,82vw)] overflow-hidden rounded-md bg-[#06040d] ring-1 ring-primary/40 [backface-visibility:hidden] [contain:layout_paint_style] transform-gpu ${lightweightMode ? "shadow-[0_0_22px_hsl(var(--accent)/0.18),0_0_56px_hsl(var(--primary)/0.2)]" : "shadow-[0_0_28px_hsl(var(--accent)/0.24),0_0_90px_hsl(var(--primary)/0.3)]"}`}>
             <ScrollStoryCanvas />
             <motion.div
               style={{ x: sweepX, opacity: sweepOpacity, willChange: "transform, opacity" }}
-              className="pointer-events-none absolute inset-y-[-12%] left-0 w-1/3 rotate-12 bg-gradient-to-r from-transparent via-white/25 to-transparent blur-sm mix-blend-screen transform-gpu"
+              className={`pointer-events-none absolute inset-y-[-12%] left-0 w-1/3 rotate-12 bg-gradient-to-r from-transparent via-white/22 to-transparent mix-blend-screen transform-gpu ${lightweightMode ? "" : "blur-[2px]"}`}
               aria-hidden
             />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_48%,hsl(var(--primary)/0.12)_72%,hsl(var(--background)/0.76)_100%)]" aria-hidden />
-            <div className="pointer-events-none absolute inset-2 rounded border border-white/10 shadow-[inset_0_0_32px_hsl(var(--primary)/0.18)]" aria-hidden />
+            <div className={`pointer-events-none absolute inset-2 rounded border border-white/10 ${lightweightMode ? "shadow-[inset_0_0_16px_hsl(var(--primary)/0.12)]" : "shadow-[inset_0_0_24px_hsl(var(--primary)/0.14)]"}`} aria-hidden />
             <div className="pointer-events-none absolute left-4 top-4 h-10 w-10 border-l border-t border-accent/70" aria-hidden />
             <div className="pointer-events-none absolute right-4 top-4 h-10 w-10 border-r border-t border-accent/70" aria-hidden />
             <div className="pointer-events-none absolute bottom-4 left-4 h-10 w-10 border-b border-l border-accent/70" aria-hidden />
@@ -254,44 +275,45 @@ const CinematicNarrative = memo(function CinematicNarrative() {
 
         {/* HERO STAGE TEXT — centered, dominant */}
         <div className="absolute inset-0 z-10 flex items-center justify-center px-6 md:px-12">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStage.key}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="relative max-w-3xl px-4 py-5 text-center"
+          <motion.div
+            key={currentStage.key}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: lightweightMode ? 0.34 : 0.46, ease: [0.16, 1, 0.3, 1] }}
+            className="relative max-w-3xl px-4 py-5 text-center"
+          >
+            {/* Soft solid backing panel directly behind text for guaranteed legibility */}
+            <div
+              aria-hidden
+              className={`pointer-events-none absolute -inset-x-10 -inset-y-8 md:-inset-x-16 md:-inset-y-12 -z-10 rounded-[2rem] ring-1 ring-white/5 ${lightweightMode ? "bg-background/64 shadow-[0_18px_56px_-26px_hsl(var(--background))]" : "bg-background/58 shadow-[0_22px_72px_-28px_hsl(var(--background))]"}`}
+              style={{ maskImage: "radial-gradient(ellipse at center, black 55%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse at center, black 55%, transparent 100%)" }}
+            />
+            <div className="mb-5 font-mono text-[11px] uppercase tracking-[0.4em] text-accent drop-shadow-[0_0_12px_hsl(var(--accent)/0.6)] md:text-xs">
+              {currentStage.label}
+            </div>
+            <h3
+              className={`font-display font-bold tracking-tight text-gradient-hero ${lightweightMode ? "text-5xl leading-[0.95] md:text-7xl lg:text-[7rem]" : "text-6xl leading-[0.92] md:text-8xl lg:text-[8.5rem]"}`}
+              style={{
+                textShadow: lightweightMode
+                  ? "0 2px 12px hsl(var(--background) / 0.92), 0 0 14px hsl(var(--accent) / 0.18), 0 0 24px hsl(var(--primary) / 0.34), 0 0 42px hsl(var(--primary) / 0.18)"
+                  : "0 2px 16px hsl(var(--background) / 0.94), 0 0 18px hsl(var(--accent) / 0.22), 0 0 34px hsl(var(--primary) / 0.46), 0 0 68px hsl(var(--primary) / 0.24)",
+              }}
             >
-              {/* Soft solid backing panel directly behind text for guaranteed legibility */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -inset-x-10 -inset-y-8 md:-inset-x-16 md:-inset-y-12 -z-10 rounded-[2rem] bg-background/55 backdrop-blur-md ring-1 ring-white/5 shadow-[0_30px_120px_-20px_hsl(var(--background))]"
-                style={{ maskImage: "radial-gradient(ellipse at center, black 55%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse at center, black 55%, transparent 100%)" }}
-              />
-              <div className="font-mono text-[11px] md:text-xs uppercase tracking-[0.4em] text-accent mb-5 drop-shadow-[0_0_12px_hsl(var(--accent)/0.6)]">
-                {currentStage.label}
+              {currentStage.title}
+            </h3>
+            <p
+              className="mx-auto mt-7 max-w-2xl text-lg font-medium leading-snug text-foreground md:text-2xl"
+              style={{ textShadow: lightweightMode ? "0 1px 2px hsl(var(--background)), 0 0 18px hsl(var(--background) / 0.9)" : "0 1px 2px hsl(var(--background)), 0 2px 16px hsl(var(--background) / 0.95), 0 0 32px hsl(var(--background))" }}
+            >
+              {currentStage.sub}
+            </p>
+            {currentStage.key === "dominance" && (
+              <div className={`mt-8 inline-flex items-center gap-2 rounded-full border border-accent/50 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-accent md:text-xs ${lightweightMode ? "bg-background/74 shadow-[0_0_14px_hsl(var(--accent)/0.18)]" : "bg-background/72 shadow-[0_0_18px_hsl(var(--accent)/0.22)]"}`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                winner gets the homepage ad slot
               </div>
-              <h3
-                className="font-display font-bold text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.92] tracking-tight text-gradient-hero"
-                style={{ filter: "drop-shadow(0 2px 18px hsl(var(--background))) drop-shadow(0 0 28px hsl(var(--primary) / 0.55))" }}
-              >
-                {currentStage.title}
-              </h3>
-              <p
-                className="mt-7 mx-auto text-lg md:text-2xl leading-snug text-foreground max-w-2xl font-medium"
-                style={{ textShadow: "0 1px 2px hsl(var(--background)), 0 2px 16px hsl(var(--background) / 0.95), 0 0 32px hsl(var(--background))" }}
-              >
-                {currentStage.sub}
-              </p>
-              {currentStage.key === "dominance" && (
-                <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-accent/50 bg-background/70 px-4 py-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.3em] text-accent backdrop-blur-md shadow-[0_0_24px_hsl(var(--accent)/0.25)]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                  winner gets the homepage ad slot
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+            )}
+          </motion.div>
         </div>
 
         {/* progress rail */}
