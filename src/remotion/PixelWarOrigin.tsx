@@ -595,8 +595,8 @@ function MascotOrFallback({opacity}: {opacity: number}) {
 
 function SceneIdea() {
   const frame = useCurrentFrame();
-  const opacity = sceneOpacity(frame, 120);
-  const scale = interpolate(frame, [0, 120], [0.965, 1.02], clamp);
+  const opacity = sceneOpacity(frame, ORIGIN_SCENE_IDEA, 16, 14, 6);
+  const scale = interpolate(frame, [0, ORIGIN_SCENE_IDEA], [0.97, 1.02], clamp);
 
   return (
     <AbsoluteFill style={{opacity}}>
@@ -616,15 +616,15 @@ function SceneIdea() {
 function SceneTokenToTerritory() {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const opacity = sceneOpacity(frame, 150);
+  const opacity = sceneOpacity(frame, ORIGIN_SCENE_TOKEN, 16, 14, 6);
   const tokenSpring = spring({
     frame: frame - 8,
     fps,
     config: {damping: 18, stiffness: 105},
   });
-  const pixelsProgress = smoothProgress(frame, 36, 56);
-  const textOpacity = fadeIn(frame, 28, 30);
-  const linkGlow = smoothProgress(frame, 26, 48);
+  const pixelsProgress = smoothProgress(frame, 24, 42);
+  const textOpacity = fadeIn(frame, 18, 22);
+  const linkGlow = smoothProgress(frame, 18, 34);
 
   return (
     <AbsoluteFill style={{opacity}}>
@@ -679,8 +679,8 @@ function SceneTokenToTerritory() {
 
 function SceneCanvas() {
   const frame = useCurrentFrame();
-  const opacity = sceneOpacity(frame, 150);
-  const progress = smoothProgress(frame, 18, 54);
+  const opacity = sceneOpacity(frame, ORIGIN_SCENE_CANVAS, 16, 14, 6);
+  const progress = smoothProgress(frame, 12, 40);
   const gridScale = interpolate(progress, [0, 1], [0.86, 1], clamp);
 
   return (
@@ -723,8 +723,8 @@ function SceneCanvas() {
 
 function SceneMechanics() {
   const frame = useCurrentFrame();
-  const opacity = sceneOpacity(frame, 150);
-  const conquest = smoothProgress(frame, 30, 58);
+  const opacity = sceneOpacity(frame, ORIGIN_SCENE_MECHANICS, 16, 14, 6);
+  const conquest = smoothProgress(frame, 18, 42);
 
   return (
     <AbsoluteFill style={{opacity}}>
@@ -768,12 +768,12 @@ function SceneMechanics() {
 
 function ScenePoints() {
   const frame = useCurrentFrame();
-  const opacity = sceneOpacity(frame, 150);
-  const rowsOpacity = fadeIn(frame, 34, 28);
-  const glowProgress = smoothProgress(frame, 22, 76);
-  const p1 = Math.floor(interpolate(frame, [34, 118], [0, 8420], clamp));
-  const p2 = Math.floor(interpolate(frame, [44, 118], [0, 6310], clamp));
-  const p3 = Math.floor(interpolate(frame, [54, 118], [0, 4985], clamp));
+  const opacity = sceneOpacity(frame, ORIGIN_SCENE_POINTS, 16, 14, 6);
+  const rowsOpacity = fadeIn(frame, 20, 22);
+  const glowProgress = smoothProgress(frame, 14, 54);
+  const p1 = Math.floor(interpolate(frame, [22, 92], [0, 8420], clamp));
+  const p2 = Math.floor(interpolate(frame, [30, 92], [0, 6310], clamp));
+  const p3 = Math.floor(interpolate(frame, [38, 92], [0, 4985], clamp));
 
   return (
     <AbsoluteFill style={{opacity}}>
@@ -829,7 +829,7 @@ function SceneFinal() {
     config: {damping: 18, stiffness: 90},
   });
   const scale = interpolate(titleSpring, [0, 1], [0.9, 1], clamp);
-  const settle = smoothProgress(frame, 12, 90);
+  const settle = smoothProgress(frame, 10, 68);
 
   return (
     <AbsoluteFill style={{opacity}}>
@@ -851,6 +851,23 @@ function SceneFinal() {
             transform: `scale(${scale})`,
           }}
         >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              height: 38,
+              padding: "0 16px",
+              borderRadius: 999,
+              border: `1px solid ${SURFACE_BORDER}`,
+              background: "rgba(255,255,255,0.05)",
+              color: LIGHT_PURPLE,
+              fontSize: 14,
+              fontWeight: 700,
+              marginBottom: 18,
+            }}
+          >
+            Launch day • May 7, 2026
+          </div>
           <MascotOrFallback opacity={fadeIn(frame, 0, 22)} />
           <h1
             style={{
@@ -874,8 +891,18 @@ function SceneFinal() {
               letterSpacing: 0,
             }}
           >
-            Buy $PIXL. Claim territory. Climb the board.
+            Today is launch day. Be ready to claim territory.
           </p>
+          <div
+            style={{
+              marginTop: 14,
+              color: "rgba(248,247,255,0.56)",
+              fontSize: 24,
+              letterSpacing: 0,
+            }}
+          >
+            Buy $PIXL. Enter the board.
+          </div>
           <div
             style={{
               marginTop: 32,
@@ -896,27 +923,42 @@ function SceneFinal() {
 export const PixelWarOrigin: React.FC = () => {
   return (
     <AbsoluteFill style={{background: BG, fontFamily: FONT}}>
-      <Sequence from={0} durationInFrames={120}>
+      <Sequence from={0} durationInFrames={ORIGIN_SCENE_IDEA}>
         <SceneIdea />
       </Sequence>
 
-      <Sequence from={120} durationInFrames={150}>
+      <Sequence from={ORIGIN_SCENE_IDEA} durationInFrames={ORIGIN_SCENE_TOKEN}>
         <SceneTokenToTerritory />
       </Sequence>
 
-      <Sequence from={270} durationInFrames={150}>
+      <Sequence from={ORIGIN_SCENE_IDEA + ORIGIN_SCENE_TOKEN} durationInFrames={ORIGIN_SCENE_CANVAS}>
         <SceneCanvas />
       </Sequence>
 
-      <Sequence from={420} durationInFrames={150}>
+      <Sequence
+        from={ORIGIN_SCENE_IDEA + ORIGIN_SCENE_TOKEN + ORIGIN_SCENE_CANVAS}
+        durationInFrames={ORIGIN_SCENE_MECHANICS}
+      >
         <SceneMechanics />
       </Sequence>
 
-      <Sequence from={570} durationInFrames={150}>
+      <Sequence
+        from={ORIGIN_SCENE_IDEA + ORIGIN_SCENE_TOKEN + ORIGIN_SCENE_CANVAS + ORIGIN_SCENE_MECHANICS}
+        durationInFrames={ORIGIN_SCENE_POINTS}
+      >
         <ScenePoints />
       </Sequence>
 
-      <Sequence from={720} durationInFrames={180}>
+      <Sequence
+        from={
+          ORIGIN_SCENE_IDEA +
+          ORIGIN_SCENE_TOKEN +
+          ORIGIN_SCENE_CANVAS +
+          ORIGIN_SCENE_MECHANICS +
+          ORIGIN_SCENE_POINTS
+        }
+        durationInFrames={ORIGIN_SCENE_FINAL}
+      >
         <SceneFinal />
       </Sequence>
     </AbsoluteFill>

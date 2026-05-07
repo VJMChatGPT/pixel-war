@@ -322,7 +322,10 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 export function RoundSystemSection() {
   return (
-    <section className="relative border-t border-border/60 py-28 md:py-32 overflow-hidden">
+    <section
+      className="relative border-t border-border/60 py-28 md:py-32 overflow-hidden"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "1400px" }}
+    >
       <div className="absolute inset-0 bg-radial-glow opacity-50 pointer-events-none" />
       <div className="absolute inset-0 grid-bg opacity-[0.05] pointer-events-none" />
 

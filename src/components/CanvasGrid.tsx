@@ -216,7 +216,7 @@ export function CanvasGrid({
     ctx.fillStyle = "#0a0a14";
     ctx.fillRect(offset.x, offset.y, W * cellSize, H * cellSize);
 
-    const emphasizePainted = renderMeta.paintedCount > 0 && cellSize <= 8;
+    const shouldGlowPainted = renderMeta.paintedCount > 0 && cellSize >= 10 && renderMeta.paintedCount <= 800 && !currentHighlightWallet;
     const highlightSet = renderMeta.highlightSet;
     const highlightStroke = renderMeta.highlightStroke;
 
@@ -234,12 +234,12 @@ export function CanvasGrid({
         ctx.fillStyle = dim ? p.color + "90" : p.color;
         ctx.fillRect(drawX, drawY, drawSize, drawSize);
 
-        if (emphasizePainted && !dim && !isHighlighted) {
+        if (shouldGlowPainted && !dim && !isHighlighted) {
           ctx.save();
           ctx.strokeStyle = p.color;
           ctx.lineWidth = 1.5;
           ctx.shadowColor = p.color;
-          ctx.shadowBlur = 10;
+          ctx.shadowBlur = Math.min(10, cellSize * 0.7);
           ctx.strokeRect(drawX - 1, drawY - 1, drawSize + 2, drawSize + 2);
           ctx.restore();
         }
@@ -248,8 +248,10 @@ export function CanvasGrid({
           ctx.save();
           ctx.strokeStyle = highlightStroke + "cc";
           ctx.lineWidth = Math.max(1, cellSize >= 10 ? 1.5 : 1);
-          ctx.shadowColor = highlightStroke;
-          ctx.shadowBlur = 4;
+          if (cellSize >= 8) {
+            ctx.shadowColor = highlightStroke;
+            ctx.shadowBlur = Math.min(6, cellSize * 0.45);
+          }
           ctx.beginPath();
 
           if (!highlightSet?.has(`${x},${y - 1}`)) {

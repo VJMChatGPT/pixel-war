@@ -16,6 +16,7 @@ interface Props {
 
 const BOARD = 100;
 const PALETTE = APP_CONFIG.palette as readonly string[];
+const SNAPSHOT = buildSnapshot();
 
 /* Deterministic PRNG so the snapshot is stable across renders */
 function mulberry32(seed: number) {
@@ -190,8 +191,7 @@ export const ScrollStoryCanvas = memo(function ScrollStoryCanvas({ className }: 
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const board = buildSnapshot();
-    drawSnapshot(ctx, board);
+    drawSnapshot(ctx, SNAPSHOT);
   }, []);
 
   return (
@@ -204,10 +204,8 @@ export const ScrollStoryCanvas = memo(function ScrollStoryCanvas({ className }: 
         style={{ imageRendering: "pixelated", transform: "translateZ(0)", backfaceVisibility: "hidden" }}
         aria-hidden="true"
       />
-      {/* subtle inner shadow for depth */}
-      <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.55)]" />
-      {/* very soft vignette */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_55%,rgba(0,0,0,0.45)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_30px_rgba(0,0,0,0.28)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_62%,rgba(0,0,0,0.24)_100%)]" />
     </div>
   );
 });

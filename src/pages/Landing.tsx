@@ -3,10 +3,10 @@ import { PixlMascot } from "@/components/PixlMascot";
 import { NeonCard } from "@/components/NeonCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, ArrowUpRight, Wallet, Trophy, TrendingUp, TrendingDown, MousePointerClick, Zap, Crown, Eye } from "lucide-react";
+import { ArrowRight, Wallet, Trophy, TrendingUp, TrendingDown, MousePointerClick, Zap, Crown, Eye } from "lucide-react";
 import { useCanvas } from "@/hooks/useCanvas";
 import { APP_CONFIG } from "@/config/app";
-import { CanvasGrid } from "@/components/CanvasGrid";
+import { CanvasPreview } from "@/components/CanvasPreview";
 import { ScrollStoryCanvas } from "@/components/ScrollStoryCanvas";
 import { LaunchStatusBanner } from "@/components/LaunchStatusBanner";
 import { RoundSystemSection } from "@/components/RoundSystem";
@@ -18,8 +18,6 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
 import { toast } from "sonner";
-
-const BUY_PIXL_URL = "https://trade.padre.gg/trenches";
 
 /* ------------------------------------------------------------------ */
 /* Section heading helper                                             */
@@ -136,7 +134,7 @@ function MechanicPixelCell({ progress, index }: { progress: MotionValue<number>;
   );
 }
 
-const CINEMATIC_STAGE_HEIGHT_VH = 150;
+const CINEMATIC_STAGE_HEIGHT_VH = 128;
 
 const CinematicNarrative = memo(function CinematicNarrative() {
   const ref = useRef<HTMLElement>(null);
@@ -148,21 +146,26 @@ const CinematicNarrative = memo(function CinematicNarrative() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const mediaQuery = window.matchMedia("(max-width: 1024px), (pointer: coarse)");
     const update = () => setIsMobileNarrative(mediaQuery.matches);
     update();
 
-    mediaQuery.addEventListener("change", update);
-    return () => mediaQuery.removeEventListener("change", update);
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", update);
+      return () => mediaQuery.removeEventListener("change", update);
+    }
+
+    mediaQuery.addListener(update);
+    return () => mediaQuery.removeListener(update);
   }, []);
 
   const lightweightMode = prefersReducedMotion || isMobileNarrative;
 
   // Smooth the raw scroll progress first — produces buttery motion across all derived values
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: lightweightMode ? 90 : 110,
-    damping: lightweightMode ? 26 : 32,
-    mass: lightweightMode ? 0.48 : 0.55,
+    stiffness: lightweightMode ? 88 : 104,
+    damping: lightweightMode ? 25 : 30,
+    mass: lightweightMode ? 0.45 : 0.52,
     restDelta: 0.0005,
   });
 
@@ -171,27 +174,17 @@ const CinematicNarrative = memo(function CinematicNarrative() {
   const scaleRaw = useTransform(
     smoothProgress,
     [0, 0.18, 0.4, 0.62, 0.82, 1],
-    lightweightMode ? [2.2, 1.84, 1.38, 1.08, 0.98, 0.92] : [2.65, 2.05, 1.48, 1.12, 0.96, 0.88],
+    lightweightMode ? [2.05, 1.7, 1.34, 1.08, 0.98, 0.94] : [2.45, 1.96, 1.46, 1.12, 0.98, 0.9],
   );
   const scale = useSpring(scaleRaw, {
-    stiffness: lightweightMode ? 62 : 70,
-    damping: lightweightMode ? 24 : 26,
-    mass: lightweightMode ? 0.42 : 0.5,
+    stiffness: lightweightMode ? 60 : 68,
+    damping: lightweightMode ? 23 : 25,
+    mass: lightweightMode ? 0.4 : 0.48,
   });
 
-  // Subtle pan that drifts toward center as we zoom out
-  const x = useTransform(smoothProgress, [0, 0.5, 1], lightweightMode ? ["8%", "2%", "0%"] : ["12%", "4%", "0%"]);
-  const y = useTransform(smoothProgress, [0, 0.5, 1], lightweightMode ? ["-8%", "-2%", "0%"] : ["-12%", "-4%", "0%"]);
-  const rotate = useTransform(smoothProgress, [0, 0.5, 1], lightweightMode ? ["-0.6deg", "0deg", "0.4deg"] : ["-1.2deg", "0deg", "1.2deg"]);
-  const haloScale = useTransform(smoothProgress, [0, 0.45, 1], lightweightMode ? [0.92, 1.02, 1.08] : [0.85, 1.08, 1.2]);
-  const haloOpacity = useTransform(smoothProgress, [0, 0.14, 0.5, 0.88, 1], lightweightMode ? [0.12, 0.34, 0.28, 0.36, 0.14] : [0.25, 0.8, 0.55, 0.85, 0.3]);
-  const sweepX = useTransform(smoothProgress, [0, 1], ["-45%", "145%"]);
-  const sweepOpacity = useTransform(smoothProgress, [0, 0.08, 0.88, 1], lightweightMode ? [0, 0.24, 0.24, 0] : [0, 0.55, 0.55, 0]);
-  const vignetteOpacity = useTransform(smoothProgress, (v) => {
-    const start = lightweightMode ? 0.7 : 0.85;
-    const end = lightweightMode ? 0.28 : 0.22;
-    return start + (end - start) * Math.min(1, Math.max(0, v));
-  });
+  const x = useTransform(smoothProgress, [0, 0.45, 1], lightweightMode ? ["5%", "1%", "0%"] : ["8%", "2%", "0%"]);
+  const y = useTransform(smoothProgress, [0, 0.45, 1], lightweightMode ? ["-5%", "-1%", "0%"] : ["-8%", "-2%", "0%"]);
+  const haloOpacity = useTransform(smoothProgress, [0, 0.16, 0.75, 1], lightweightMode ? [0.08, 0.14, 0.12, 0.06] : [0.14, 0.24, 0.18, 0.1]);
   const currentStage = STAGES[activeStage];
 
   useMotionValueEvent(smoothProgress, "change", (value) => {
@@ -200,31 +193,26 @@ const CinematicNarrative = memo(function CinematicNarrative() {
   });
 
   return (
-    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * (lightweightMode ? 138 : CINEMATIC_STAGE_HEIGHT_VH)}vh` }}>
+    <section ref={ref} className="relative isolate" style={{ height: `${STAGES.length * (lightweightMode ? 112 : CINEMATIC_STAGE_HEIGHT_VH)}vh` }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-background isolate">
         {/* ambient grid */}
-        <div className="absolute inset-0 grid-bg opacity-[0.05]" />
-        <div className="absolute inset-0 bg-radial-glow opacity-40" />
+        <div className="absolute inset-0 grid-bg opacity-[0.04]" />
+        <div className={lightweightMode ? "absolute inset-0 bg-radial-glow opacity-20" : "absolute inset-0 bg-radial-glow opacity-28"} />
 
         {/* the zooming canvas */}
         <motion.div
-          style={{ scale, x, y, rotate, willChange: "transform", backfaceVisibility: "hidden" }}
-          className="pointer-events-none absolute inset-0 flex items-center justify-center will-change-transform transform-gpu"
+          style={{ scale, x, y, willChange: "transform", backfaceVisibility: "hidden" }}
+          className="pointer-events-none absolute inset-0 flex items-center justify-center transform-gpu"
         >
           <motion.div
-            style={{ opacity: haloOpacity, scale: haloScale, willChange: "transform, opacity" }}
-            className={`absolute aspect-square rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.38)_0%,hsl(var(--accent)/0.22)_36%,transparent_68%)] transform-gpu ${lightweightMode ? "w-[min(76vh,76vw)] blur-lg" : "w-[min(90vh,90vw)] blur-xl"}`}
+            style={{ opacity: haloOpacity, willChange: "opacity" }}
+            className={`absolute aspect-square rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.22)_0%,hsl(var(--accent)/0.14)_38%,transparent_72%)] ${lightweightMode ? "hidden" : "w-[min(76vh,76vw)] blur-[26px]"}`}
             aria-hidden
           />
-          <div className={`scanlines relative aspect-square w-[min(82vh,82vw)] overflow-hidden rounded-md bg-[#06040d] ring-1 ring-primary/40 [backface-visibility:hidden] [contain:layout_paint_style] transform-gpu ${lightweightMode ? "shadow-[0_0_22px_hsl(var(--accent)/0.18),0_0_56px_hsl(var(--primary)/0.2)]" : "shadow-[0_0_28px_hsl(var(--accent)/0.24),0_0_90px_hsl(var(--primary)/0.3)]"}`}>
+          <div className={`scanlines relative aspect-square w-[min(82vh,82vw)] overflow-hidden rounded-md bg-[#06040d] ring-1 ring-primary/35 [backface-visibility:hidden] [contain:layout_paint_style] transform-gpu ${lightweightMode ? "shadow-[0_0_16px_hsl(var(--accent)/0.12)]" : "shadow-[0_0_22px_hsl(var(--accent)/0.16),0_0_54px_hsl(var(--primary)/0.18)]"}`}>
             <ScrollStoryCanvas />
-            <motion.div
-              style={{ x: sweepX, opacity: sweepOpacity, willChange: "transform, opacity" }}
-              className={`pointer-events-none absolute inset-y-[-12%] left-0 w-1/3 rotate-12 bg-gradient-to-r from-transparent via-white/22 to-transparent mix-blend-screen transform-gpu ${lightweightMode ? "" : "blur-[2px]"}`}
-              aria-hidden
-            />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_48%,hsl(var(--primary)/0.12)_72%,hsl(var(--background)/0.76)_100%)]" aria-hidden />
-            <div className={`pointer-events-none absolute inset-2 rounded border border-white/10 ${lightweightMode ? "shadow-[inset_0_0_16px_hsl(var(--primary)/0.12)]" : "shadow-[inset_0_0_24px_hsl(var(--primary)/0.14)]"}`} aria-hidden />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_54%,hsl(var(--background)/0.42)_100%)]" aria-hidden />
+            <div className={`pointer-events-none absolute inset-2 rounded border border-white/10 ${lightweightMode ? "" : "shadow-[inset_0_0_16px_hsl(var(--primary)/0.1)]"}`} aria-hidden />
             <div className="pointer-events-none absolute left-4 top-4 h-10 w-10 border-l border-t border-accent/70" aria-hidden />
             <div className="pointer-events-none absolute right-4 top-4 h-10 w-10 border-r border-t border-accent/70" aria-hidden />
             <div className="pointer-events-none absolute bottom-4 left-4 h-10 w-10 border-b border-l border-accent/70" aria-hidden />
@@ -232,14 +220,7 @@ const CinematicNarrative = memo(function CinematicNarrative() {
           </div>
         </motion.div>
 
-        {/* vignette overlay (deep at the closest zoom for cinematic feel) */}
-        <motion.div
-          style={{ opacity: vignetteOpacity }}
-          className="pointer-events-none absolute inset-0"
-          aria-hidden
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,hsl(var(--background))_85%)]" />
-        </motion.div>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_48%,hsl(var(--background)/0.88)_100%)]" aria-hidden />
 
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background via-background/75 to-transparent"
@@ -287,7 +268,7 @@ const CinematicNarrative = memo(function CinematicNarrative() {
             {/* Soft solid backing panel directly behind text for guaranteed legibility */}
             <div
               aria-hidden
-              className={`pointer-events-none absolute -inset-x-10 -inset-y-8 md:-inset-x-16 md:-inset-y-12 -z-10 rounded-[2rem] ring-1 ring-white/5 ${lightweightMode ? "bg-background/64 shadow-[0_18px_56px_-26px_hsl(var(--background))]" : "bg-background/58 shadow-[0_22px_72px_-28px_hsl(var(--background))]"}`}
+              className={`pointer-events-none absolute -inset-x-10 -inset-y-8 md:-inset-x-16 md:-inset-y-12 -z-10 rounded-[2rem] ring-1 ring-white/5 ${lightweightMode ? "bg-background/76" : "bg-background/68 shadow-[0_18px_42px_-24px_hsl(var(--background))]"}`}
               style={{ maskImage: "radial-gradient(ellipse at center, black 55%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse at center, black 55%, transparent 100%)" }}
             />
             <div className="mb-5 font-mono text-[11px] uppercase tracking-[0.4em] text-accent drop-shadow-[0_0_12px_hsl(var(--accent)/0.6)] md:text-xs">
@@ -340,6 +321,29 @@ export default function Landing() {
   const { pixels, revision } = useCanvas();
   const { connect, connecting, isConnected } = useWallet();
   const launch = useLaunchState();
+  const prefersReducedMotion = useReducedMotion();
+  const [lightweightHero, setLightweightHero] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 1024px), (pointer: coarse)");
+    const update = () => setLightweightHero(mediaQuery.matches || prefersReducedMotion);
+    update();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", update);
+      return () => mediaQuery.removeEventListener("change", update);
+    }
+
+    mediaQuery.addListener(update);
+    return () => mediaQuery.removeListener(update);
+  }, [prefersReducedMotion]);
+
+  const heroParticles = useMemo(
+    () => Array.from({ length: lightweightHero ? 8 : 12 }, (_, index) => index),
+    [lightweightHero],
+  );
 
   const stats = useMemo(() => {
     const painted = pixels.filter((p) => p && p.owner_wallet).length;
@@ -353,12 +357,12 @@ export default function Landing() {
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const heroCanvasScale = useSpring(useTransform(heroProgress, [0, 1], [1, 1.35]), { stiffness: 80, damping: 20 });
-  const heroCanvasY = useTransform(heroProgress, [0, 1], [0, -120]);
-  const heroTextY = useTransform(heroProgress, [0, 1], [0, -180]);
+  const heroCanvasScale = useSpring(useTransform(heroProgress, [0, 1], lightweightHero ? [1, 1.18] : [1, 1.28]), { stiffness: 78, damping: 22 });
+  const heroCanvasY = useTransform(heroProgress, [0, 1], [0, lightweightHero ? -72 : -96]);
+  const heroTextY = useTransform(heroProgress, [0, 1], [0, lightweightHero ? -120 : -160]);
   const heroTextOpacity = useTransform(heroProgress, [0, 0.7], [1, 0]);
-  const heroGlowOpacity = useTransform(heroProgress, [0, 1], [0.7, 0.05]);
-  const heroBgY = useTransform(heroProgress, [0, 1], [0, 200]);
+  const heroGlowOpacity = useTransform(heroProgress, [0, 1], lightweightHero ? [0.32, 0.08] : [0.52, 0.08]);
+  const heroBgY = useTransform(heroProgress, [0, 1], [0, lightweightHero ? 96 : 140]);
 
   /* ---- BUY/SELL mechanic scroll ---- */
   const mechanicRef = useRef<HTMLElement>(null);
@@ -401,23 +405,27 @@ export default function Landing() {
         <div className="absolute inset-0 grid-bg opacity-[0.06] pointer-events-none" />
         <motion.div
           style={{ opacity: heroGlowOpacity }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[920px] h-[920px] rounded-full bg-primary/15 blur-[160px] pointer-events-none"
+          className={lightweightHero
+            ? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[620px] h-[620px] rounded-full bg-primary/10 blur-[88px] pointer-events-none"
+            : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] rounded-full bg-primary/12 blur-[104px] pointer-events-none"}
         />
 
         {/* drifting pixel particles */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 18 }).map((_, i) => (
+          {heroParticles.map((i) => (
             <motion.span
               key={i}
-              className="absolute w-1.5 h-1.5 rounded-[1px]"
+              className="absolute rounded-[1px]"
               style={{
+                width: lightweightHero ? 4 : 6,
+                height: lightweightHero ? 4 : 6,
                 backgroundColor: APP_CONFIG.palette[i % APP_CONFIG.palette.length],
                 left: `${(i * 73) % 100}%`,
                 top: `${(i * 41) % 100}%`,
-                boxShadow: `0 0 10px ${APP_CONFIG.palette[i % APP_CONFIG.palette.length]}`,
+                boxShadow: lightweightHero ? "none" : `0 0 6px ${APP_CONFIG.palette[i % APP_CONFIG.palette.length]}`,
               }}
-              animate={{ y: [0, -40, 0], opacity: [0.15, 0.7, 0.15] }}
-              transition={{ duration: 6 + (i % 5), repeat: Infinity, delay: i * 0.3, ease: "easeInOut" }}
+              animate={{ y: [0, lightweightHero ? -18 : -28, 0], opacity: [0.12, lightweightHero ? 0.34 : 0.52, 0.12] }}
+              transition={{ duration: 7 + (i % 4), repeat: Infinity, delay: i * 0.28, ease: "easeInOut" }}
             />
           ))}
         </div>
@@ -431,52 +439,6 @@ export default function Landing() {
               </SectionEyebrow>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.75, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 max-w-2xl rounded-[1.6rem] border border-accent/30 bg-background/62 p-5 shadow-[0_0_40px_hsl(var(--primary)/0.14)] backdrop-blur-md"
-            >
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full border border-accent/35 bg-accent/12 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-accent">
-                  <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_10px_hsl(var(--accent))] animate-pulse" />
-                  Live Today
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  $PIXL official launch
-                </span>
-              </div>
-              <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-                Official Launch Today
-              </h2>
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-                Pixel War launches today. Get ready to enter the board, claim territory and paint with $PIXL.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Button
-                  asChild
-                  size="lg"
-                  className="h-12 rounded-xl bg-gradient-neon px-6 text-primary-foreground shadow-[0_12px_30px_rgba(168,85,247,0.25)]"
-                >
-                  <Link to="/canvas">
-                    Enter the Canvas
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="h-12 rounded-xl border-accent/35 bg-background/40 px-6 hover:bg-accent/10"
-                >
-                  <a href={BUY_PIXL_URL} target="_blank" rel="noopener noreferrer">
-                    Buy $PIXL
-                    <ArrowUpRight className="h-4 w-4" />
-                  </a>
-                </Button>
-              </div>
-            </motion.div>
-
             <motion.h1
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -487,6 +449,18 @@ export default function Landing() {
               <br />
               <span className="text-gradient-hero">Your territory.</span>
             </motion.h1>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-4"
+            >
+              <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-accent">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                Official Launch Today
+              </span>
+            </motion.div>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -588,7 +562,7 @@ export default function Landing() {
             ))}
 
             <NeonCard shimmer className="aspect-square p-2.5 glow-primary">
-              <CanvasGrid pixels={pixels} revision={revision} className="rounded-md" />
+              <CanvasPreview pixels={pixels} revision={revision} className="rounded-md" />
             </NeonCard>
 
             <div className="mt-3 flex items-center justify-between px-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -639,7 +613,10 @@ export default function Landing() {
       {/* ============================================================ */}
       {/* 3. HOW IT WORKS — visual 3-step                              */}
       {/* ============================================================ */}
-      <section className="relative border-t border-border/60 py-32">
+      <section
+        className="relative border-t border-border/60 py-32"
+        style={{ contentVisibility: "auto", containIntrinsicSize: "1100px" }}
+      >
         <div className="absolute inset-0 grid-bg opacity-[0.04] pointer-events-none" />
         <div className="container relative">
           <Reveal>
@@ -757,7 +734,10 @@ export default function Landing() {
       {/* ============================================================ */}
       {/* 4. DOMINANCE — top wallets, real data                        */}
       {/* ============================================================ */}
-      <section className="relative border-t border-border/60 py-32 overflow-hidden">
+      <section
+        className="relative border-t border-border/60 py-32 overflow-hidden"
+        style={{ contentVisibility: "auto", containIntrinsicSize: "900px" }}
+      >
         <div className="absolute inset-0 bg-radial-glow opacity-40" />
         <div className="container relative grid lg:grid-cols-[minmax(0,520px)_1fr] gap-14 items-center">
           <Reveal>
@@ -801,7 +781,11 @@ export default function Landing() {
       {/* ============================================================ */}
       {/* 5. BUY/SELL MECHANIC                                         */}
       {/* ============================================================ */}
-      <section ref={mechanicRef} className="relative border-t border-border/60 py-32">
+      <section
+        ref={mechanicRef}
+        className="relative border-t border-border/60 py-32"
+        style={{ contentVisibility: "auto", containIntrinsicSize: "980px" }}
+      >
         <div className="container">
           <Reveal>
             <div className="text-center max-w-2xl mx-auto mb-16">
@@ -862,7 +846,10 @@ export default function Landing() {
       {/* ============================================================ */}
       {/* 6. FINAL CTA — full bleed                                    */}
       {/* ============================================================ */}
-      <section className="relative border-t border-border/60 min-h-[90svh] flex items-center overflow-hidden">
+      <section
+        className="relative border-t border-border/60 min-h-[90svh] flex items-center overflow-hidden"
+        style={{ contentVisibility: "auto", containIntrinsicSize: "960px" }}
+      >
         <div className="absolute inset-0 bg-radial-glow opacity-80 pointer-events-none" />
         <div className="absolute inset-0 grid-bg opacity-[0.05] pointer-events-none" />
         <motion.div
