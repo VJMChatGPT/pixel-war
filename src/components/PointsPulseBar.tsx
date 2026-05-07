@@ -12,8 +12,8 @@ export function PointsPulseBar() {
   if (!isConnected || !wallet) return null;
 
   return (
-    <div className="border-b border-primary/20 bg-gradient-to-r from-primary/12 via-card/80 to-accent/10 backdrop-blur-md">
-      <div className="container flex flex-wrap items-center justify-between gap-3 py-2.5">
+    <div className="border-b border-primary/20 bg-gradient-to-r from-primary/12 via-card/90 to-accent/10 md:backdrop-blur-md">
+      <div className="container flex flex-col gap-2 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className="relative flex h-2 w-2 shrink-0">
             <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />

@@ -6,9 +6,9 @@ import { PixlMascot } from "./PixlMascot";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border mt-20 bg-card/30">
-      <div className="container py-12 grid md:grid-cols-4 gap-8">
-        <div>
+    <footer className="mt-20 border-t border-border bg-card/30">
+      <div className="container grid grid-cols-2 gap-8 py-12 md:grid-cols-4">
+        <div className="col-span-2 md:col-span-1">
           <div className="flex items-center gap-3 mb-3">
             <PixlMascot size={36} mood="cheer" />
             <div className="font-display font-bold text-lg">{APP_CONFIG.name}</div>
@@ -20,6 +20,16 @@ export function Footer() {
         <div>
           <h4 className="font-display font-semibold text-sm mb-3">App</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>
+              <a
+                className="hover:text-foreground"
+                href="https://trade.padre.gg/trenches"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Buy $PIXL
+              </a>
+            </li>
             <li><Link to="/canvas" className="hover:text-foreground">Canvas</Link></li>
             <li><Link to="/leaderboard" className="hover:text-foreground">Leaderboard</Link></li>
             <li><Link to="/profile" className="hover:text-foreground">Profile</Link></li>
@@ -65,7 +75,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border">
-        <div className="container py-4 flex justify-between text-xs font-mono text-muted-foreground">
+        <div className="container flex flex-col gap-2 py-4 text-xs font-mono text-muted-foreground sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} {APP_CONFIG.name}</span>
           <span className="font-pixel text-[8px] hidden sm:inline">PRESS START TO PAINT</span>
         </div>

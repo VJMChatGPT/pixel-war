@@ -22,12 +22,12 @@ export function LaunchStatusBanner({ compact = false }: { compact?: boolean }) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden border-b border-border/60 bg-card/55 backdrop-blur-md",
+        "relative overflow-hidden border-b border-border/60 bg-card/88 md:bg-card/55 md:backdrop-blur-md",
         isLive && "border-accent/40 bg-accent/10",
       )}
     >
       <div className="absolute inset-0 bg-radial-glow opacity-35 pointer-events-none" />
-      <div className={cn("container relative flex flex-wrap items-center justify-between gap-4", compact ? "py-3" : "py-4")}>
+      <div className={cn("container relative flex flex-col gap-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between", compact ? "md:py-3" : "md:py-4")}>
         <div className="flex min-w-0 items-center gap-3">
           <span className={cn("relative flex h-2.5 w-2.5", isLive ? "text-accent" : "text-primary")}>
             <span className={cn("absolute inline-flex h-full w-full rounded-full opacity-75", isLive ? "bg-accent animate-ping" : "bg-primary/70")} />
@@ -48,14 +48,14 @@ export function LaunchStatusBanner({ compact = false }: { compact?: boolean }) {
                 </span>
               )}
             </div>
-            <p className="mt-1 max-w-2xl truncate text-xs text-muted-foreground md:text-sm">
+            <p className="mt-1 max-w-2xl text-xs text-muted-foreground md:text-sm">
               {launch.error ? "Could not load current backend launch state." : launch.description}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-background/55 px-3 py-2">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-background/70 px-3 py-2 md:bg-background/55">
             <Timer className="h-4 w-4 text-primary" />
             <div>
               <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -68,13 +68,13 @@ export function LaunchStatusBanner({ compact = false }: { compact?: boolean }) {
           </div>
 
           {isLive ? (
-            <Button asChild size="sm" className="h-10 rounded-xl bg-gradient-neon text-primary-foreground">
+            <Button asChild size="sm" className="h-11 w-full rounded-xl bg-gradient-neon text-primary-foreground sm:h-10 sm:w-auto">
               <Link to="/canvas">
                 <Zap className="h-4 w-4" /> Paint your pixels
               </Link>
             </Button>
           ) : (
-            <Button asChild size="sm" variant="outline" className="h-10 rounded-xl">
+            <Button asChild size="sm" variant="outline" className="h-11 w-full rounded-xl sm:h-10 sm:w-auto">
               <Link to="/rules">
                 Launch rules <ArrowRight className="h-4 w-4" />
               </Link>

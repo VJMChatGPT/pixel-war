@@ -19,6 +19,8 @@ import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
 import { toast } from "sonner";
 
+const BUY_PIXL_URL = "https://trade.padre.gg/trenches";
+
 /* ------------------------------------------------------------------ */
 /* Section heading helper                                             */
 /* ------------------------------------------------------------------ */
@@ -116,6 +118,34 @@ const STAGES = [
   { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas for every round." },
   { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on Pixel War." },
 ];
+
+const MOBILE_STORY_CARDS = [
+  {
+    number: "01",
+    title: "Pixel",
+    copy: `0.01% of supply gives you 1 pixel of territory.`,
+  },
+  {
+    number: "02",
+    title: "Foothold",
+    copy: "Buy more $PIXL to expand your position.",
+  },
+  {
+    number: "03",
+    title: "Territory",
+    copy: "Your pixels become visible public land.",
+  },
+  {
+    number: "04",
+    title: "The Board",
+    copy: `10,000 pixels. One live canvas.`,
+  },
+  {
+    number: "05",
+    title: "The Prize",
+    copy: "Top players earn status, leaderboard position and visibility.",
+  },
+] as const;
 
 const MECHANIC_PIXEL_COUNT = 60;
 const MECHANIC_PIXEL_INDICES = Array.from({ length: MECHANIC_PIXEL_COUNT }, (_, index) => index);
@@ -314,6 +344,55 @@ const CinematicNarrative = memo(function CinematicNarrative() {
   );
 });
 
+function MobileStoryCards() {
+  return (
+    <section
+      className="relative border-t border-border/60 py-16 md:py-20"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "920px" }}
+    >
+      <div className="absolute inset-0 grid-bg opacity-[0.04] pointer-events-none" />
+      <div className="container relative">
+        <Reveal>
+          <div className="mx-auto max-w-xl text-center">
+            <SectionEyebrow>from token to territory</SectionEyebrow>
+            <h2 className="mt-5 font-display text-4xl font-bold leading-[0.96] tracking-tight sm:text-5xl">
+              Five steps.
+              <br />
+              <span className="text-gradient-hero">One live board.</span>
+            </h2>
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
+              The mobile version is built to explain the war fast. Desktop is where painting really opens up.
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="mt-10 space-y-4">
+          {MOBILE_STORY_CARDS.map((card, index) => (
+            <Reveal key={card.number} delay={index * 0.05} y={18}>
+              <NeonCard className="p-5 sm:p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 font-mono text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+                    {card.number}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_10px_hsl(var(--accent)/0.6)]" />
+                      <h3 className="font-display text-2xl font-bold tracking-tight">{card.title}</h3>
+                    </div>
+                    <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground sm:text-base">
+                      {card.copy}
+                    </p>
+                  </div>
+                </div>
+              </NeonCard>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ================================================================== */
 /* LANDING                                                            */
 /* ================================================================== */
@@ -341,7 +420,7 @@ export default function Landing() {
   }, [prefersReducedMotion]);
 
   const heroParticles = useMemo(
-    () => Array.from({ length: lightweightHero ? 8 : 12 }, (_, index) => index),
+    () => Array.from({ length: lightweightHero ? 5 : 12 }, (_, index) => index),
     [lightweightHero],
   );
 
@@ -349,7 +428,7 @@ export default function Landing() {
     const painted = pixels.filter((p) => p && p.owner_wallet).length;
     const owners = new Set(pixels.filter((p) => p?.owner_wallet).map((p) => p!.owner_wallet)).size;
     return { painted, owners, pct: (painted / APP_CONFIG.canvas.totalPixels) * 100 };
-  }, [pixels, revision]);
+  }, [pixels]);
 
   /* ---- HERO scroll-driven parallax ---- */
   const heroRef = useRef<HTMLElement>(null);
@@ -398,7 +477,7 @@ export default function Landing() {
       {/* ============================================================ */}
       <section
         ref={heroRef}
-        className="relative min-h-[100svh] overflow-hidden border-b border-border/60 flex items-center"
+        className="relative flex min-h-[calc(100svh-3.5rem)] items-center overflow-hidden border-b border-border/60 md:min-h-[100svh]"
       >
         {/* ambient layers */}
         <motion.div style={{ opacity: heroGlowOpacity, y: heroBgY }} className="absolute inset-0 bg-radial-glow pointer-events-none" />
@@ -430,12 +509,12 @@ export default function Landing() {
           ))}
         </div>
 
-        <div className="container relative grid lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] gap-12 lg:gap-20 items-center py-20">
+        <div className="container relative grid items-center gap-10 py-14 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] lg:gap-20 lg:py-20">
           {/* LEFT — message */}
           <motion.div style={{ y: heroTextY, opacity: heroTextOpacity }} className="relative z-10">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
               <SectionEyebrow>
-                live · solana · {APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels
+                {lightweightHero ? "live today" : `live · solana · ${APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels`}
               </SectionEyebrow>
             </motion.div>
 
@@ -443,11 +522,21 @@ export default function Landing() {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 font-display font-bold text-[3.2rem] sm:text-7xl lg:text-[7.5rem] leading-[0.88] tracking-[-0.03em]"
+              className="mt-5 font-display font-bold text-5xl leading-[0.9] tracking-[-0.03em] sm:text-6xl md:text-7xl lg:text-[7.5rem]"
             >
-              Your wallet.
-              <br />
-              <span className="text-gradient-hero">Your territory.</span>
+              {lightweightHero ? (
+                <>
+                  Enter the
+                  <br />
+                  <span className="text-gradient-hero">Pixel War.</span>
+                </>
+              ) : (
+                <>
+                  Your wallet.
+                  <br />
+                  <span className="text-gradient-hero">Your territory.</span>
+                </>
+              )}
             </motion.h1>
 
             <motion.div
@@ -456,7 +545,7 @@ export default function Landing() {
               transition={{ duration: 0.7, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
               className="mt-4"
             >
-              <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-accent">
+              <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-accent">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
                 Official Launch Today
               </span>
@@ -466,60 +555,105 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.35 }}
-              className="mt-7 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed"
+              className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg md:text-xl"
             >
-              A live, on-chain canvas where <span className="text-foreground font-semibold">$PIXL</span> becomes
-              territory, territory becomes points, and points become public dominance. Every {APP_CONFIG.rules.supplyPercentPerPixel}% of supply = 1 pixel you own,
-              recolor, and defend.
+              {lightweightHero ? (
+                <>
+                  Buy <span className="font-semibold text-foreground">$PIXL</span>. Claim territory. Paint the board.
+                  Climb the leaderboard.
+                </>
+              ) : (
+                <>
+                  A live, on-chain canvas where <span className="text-foreground font-semibold">$PIXL</span> becomes
+                  territory, territory becomes points, and points become public dominance. Every {APP_CONFIG.rules.supplyPercentPerPixel}% of supply = 1 pixel you own,
+                  recolor, and defend.
+                </>
+              )}
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}
-              className="mt-9 flex flex-wrap gap-3"
+              className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
             >
-              {!isConnected ? (
-                <Button
-                  size="lg"
-                  onClick={() => void handleConnectClick()}
-                  disabled={connecting}
-                  className="group h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] active:scale-[0.98] transition-all"
-                >
-                  <Wallet className="w-5 h-5" />
-                  Claim your pixels
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </Button>
-              ) : launch.canPaint ? (
-                <Button
-                  size="lg"
-                  asChild
-                  className="group h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] transition-all"
-                >
-                  <Link to="/canvas">
-                    Enter the canvas
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Button>
+              {lightweightHero ? (
+                <>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-12 w-full rounded-xl bg-gradient-neon px-6 text-base font-semibold text-primary-foreground shadow-[0_14px_36px_rgba(168,85,247,0.28)] sm:w-auto"
+                  >
+                    <a href={BUY_PIXL_URL} target="_blank" rel="noopener noreferrer">
+                      Buy $PIXL
+                      <ArrowRight className="h-5 w-5" />
+                    </a>
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    asChild
+                    className="h-12 w-full rounded-xl border-border px-6 hover:bg-muted/40 sm:w-auto"
+                  >
+                    <Link to="/canvas">View Canvas</Link>
+                  </Button>
+                </>
               ) : (
-                <Button
-                  size="lg"
-                  disabled
-                  className="h-14 px-8 text-base font-semibold rounded-xl"
-                >
-                  {launch.title}
-                </Button>
+                <>
+                  {!isConnected ? (
+                    <Button
+                      size="lg"
+                      onClick={() => void handleConnectClick()}
+                      disabled={connecting}
+                      className="group h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] active:scale-[0.98] transition-all"
+                    >
+                      <Wallet className="w-5 h-5" />
+                      Claim your pixels
+                      <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  ) : launch.canPaint ? (
+                    <Button
+                      size="lg"
+                      asChild
+                      className="group h-14 px-8 text-base font-semibold bg-gradient-neon text-primary-foreground rounded-xl glow-primary hover:scale-[1.03] transition-all"
+                    >
+                      <Link to="/canvas">
+                        Enter the canvas
+                        <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="lg"
+                      disabled
+                      className="h-14 px-8 text-base font-semibold rounded-xl"
+                    >
+                      {launch.title}
+                    </Button>
+                  )}
+                  <Button size="lg" variant="outline" asChild className="h-14 px-8 rounded-xl border-border hover:bg-muted/40">
+                    <Link to="/rules">How it works</Link>
+                  </Button>
+                </>
               )}
-              <Button size="lg" variant="outline" asChild className="h-14 px-8 rounded-xl border-border hover:bg-muted/40">
-                <Link to="/rules">How it works</Link>
-              </Button>
             </motion.div>
+
+            {lightweightHero && (
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.62 }}
+                className="mt-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                Best experienced on desktop for painting.
+              </motion.p>
+            )}
 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.75 }}
-              className="mt-12 flex flex-wrap items-center gap-x-10 gap-y-4"
+              className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 sm:gap-x-10"
             >
               <div className="flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] animate-pulse" />
@@ -547,9 +681,9 @@ export default function Landing() {
             style={{ scale: heroCanvasScale, y: heroCanvasY }}
             className="relative mx-auto w-full max-w-[640px]"
           >
-            <div className="absolute -top-3 left-6 z-20 px-2.5 py-1 rounded-md bg-accent text-accent-foreground font-mono text-[10px] font-bold uppercase tracking-[0.2em] shadow-[0_0_24px_hsl(var(--accent)/0.55)]">
+            <div className="absolute -top-3 left-4 z-20 rounded-md bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-accent-foreground shadow-[0_0_18px_hsl(var(--accent)/0.42)] sm:left-6">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-foreground mr-1.5 animate-pulse" />
-              live · public
+              {lightweightHero ? "mobile preview" : "live · public"}
             </div>
 
             {[
@@ -561,15 +695,15 @@ export default function Landing() {
               <span key={c} className={`absolute w-4 h-4 border-primary/70 ${c}`} />
             ))}
 
-            <NeonCard shimmer className="aspect-square p-2.5 glow-primary">
+            <NeonCard shimmer={!lightweightHero} className="aspect-square p-2 sm:p-2.5 lg:glow-primary">
               <CanvasPreview pixels={pixels} revision={revision} className="rounded-md" />
             </NeonCard>
 
-            <div className="mt-3 flex items-center justify-between px-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="mt-3 flex items-center justify-between gap-3 px-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               <span>100 × 100 board</span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-accent animate-pulse" />
-                updating in real time
+                {lightweightHero ? "view first" : "updating in real time"}
               </span>
             </div>
 
@@ -585,25 +719,27 @@ export default function Landing() {
         </div>
 
         {/* scroll hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground font-mono text-[10px] uppercase tracking-[0.3em]"
-        >
-          <span>scroll to enter</span>
+        {!lightweightHero && (
           <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            className="w-px h-8 bg-gradient-to-b from-primary to-transparent"
-          />
-        </motion.div>
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.4 }}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground font-mono text-[10px] uppercase tracking-[0.3em]"
+          >
+            <span>scroll to enter</span>
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+              className="w-px h-8 bg-gradient-to-b from-primary to-transparent"
+            />
+          </motion.div>
+        )}
       </section>
 
       {/* ============================================================ */}
       {/* 2. CINEMATIC NARRATIVE — pinned scroll-zoom through stages  */}
       {/* ============================================================ */}
-      <CinematicNarrative />
+      {lightweightHero ? <MobileStoryCards /> : <CinematicNarrative />}
 
       {/* ============================================================ */}
       {/* 2.5 ROUND SYSTEM — countdown · winner ad · how it works · museum */}
@@ -614,15 +750,15 @@ export default function Landing() {
       {/* 3. HOW IT WORKS — visual 3-step                              */}
       {/* ============================================================ */}
       <section
-        className="relative border-t border-border/60 py-32"
+        className="relative border-t border-border/60 py-16 md:py-32"
         style={{ contentVisibility: "auto", containIntrinsicSize: "1100px" }}
       >
         <div className="absolute inset-0 grid-bg opacity-[0.04] pointer-events-none" />
         <div className="container relative">
           <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-20">
+            <div className="mx-auto mb-12 max-w-2xl text-center md:mb-20">
               <SectionEyebrow>how it works</SectionEyebrow>
-              <h2 className="mt-5 font-display font-bold text-5xl md:text-7xl leading-[0.95] tracking-tight">
+              <h2 className="mt-5 font-display text-4xl font-bold leading-[0.95] tracking-tight md:text-7xl">
                 Three moves.
                 <br />
                 <span className="text-gradient-hero">Claim the board.</span>
@@ -630,7 +766,7 @@ export default function Landing() {
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid gap-5 md:grid-cols-3 md:gap-6">
             {[
               {
                 n: "01",
@@ -735,15 +871,15 @@ export default function Landing() {
       {/* 4. DOMINANCE — top wallets, real data                        */}
       {/* ============================================================ */}
       <section
-        className="relative border-t border-border/60 py-32 overflow-hidden"
+        className="relative overflow-hidden border-t border-border/60 py-16 md:py-32"
         style={{ contentVisibility: "auto", containIntrinsicSize: "900px" }}
       >
         <div className="absolute inset-0 bg-radial-glow opacity-40" />
-        <div className="container relative grid lg:grid-cols-[minmax(0,520px)_1fr] gap-14 items-center">
+        <div className="container relative grid items-center gap-10 lg:grid-cols-[minmax(0,520px)_1fr] lg:gap-14">
           <Reveal>
             <div>
               <SectionEyebrow>dominance</SectionEyebrow>
-              <h2 className="mt-5 font-display font-bold text-5xl md:text-7xl leading-[0.95] tracking-tight">
+              <h2 className="mt-5 font-display text-4xl font-bold leading-[0.95] tracking-tight md:text-7xl">
                 The score has
                 <br />
                 <span className="text-gradient-hero">a king.</span>
@@ -783,14 +919,14 @@ export default function Landing() {
       {/* ============================================================ */}
       <section
         ref={mechanicRef}
-        className="relative border-t border-border/60 py-32"
+        className="relative border-t border-border/60 py-16 md:py-32"
         style={{ contentVisibility: "auto", containIntrinsicSize: "980px" }}
       >
         <div className="container">
           <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="mx-auto mb-12 max-w-2xl text-center md:mb-16">
               <SectionEyebrow>token mechanic</SectionEyebrow>
-              <h2 className="mt-5 font-display font-bold text-5xl md:text-7xl leading-[0.95] tracking-tight">
+              <h2 className="mt-5 font-display text-4xl font-bold leading-[0.95] tracking-tight md:text-7xl">
                 Buy. Hold. <span className="text-gradient-hero">Win territory.</span>
               </h2>
               <p className="mt-5 text-muted-foreground text-lg">
@@ -799,7 +935,7 @@ export default function Landing() {
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
             <Reveal>
               <NeonCard glow="primary" className="p-8 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
@@ -847,7 +983,7 @@ export default function Landing() {
       {/* 6. FINAL CTA — full bleed                                    */}
       {/* ============================================================ */}
       <section
-        className="relative border-t border-border/60 min-h-[90svh] flex items-center overflow-hidden"
+        className="relative flex min-h-[72svh] items-center overflow-hidden border-t border-border/60 md:min-h-[90svh]"
         style={{ contentVisibility: "auto", containIntrinsicSize: "960px" }}
       >
         <div className="absolute inset-0 bg-radial-glow opacity-80 pointer-events-none" />
@@ -863,14 +999,14 @@ export default function Landing() {
           className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full border border-accent/10 pointer-events-none"
         />
 
-        <div className="container relative z-10 text-center py-24">
+        <div className="container relative z-10 py-16 text-center md:py-24">
           <Reveal>
             {/* MASCOT — UNCHANGED */}
             <PixlMascot mood="cheer" size={120} className="mx-auto mb-8" />
 
             <SectionEyebrow>the canvas is live</SectionEyebrow>
 
-            <h2 className="mt-6 font-display font-bold text-6xl md:text-8xl lg:text-9xl leading-[0.88] tracking-[-0.03em]">
+            <h2 className="mt-6 font-display text-5xl font-bold leading-[0.9] tracking-[-0.03em] md:text-8xl lg:text-9xl">
               Ten thousand pixels.
               <br />
               <span className="text-gradient-hero">One king.</span>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { shortAddress } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { WalletInfo } from "@/services/wallet";
 import { Check, Copy, Loader2, LogOut, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -11,9 +12,10 @@ type Props = {
   connecting: boolean;
   onRefreshBalance: () => Promise<void>;
   onDisconnect: () => Promise<void>;
+  buttonClassName?: string;
 };
 
-export function WalletConnectedMenu({ wallet, connecting, onRefreshBalance, onDisconnect }: Props) {
+export function WalletConnectedMenu({ wallet, connecting, onRefreshBalance, onDisconnect, buttonClassName }: Props) {
   const [copying, setCopying] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -47,7 +49,10 @@ export function WalletConnectedMenu({ wallet, connecting, onRefreshBalance, onDi
         <Button
           type="button"
           disabled={connecting}
-          className="h-11 rounded-xl border border-border bg-card px-4 text-foreground hover:bg-muted/40"
+          className={cn(
+            "h-11 rounded-xl border border-border bg-card px-4 text-foreground hover:bg-muted/40",
+            buttonClassName,
+          )}
           variant="outline"
         >
           {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : shortAddress(wallet.address)}

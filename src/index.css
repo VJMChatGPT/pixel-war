@@ -89,11 +89,19 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Space Grotesk', system-ui, sans-serif;
+    overflow-x: hidden;
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -10%, hsl(268 90% 65% / 0.18), transparent 60%),
       radial-gradient(ellipse 60% 40% at 100% 100%, hsl(285 90% 70% / 0.1), transparent 60%),
       radial-gradient(ellipse 60% 40% at 0% 80%, hsl(255 90% 65% / 0.1), transparent 60%);
     background-attachment: fixed;
+  }
+
+  img,
+  canvas,
+  video,
+  iframe {
+    max-width: 100%;
   }
 
   ::selection {

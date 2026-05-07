@@ -7,6 +7,7 @@ import { Loader2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { WalletConnectModal } from "@/components/wallet/WalletConnectModal";
 import { WalletConnectedMenu } from "@/components/wallet/WalletConnectedMenu";
+import { cn } from "@/lib/utils";
 
 function normalizeWalletUiErrorMessage(message: string) {
   const lower = message.toLowerCase();
@@ -30,7 +31,7 @@ function normalizeWalletUiErrorMessage(message: string) {
   return message;
 }
 
-export function WalletConnectButton() {
+export function WalletConnectButton({ className }: { className?: string }) {
   const { wallet, connect, disconnect, refreshBalance, connecting, isConnected, availableWallets } = useWallet();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -57,6 +58,7 @@ export function WalletConnectButton() {
           await disconnect();
           toast("Wallet disconnected");
         }}
+        buttonClassName={className}
       />
     );
   }
@@ -67,7 +69,7 @@ export function WalletConnectButton() {
         type="button"
         onClick={() => setModalOpen(true)}
         disabled={connecting}
-        className="h-11 rounded-xl px-5 font-semibold"
+        className={cn("h-11 rounded-xl px-5 font-semibold", className)}
       >
         {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
         <span>{connecting ? "Connecting..." : "Connect Wallet"}</span>

@@ -7,7 +7,7 @@ export function Layout({ children, footer = true }: { children: React.ReactNode;
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
-      <div className="sticky top-16 md:top-20 z-30">
+      <div className="sticky top-14 z-30 md:top-20">
         <LiveTicker />
         <PointsPulseBar />
       </div>

@@ -17,7 +17,7 @@ const links = [
   { to: "/rules", label: "Rules" },
 ];
 
-const TRADE_URL = "https://pump.fun/";
+const TRADE_URL = "https://trade.padre.gg/trenches";
 
 export function NavBar() {
   const [scrolled, setScrolled] = useState(false);
@@ -37,14 +37,14 @@ export function NavBar() {
         scrolled ? "backdrop-blur-xl bg-background/70 border-b border-border" : "bg-transparent"
       )}
     >
-      <div className="container flex items-center justify-between h-16 md:h-20">
-        <Link to="/" className="flex items-center gap-3 group">
+      <div className="container flex h-14 items-center justify-between md:h-20">
+        <Link to="/" className="group flex min-w-0 items-center gap-3">
           <PixlMascot size={40} mood="idle" />
-          <div className="leading-none">
-            <div className="font-display font-bold text-xl tracking-tight">
+          <div className="min-w-0 leading-none">
+            <div className="truncate font-display text-lg font-bold tracking-tight sm:text-xl">
               {APP_CONFIG.name}
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5">
+            <div className="mt-0.5 hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:block">
               paint territory. win the war.
             </div>
           </div>
@@ -89,18 +89,36 @@ export function NavBar() {
 
         <div className="md:hidden">
           <Sheet>
-            <SheetTrigger className="p-2 rounded-lg hover:bg-muted/40">
+            <SheetTrigger className="rounded-lg p-2 hover:bg-muted/40">
               <Menu className="w-5 h-5" />
             </SheetTrigger>
-            <SheetContent side="right" className="bg-background border-border">
-              <div className="flex flex-col gap-2 mt-8">
+            <SheetContent side="right" className="border-border bg-background px-5">
+              <div className="mt-8 flex flex-col gap-2">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 w-full rounded-xl bg-gradient-neon px-5 font-semibold text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] hover:opacity-95"
+                >
+                  <a href={TRADE_URL} target="_blank" rel="noopener noreferrer">
+                    <span>Buy $PIXL</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-12 w-full rounded-xl px-5"
+                >
+                  <Link to="/canvas">View Canvas</Link>
+                </Button>
                 {links.map((l) => (
                   <NavLink
                     key={l.to}
                     to={l.to}
                     className={({ isActive }) =>
                       cn(
-                        "px-4 py-3 rounded-lg font-medium",
+                        "rounded-lg px-4 py-3 font-medium",
                         isActive ? "bg-muted text-foreground" : "text-muted-foreground"
                       )
                     }
@@ -109,18 +127,11 @@ export function NavBar() {
                   </NavLink>
                 ))}
                 <div className="mt-4 space-y-3">
+                  <div className="text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                    Wallet and sharing
+                  </div>
                   <HeaderShareOnXButton />
-                  <WalletConnectButton />
-                  <Button
-                    asChild
-                    size="lg"
-                    className="w-full h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] hover:opacity-95"
-                  >
-                    <a href={TRADE_URL} target="_blank" rel="noopener noreferrer">
-                      <span>Buy $PIXL</span>
-                      <ArrowUpRight className="w-4 h-4" />
-                    </a>
-                  </Button>
+                  <WalletConnectButton className="h-12 w-full justify-center" />
                 </div>
               </div>
             </SheetContent>

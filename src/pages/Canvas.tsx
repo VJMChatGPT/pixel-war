@@ -402,6 +402,12 @@ export default function CanvasPage() {
                 <AlertDescription>{launch.description}</AlertDescription>
               </Alert>
             )}
+            <Alert className="border-border/70 bg-card/70 lg:hidden">
+              <AlertTitle>Mobile preview mode</AlertTitle>
+              <AlertDescription>
+                Pixel War is best played on desktop. You can still view the board, track the leaderboard, and check your territory from here.
+              </AlertDescription>
+            </Alert>
             <NeonCard shimmer={canPaint} className="p-2 md:p-3 aspect-square md:aspect-auto md:h-[calc(100vh-180px)] glow-primary">
               <CanvasGrid
                 pixels={pixels}
