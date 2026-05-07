@@ -19,7 +19,8 @@ import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
 import { toast } from "sonner";
 
-const BUY_PIXL_URL = "https://trade.padre.gg/trenches";
+const BUY_PIXL_URL = "https://pump.fun/coin/9UdjvmrxbRH3EZLD7UnbQTFjgNTkMqZ6Xq4PpXTSpump";
+const PIXL_CA = "9UdjvmrxbRH3EZLD7UnbQTFjgNTkMqZ6Xq4PpXTSpump";
 
 /* ------------------------------------------------------------------ */
 /* Section heading helper                                             */
@@ -648,6 +649,16 @@ export default function Landing() {
                 Best experienced on desktop for painting.
               </motion.p>
             )}
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.68 }}
+              className="mt-4 max-w-full rounded-xl border border-border/70 bg-card/65 px-4 py-3 font-mono text-[11px] leading-5 text-muted-foreground"
+            >
+              <span className="mr-2 uppercase tracking-[0.2em] text-accent">CA:</span>
+              <span className="break-all text-foreground/80">{PIXL_CA}</span>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0 }}
