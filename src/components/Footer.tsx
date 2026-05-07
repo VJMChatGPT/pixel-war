@@ -23,7 +23,7 @@ export function Footer() {
             <li>
               <a
                 className="hover:text-foreground"
-                href="https://pump.fun/coin/oLkuzPzXG9YqkTkBkvn3RGiRJo7VG2Ae5Sbbvurpump"
+                href="https://trade.padre.gg/trenches"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -43,7 +43,7 @@ export function Footer() {
             <li>
               CA:{" "}
               <span className="inline-flex items-center gap-2 text-muted-foreground/90">
-                <span className="break-all text-foreground/80">oLkuzPzXG9YqkTkBkvn3RGiRJo7VG2Ae5Sbbvurpump</span>
+                <span className="text-foreground/70">Soon</span>
               </span>
             </li>
             <li>Network: Solana</li>
