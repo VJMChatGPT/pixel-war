@@ -7,7 +7,7 @@ import { APP_CONFIG } from "@/config/app";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { ArrowUpRight, Menu } from "lucide-react";
 
 const links = [
   { to: "/", label: "Home" },
@@ -16,6 +16,8 @@ const links = [
   { to: "/profile", label: "Profile" },
   { to: "/rules", label: "Rules" },
 ];
+
+const TRADE_URL = "https://trade.padre.gg/trenches";
 
 export function NavBar() {
   const [scrolled, setScrolled] = useState(false);
@@ -74,11 +76,14 @@ export function NavBar() {
           <HeaderShareOnXButton />
           <WalletConnectButton />
           <Button
+            asChild
             size="lg"
-            disabled
-            className="h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] opacity-60"
+            className="h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] hover:opacity-95"
           >
-            <span>Buy $PIXL</span>
+            <a href={TRADE_URL} target="_blank" rel="noopener noreferrer">
+              <span>Buy $PIXL</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </a>
           </Button>
         </div>
 
@@ -107,11 +112,14 @@ export function NavBar() {
                   <HeaderShareOnXButton />
                   <WalletConnectButton />
                   <Button
+                    asChild
                     size="lg"
-                    disabled
-                    className="w-full h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] opacity-60"
+                    className="w-full h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] hover:opacity-95"
                   >
-                    <span>Buy $PIXL</span>
+                    <a href={TRADE_URL} target="_blank" rel="noopener noreferrer">
+                      <span>Buy $PIXL</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </a>
                   </Button>
                 </div>
               </div>

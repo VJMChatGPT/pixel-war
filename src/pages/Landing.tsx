@@ -3,7 +3,7 @@ import { PixlMascot } from "@/components/PixlMascot";
 import { NeonCard } from "@/components/NeonCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Wallet, Trophy, TrendingUp, TrendingDown, MousePointerClick, Zap, Crown, Eye } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Wallet, Trophy, TrendingUp, TrendingDown, MousePointerClick, Zap, Crown, Eye } from "lucide-react";
 import { useCanvas } from "@/hooks/useCanvas";
 import { APP_CONFIG } from "@/config/app";
 import { CanvasGrid } from "@/components/CanvasGrid";
@@ -18,6 +18,8 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
 import { toast } from "sonner";
+
+const BUY_PIXL_URL = "https://trade.padre.gg/trenches";
 
 /* ------------------------------------------------------------------ */
 /* Section heading helper                                             */
@@ -427,6 +429,52 @@ export default function Landing() {
               <SectionEyebrow>
                 live · solana · {APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels
               </SectionEyebrow>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.75, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-6 max-w-2xl rounded-[1.6rem] border border-accent/30 bg-background/62 p-5 shadow-[0_0_40px_hsl(var(--primary)/0.14)] backdrop-blur-md"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-accent/35 bg-accent/12 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-accent">
+                  <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_10px_hsl(var(--accent))] animate-pulse" />
+                  Live Today
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  $PIXL official launch
+                </span>
+              </div>
+              <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+                Official Launch Today
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+                Pixel War launches today. Get ready to enter the board, claim territory and paint with $PIXL.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 rounded-xl bg-gradient-neon px-6 text-primary-foreground shadow-[0_12px_30px_rgba(168,85,247,0.25)]"
+                >
+                  <Link to="/canvas">
+                    Enter the Canvas
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-12 rounded-xl border-accent/35 bg-background/40 px-6 hover:bg-accent/10"
+                >
+                  <a href={BUY_PIXL_URL} target="_blank" rel="noopener noreferrer">
+                    Buy $PIXL
+                    <ArrowUpRight className="h-4 w-4" />
+                  </a>
+                </Button>
+              </div>
             </motion.div>
 
             <motion.h1

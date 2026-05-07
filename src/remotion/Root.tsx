@@ -1,5 +1,6 @@
 import {Composition, Folder} from "remotion";
 import {PixlLaunchVideo, PIXL_LAUNCH_DURATION, PIXL_LAUNCH_FPS} from "./PixlLaunchVideo";
+import {PixelWarOrigin} from "./PixelWarOrigin";
 import {
   PIXLProductTeaser,
   PIXLProductWalkthrough,
@@ -37,6 +38,14 @@ export const RemotionRoot = () => {
         fps={PIXL_LAUNCH_FPS}
         width={1080}
         height={1920}
+      />
+      <Composition
+        id="PixelWarOrigin"
+        component={PixelWarOrigin}
+        durationInFrames={900}
+        fps={30}
+        width={1920}
+        height={1080}
       />
     </Folder>
   );
