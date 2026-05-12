@@ -17,6 +17,7 @@ const Leaderboard = lazy(() => import("./pages/Leaderboard.tsx"));
 const Profile = lazy(() => import("./pages/Profile.tsx"));
 const Rules = lazy(() => import("./pages/Rules.tsx"));
 const Litepaper = lazy(() => import("./pages/Litepaper.tsx"));
+const ViewConcepts = lazy(() => import("./pages/ViewConcepts.tsx"));
 
 function RouteLoadingFallback() {
   return (
@@ -53,6 +54,7 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/rules" element={<Rules />} />
                 <Route path="/litepaper" element={<Litepaper />} />
+                <Route path="/concepts" element={<ViewConcepts />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { APP_CONFIG } from "@/config/app";
+import { tokenTicker } from "@/config/brand";
 
 import { PixlMark } from "./PixlMark";
 
@@ -14,13 +15,13 @@ export function Footer() {
             <div className="font-display font-bold text-lg">{APP_CONFIG.name}</div>
           </div>
           <p className="text-sm text-muted-foreground">
-            A live Solana territory game. Hold $PIXL, paint territory, defend your pixels, and grow by points.
+            A live Solana territory game. Hold {tokenTicker}, paint territory, defend your pixels, and grow by points.
           </p>
         </div>
         <div>
           <h4 className="font-display font-semibold text-sm mb-3">App</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><span className="text-foreground/80">Buy $PIXL</span></li>
+            <li><span className="text-foreground/80">Buy {tokenTicker}</span></li>
             <li><Link to="/canvas" className="hover:text-foreground">Canvas</Link></li>
             <li><Link to="/leaderboard" className="hover:text-foreground">Leaderboard</Link></li>
             <li><Link to="/profile" className="hover:text-foreground">Profile</Link></li>

@@ -1,6 +1,7 @@
 import {Composition, Folder} from "remotion";
 import {PixlLaunchVideo, PIXL_LAUNCH_DURATION, PIXL_LAUNCH_FPS} from "./PixlLaunchVideo";
 import {PixelWarOrigin, PIXEL_WAR_ORIGIN_DURATION, PIXEL_WAR_ORIGIN_FPS} from "./PixelWarOrigin";
+import {PIXLProductWalkthroughOctopus} from "./PIXLProductWalkthroughOctopus";
 import {
   PIXLProductTeaser,
   PIXLProductWalkthrough,
@@ -27,6 +28,14 @@ export const RemotionRoot = () => {
         id="PIXLProductTeaser"
         component={PIXLProductTeaser}
         durationInFrames={PIXL_TEASER_DURATION}
+        fps={PIXL_WALKTHROUGH_FPS}
+        width={compositionPresets.horizontal.width}
+        height={compositionPresets.horizontal.height}
+      />
+      <Composition
+        id="PIXLProductWalkthroughOctopus"
+        component={PIXLProductWalkthroughOctopus}
+        durationInFrames={PIXL_WALKTHROUGH_DURATION}
         fps={PIXL_WALKTHROUGH_FPS}
         width={compositionPresets.horizontal.width}
         height={compositionPresets.horizontal.height}

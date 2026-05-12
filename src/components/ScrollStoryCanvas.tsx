@@ -7,11 +7,11 @@ interface Props {
 }
 
 /* ----------------------------------------------------------------
-   Storytelling canvas — a believable SNAPSHOT of the real PIXL
+   Storytelling canvas — a believable snapshot of the real board
    board (100x100). Not live data; deterministically generated to
    look like real users actually painted: scattered solo pixels,
    small skirmishes, dense clusters, and a few "territory" blobs.
-   Uses the actual app palette so it feels native to PIXL.
+   Uses the actual app palette so it feels native to the site.
 ---------------------------------------------------------------- */
 
 const BOARD = 100;
@@ -156,7 +156,7 @@ function buildSnapshot(seed = 0xC0FFEE): Cell[] {
 }
 
 function drawSnapshot(ctx: CanvasRenderingContext2D, board: Cell[]) {
-  // dark backdrop matches PIXL canvas chrome
+  // dark backdrop matches the canvas chrome
   ctx.fillStyle = "#0b0718";
   ctx.fillRect(0, 0, BOARD, BOARD);
 

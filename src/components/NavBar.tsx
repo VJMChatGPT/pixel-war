@@ -4,6 +4,7 @@ import { WalletConnectButton } from "./WalletConnectButton";
 import { HeaderShareOnXButton } from "./HeaderShareOnXButton";
 import { cn } from "@/lib/utils";
 import { APP_CONFIG } from "@/config/app";
+import { tokenTicker } from "@/config/brand";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -14,6 +15,7 @@ const links = [
   { to: "/canvas", label: "Canvas" },
   { to: "/leaderboard", label: "Leaderboard" },
   { to: "/profile", label: "Profile" },
+  { to: "/#prize", label: "Prize" },
   { to: "/rules", label: "Rules" },
 ];
 
@@ -53,17 +55,20 @@ export function NavBar() {
             <NavLink
               key={l.to}
               to={l.to}
-              className={({ isActive }) =>
+              className={() =>
                 cn(
                   "relative px-4 py-2 text-sm font-medium rounded-lg transition-all",
-                  isActive
+                  (l.to === "/#prize"
+                    ? location.pathname === "/" && location.hash === "#prize"
+                    : location.pathname === l.to)
                     ? "text-foreground bg-muted/60"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                 )
               }
             >
               {l.label}
-              {location.pathname === l.to && (
+              {((l.to === "/#prize" && location.pathname === "/" && location.hash === "#prize") ||
+                (l.to !== "/#prize" && location.pathname === l.to)) && (
                 <span className="absolute -bottom-px left-1/2 -translate-x-1/2 h-px w-8 bg-gradient-neon" />
               )}
             </NavLink>
@@ -78,7 +83,7 @@ export function NavBar() {
             disabled
             className="h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] opacity-80"
           >
-            <span>Buy $PIXL</span>
+            <span>Buy {tokenTicker}</span>
           </Button>
         </div>
 
@@ -94,7 +99,7 @@ export function NavBar() {
                   disabled
                   className="h-12 w-full rounded-xl bg-gradient-neon px-5 font-semibold text-primary-foreground opacity-80"
                 >
-                  <span>Buy $PIXL</span>
+                  <span>Buy {tokenTicker}</span>
                 </Button>
                 <Button
                   asChild
@@ -108,10 +113,13 @@ export function NavBar() {
                   <NavLink
                     key={l.to}
                     to={l.to}
-                    className={({ isActive }) =>
+                    className={() =>
                       cn(
                         "rounded-lg px-4 py-3 font-medium",
-                        isActive ? "bg-muted text-foreground" : "text-muted-foreground"
+                        ((l.to === "/#prize" && location.pathname === "/" && location.hash === "#prize") ||
+                          (l.to !== "/#prize" && location.pathname === l.to))
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground"
                       )
                     }
                   >

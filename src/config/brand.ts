@@ -1,6 +1,6 @@
 export const BRAND_CONFIG = {
   brandName: "Pixel Battle",
-  ticker: "$PIXL",
+  ticker: "$P&H",
   tagline: "HOLD. PAINT. DEFEND. GROW.",
   description:
     "Green and teal pixel-art octopus branding for a competitive territory-painting game UI. Playful, premium, readable, and built around public canvas control.",
@@ -28,3 +28,10 @@ export const tokenTicker = BRAND_CONFIG.ticker;
 export const brandTagline = BRAND_CONFIG.tagline;
 export const mascotPaths = BRAND_CONFIG.mascot;
 export const markPaths = BRAND_CONFIG.mark;
+
+export const WINNER_PRIZE_BADGE = "WINNER PRIZE";
+export const WINNER_PRIZE_HEADLINE = "Win the round. Get the homepage slot + 50% of dev fees.";
+export const WINNER_PRIZE_SUBLINE =
+  "Advertise whatever you want here and receive half of the dev fees from this round.";
+export const WINNER_PRIZE_RULES_COPY =
+  "Win the round and you get the homepage promotion slot plus 50% of the dev fees collected during that round.";

@@ -11,6 +11,7 @@ import { useAnimatedWalletPoints, useWalletState } from "@/hooks/useWalletState"
 import { useCanvas } from "@/hooks/useCanvas";
 import { useCooldown } from "@/hooks/useCooldown";
 import { APP_CONFIG } from "@/config/app";
+import { tokenTicker } from "@/config/brand";
 import {
   fetchWalletPaints,
   updateWalletDisplayName,
@@ -291,7 +292,7 @@ export default function Profile() {
               />
               <div className="mt-4 text-center">
                 <div className="font-mono text-xs text-muted-foreground">balance</div>
-                <div className="font-display font-bold text-2xl mt-1">{compactNumber(wallet!.balance)} <span className="text-base text-muted-foreground">$PIXL</span></div>
+                <div className="font-display font-bold text-2xl mt-1">{compactNumber(wallet!.balance)} <span className="text-base text-muted-foreground">{tokenTicker}</span></div>
               </div>
             </NeonCard>
 

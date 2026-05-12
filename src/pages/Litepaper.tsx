@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { NeonCard } from "@/components/NeonCard";
 import { Button } from "@/components/ui/button";
 import { APP_CONFIG } from "@/config/app";
+import { tokenTicker } from "@/config/brand";
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
@@ -52,7 +53,7 @@ export default function Litepaper() {
                 Pixel Battle Litepaper
               </h1>
               <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-muted-foreground md:text-xl">
-                A live public canvas for territory, painted with $PIXL.
+                A live public canvas for territory, painted with {tokenTicker}.
               </p>
               <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
                 Pixel Battle turns token ownership into visible territory on a public 100x100 canvas. Hold to claim, paint to mark, defend to keep, grow to lead.
@@ -74,7 +75,7 @@ export default function Litepaper() {
               {[
                 { label: "Board", value: "100 x 100", sub: "10,000 live pixels" },
                 { label: "Formula", value: `${APP_CONFIG.rules.supplyPercentPerPixel}%`, sub: "of supply = 1 pixel" },
-                { label: "Capacity", value: "Wallet-based", sub: "More $PIXL = more territory" },
+                { label: "Capacity", value: "Wallet-based", sub: `More ${tokenTicker} = more territory` },
               ].map((item) => (
                 <NeonCard key={item.label} className="p-5">
                   <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary/80">{item.label}</div>
@@ -87,7 +88,7 @@ export default function Litepaper() {
             <div className="mt-14">
               <SectionBlock icon={BookOpenText} title="Core Idea">
                 <p>
-                  Buy $PIXL. Claim pixels. Paint the board. Earn points. Climb the leaderboard.
+                  Buy {tokenTicker}. Claim pixels. Paint the board. Earn points. Climb the leaderboard.
                 </p>
                 <p>
                   Pixel Battle takes token ownership and makes it visible. The result is not a hidden wallet game or a private score counter. It is a public board where control is contested in real time.
@@ -131,7 +132,7 @@ export default function Litepaper() {
                   Controlled Now means the pixels you currently own on the board. If another player paints over you, your visible territory drops. Your balance still defines the maximum capacity you are allowed to hold.
                 </p>
                 <p>
-                  If you buy more $PIXL, your capacity rises. If you sell $PIXL, your capacity falls, and territory above the new limit can no longer be kept.
+                  If you buy more {tokenTicker}, your capacity rises. If you sell {tokenTicker}, your capacity falls, and territory above the new limit can no longer be kept.
                 </p>
               </SectionBlock>
 

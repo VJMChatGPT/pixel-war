@@ -5,7 +5,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { APP_CONFIG } from "@/config/app";
-import { Calculator, Clock, TrendingDown, Wallet } from "lucide-react";
+import { WINNER_PRIZE_RULES_COPY, tokenTicker } from "@/config/brand";
+import { Calculator, Clock, Crown, TrendingDown, Wallet } from "lucide-react";
 
 export default function Rules() {
   const [percent, setPercent] = useState("0.5");
@@ -75,6 +76,31 @@ export default function Rules() {
           </div>
         </NeonCard>
 
+        <NeonCard id="winner-prize" glow="accent" className="mb-10 p-8">
+          {/* TODO: verify or automate the 50% dev-fee payout to the winner wallet before treating this as fully enforced on-chain/backend logic. */}
+          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-accent/35 bg-accent/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-accent">
+                <Crown className="h-3.5 w-3.5" />
+                Winner Prize
+              </div>
+              <h2 className="mt-4 font-display text-3xl font-bold tracking-tight md:text-4xl">
+                Winner Prize
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-muted-foreground md:text-base">
+                {WINNER_PRIZE_RULES_COPY}
+              </p>
+              <div className="mt-5 space-y-2 text-sm text-foreground">
+                <div>- Homepage promotion slot</div>
+                <div>- 50% of dev fees from the round</div>
+              </div>
+            </div>
+            <div className="shrink-0">
+              <PixlMascot mood="idle" size={88} />
+            </div>
+          </div>
+        </NeonCard>
+
         <h2 className="font-display font-bold text-2xl mb-4">FAQ</h2>
         <NeonCard className="p-2">
           <Accordion type="single" collapsible className="w-full">
@@ -84,7 +110,7 @@ export default function Rules() {
               { q: "Can someone paint over my pixels?", a: "Yes. The canvas is competitive, so other holders can repaint your pixels. If you want to keep your spot, you need to defend it." },
               { q: "What happens if I sell my tokens?", a: "Your pixel allowance drops with your balance. If you end up controlling more pixels than your wallet now allows, some of that territory can be taken back." },
               { q: "Do my pixels stay there after I close the app?", a: "Yes. Painted pixels stay on the canvas and everyone can see them, even after you leave. They only change if someone paints over them or your allowance drops." },
-              { q: "Why does holding more $PIXL matter?", a: "The more of the supply you hold, the more pixels you can control. Bigger holders can claim more space and keep painting for longer before they run out of slots." },
+              { q: `Why does holding more ${tokenTicker} matter?`, a: "The more of the supply you hold, the more pixels you can control. Bigger holders can claim more space and keep painting for longer before they run out of slots." },
             ].map((item, i) => (
               <AccordionItem key={i} value={`item-${i}`} className="border-border">
                 <AccordionTrigger className="px-4 hover:no-underline font-display">{item.q}</AccordionTrigger>

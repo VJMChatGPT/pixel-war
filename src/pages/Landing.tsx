@@ -13,6 +13,7 @@ import { RoundSystemSection } from "@/components/RoundSystem";
 import { useWallet } from "@/hooks/useWallet";
 import { useLaunchState } from "@/hooks/useLaunchState";
 import { getWalletConnectionErrorMessage } from "@/services/wallet";
+import { WINNER_PRIZE_BADGE, WINNER_PRIZE_HEADLINE, tokenTicker } from "@/config/brand";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform, useSpring, useInView, type MotionValue } from "framer-motion";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { shortAddress } from "@/lib/format";
@@ -114,7 +115,7 @@ const STAGES = [
   { key: "foothold", label: "02 · Foothold", title: "A foothold.", sub: "Stack tokens. Stack pixels. Build a position the whole board can recognize." },
   { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells under one wallet. A region of the canvas with your name on it." },
   { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas for every round." },
-  { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on Pixel Battle." },
+  { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins the homepage slot plus 50% of the dev fees collected during that round." },
 ];
 
 const MOBILE_STORY_CARDS = [
@@ -126,7 +127,7 @@ const MOBILE_STORY_CARDS = [
   {
     number: "02",
     title: "Foothold",
-    copy: "Buy more $PIXL to expand your position.",
+    copy: `Buy more ${tokenTicker} to expand your position.`,
   },
   {
     number: "03",
@@ -321,7 +322,7 @@ const CinematicNarrative = memo(function CinematicNarrative() {
             {currentStage.key === "dominance" && (
               <div className={`mt-8 inline-flex items-center gap-2 rounded-full border border-accent/50 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-accent md:text-xs ${lightweightMode ? "bg-background/74 shadow-[0_0_14px_hsl(var(--accent)/0.18)]" : "bg-background/72 shadow-[0_0_18px_hsl(var(--accent)/0.22)]"}`}>
                 <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                winner gets the homepage ad slot
+                homepage slot + 50% of dev fees
               </div>
             )}
           </motion.div>
@@ -557,12 +558,12 @@ export default function Landing() {
             >
               {lightweightHero ? (
                 <>
-                  Buy <span className="font-semibold text-foreground">$PIXL</span>. Claim territory. Paint the board.
+                  Buy <span className="font-semibold text-foreground">{tokenTicker}</span>. Claim territory. Paint the board.
                   Climb the leaderboard.
                 </>
               ) : (
                 <>
-                  A live, on-chain canvas where <span className="text-foreground font-semibold">$PIXL</span> becomes
+                  A live, on-chain canvas where <span className="text-foreground font-semibold">{tokenTicker}</span> becomes
                   territory, territory becomes points, and points become public dominance. Every {APP_CONFIG.rules.supplyPercentPerPixel}% of supply = 1 pixel you own,
                   recolor, and defend.
                 </>
@@ -582,7 +583,7 @@ export default function Landing() {
                     disabled
                     className="h-12 w-full rounded-xl bg-gradient-neon px-6 text-base font-semibold text-primary-foreground opacity-80 sm:w-auto"
                   >
-                    Buy $PIXL
+                    Buy {tokenTicker}
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                   <Button
@@ -723,7 +724,6 @@ export default function Landing() {
           </motion.div>
         </div>
 
-        {/* scroll hint */}
         {!lightweightHero && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -742,14 +742,12 @@ export default function Landing() {
       </section>
 
       {/* ============================================================ */}
+      {/* 2.5 ROUND SYSTEM — promoted before the 1→5 story */}
+      <RoundSystemSection />
+
       {/* 2. CINEMATIC NARRATIVE — pinned scroll-zoom through stages  */}
       {/* ============================================================ */}
       {lightweightHero ? <MobileStoryCards /> : <CinematicNarrative />}
-
-      {/* ============================================================ */}
-      {/* 2.5 ROUND SYSTEM — countdown · winner ad · how it works · museum */}
-      {/* ============================================================ */}
-      <RoundSystemSection />
 
       {/* ============================================================ */}
       {/* 3. HOW IT WORKS — visual 3-step                              */}
@@ -776,7 +774,7 @@ export default function Landing() {
               {
                 n: "01",
                 icon: <Wallet className="w-5 h-5" />,
-                title: "Hold $PIXL",
+                title: `Hold ${tokenTicker}`,
                 desc: `Every ${APP_CONFIG.rules.supplyPercentPerPixel}% of supply unlocks 1 pixel of public territory.`,
                 visual: (
                   <div className="grid grid-cols-6 gap-1 mt-6">
@@ -1016,7 +1014,7 @@ export default function Landing() {
               <span className="text-gradient-hero">One live canvas.</span>
             </h2>
             <p className="mt-8 text-muted-foreground max-w-xl mx-auto text-lg md:text-xl">
-              Hold $PIXL. Paint your pixels. Defend your area. Grow your presence.
+              Hold {tokenTicker}. Paint your pixels. Defend your area. Grow your presence.
             </p>
 
             <div className="mt-12 flex flex-wrap gap-3 justify-center">

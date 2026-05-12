@@ -20,6 +20,7 @@ import { useLaunchState } from "@/hooks/useLaunchState";
 import { usePaintAvailability } from "@/hooks/usePaintAvailability";
 import { paintPixel, type PixelRow } from "@/services/pixels";
 import { APP_CONFIG } from "@/config/app";
+import { tokenTicker } from "@/config/brand";
 import { compactNumber, formatCountdown, formatPoints, shortAddress } from "@/lib/format";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -479,7 +480,7 @@ export default function CanvasPage() {
                     </div>
                     <div className="flex justify-between font-mono text-[11px] text-muted-foreground">
                       <span>balance</span>
-                      <span className="tabular-nums">{compactNumber(wallet!.balance)} $PIXL</span>
+                      <span className="tabular-nums">{compactNumber(wallet!.balance)} {tokenTicker}</span>
                     </div>
                   </div>
                 </div>

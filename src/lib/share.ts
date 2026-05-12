@@ -1,4 +1,5 @@
 import { APP_CONFIG } from "../config/app";
+import { tokenTicker } from "../config/brand";
 import { formatPoints, shortAddress } from "./format";
 
 const DEFAULT_SITE_URL = "https://pixelwarcoin.com";
@@ -66,7 +67,7 @@ export function buildXShareText({
   const totalPoints = formatPoints(Number(walletState?.total_points ?? 0), 1);
   const pointsPerSecond = formatPoints(Number(walletState?.points_per_second ?? 0), 2);
 
-  return `${label} is earning ${totalPoints} points in Pixel Battle at ${pointsPerSecond} pts/s while holding ${ownedPixels} pixels on the live territory board. $PIXL fuels territory. Territory fuels points.`;
+  return `${label} is earning ${totalPoints} points in Pixel Battle at ${pointsPerSecond} pts/s while holding ${ownedPixels} pixels on the live territory board. ${tokenTicker} fuels territory. Territory fuels points.`;
 }
 
 export function buildXIntentUrl({

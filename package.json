@@ -11,6 +11,7 @@
     "remotion:studio": "remotion studio src/remotion/index.ts",
     "remotion:render": "remotion render src/remotion/index.ts PIXLProductWalkthrough dist/pixl-product-walkthrough.mp4",
     "remotion:render:teaser": "remotion render src/remotion/index.ts PIXLProductTeaser dist/pixl-product-teaser.mp4",
+    "remotion:render:walkthrough-octopus": "remotion render src/remotion/index.ts PIXLProductWalkthroughOctopus dist/pixl-product-walkthrough-octopus.mp4",
     "remotion:render:launch-x": "remotion render src/remotion/index.ts PIXLLaunchX dist/pixl-launch-x.mp4",
     "remotion:still": "remotion still src/remotion/index.ts PIXLProductWalkthrough dist/pixl-product-walkthrough-frame.png --frame=420 --scale=0.35",
     "preview": "vite preview",

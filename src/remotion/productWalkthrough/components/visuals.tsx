@@ -11,6 +11,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import {useWalkthroughBranding} from "../branding";
 import {COLORS, PIXL_PALETTE, clamp, easeOut, popEase} from "../constants";
 import {getLeaderboardStage, interpolateLeaderboardValue} from "../leaderboardMotion";
 import {
@@ -62,18 +63,18 @@ const walletModalOptions = [
 ];
 
 export const PremiumBackground = ({intensity = 1}: {intensity?: number}) => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const sweep = interpolate(frame, [0, 1620], [-360, 2280], clamp);
   const drift = Math.sin(frame / 95) * 22;
 
   return (
-    <AbsoluteFill style={{background: COLORS.ink}}>
+    <AbsoluteFill style={{background: branding.backgroundDeep}}>
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(circle at 54% 16%, rgba(138,77,255,0.24), transparent 28%), radial-gradient(circle at 13% 82%, rgba(255,111,174,0.13), transparent 32%), linear-gradient(180deg, #0b0913 0%, #05050a 66%, #030306 100%)",
+          background: `radial-gradient(circle at 54% 16%, ${branding.accent}33, transparent 28%), radial-gradient(circle at 13% 82%, ${branding.accentSoft}20, transparent 32%), linear-gradient(180deg, ${branding.backgroundDark} 0%, ${branding.backgroundDeep} 66%, #030306 100%)`,
           opacity: intensity,
         }}
       />
@@ -95,7 +96,7 @@ export const PremiumBackground = ({intensity = 1}: {intensity?: number}) => {
           top: -120,
           width: 310,
           height: 1320,
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.075), transparent)",
+          background: `linear-gradient(90deg, transparent, ${branding.accentSoft}22, transparent)`,
           transform: "skewX(-17deg)",
           filter: "blur(1px)",
           opacity: 0.8,
@@ -113,57 +114,128 @@ export const PremiumBackground = ({intensity = 1}: {intensity?: number}) => {
   );
 };
 
-export const BrandBug = ({minimal = false}: {minimal?: boolean}) => (
+const MascotFallback = ({
+  size,
+}: {
+  size: number;
+}) => (
   <div
     style={{
-      position: "absolute",
-      left: 62,
-      top: 44,
-      zIndex: 20,
+      width: size,
+      height: size,
+      position: "relative",
       display: "flex",
       alignItems: "center",
-      gap: 14,
+      justifyContent: "center",
+      filter: "drop-shadow(0 26px 34px rgba(0,0,0,0.38))",
     }}
   >
     <div
       style={{
+        position: "absolute",
+        inset: "10% 18% 18%",
+        borderRadius: "44% 44% 34% 34%",
+        background: "linear-gradient(180deg, rgba(201,168,255,0.95), rgba(138,77,255,0.98))",
+        boxShadow: "0 0 36px rgba(138,77,255,0.42)",
+      }}
+    />
+    <div
+      style={{
+        position: "absolute",
+        top: "34%",
+        left: "33%",
+        width: size * 0.1,
+        height: size * 0.1,
+        borderRadius: "50%",
+        background: COLORS.ink,
+      }}
+    />
+    <div
+      style={{
+        position: "absolute",
+        top: "34%",
+        right: "33%",
+        width: size * 0.1,
+        height: size * 0.1,
+        borderRadius: "50%",
+        background: COLORS.ink,
+      }}
+    />
+    {Array.from({length: 4}, (_, index) => (
+      <div
+        key={index}
+        style={{
+          position: "absolute",
+          bottom: "10%",
+          left: `${23 + index * 15}%`,
+          width: size * 0.085,
+          height: size * 0.22,
+          borderRadius: 999,
+          background: "linear-gradient(180deg, rgba(168,85,247,0.9), rgba(109,40,217,0.96))",
+          transform: `rotate(${(index - 1.5) * 11}deg)`,
+          transformOrigin: "50% 0%",
+        }}
+      />
+    ))}
+  </div>
+);
+
+export const BrandBug = ({minimal = false}: {minimal?: boolean}) => {
+  const branding = useWalkthroughBranding();
+  const brandIcon = branding.mascotAssets[branding.brandBugMood] ?? mascotSrc.normal;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 62,
+        top: 44,
+        zIndex: 20,
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+      }}
+    >
+      <div
+      style={{
         width: minimal ? 36 : 40,
         height: minimal ? 36 : 40,
         borderRadius: 10,
-        background: "radial-gradient(circle, rgba(138,77,255,0.34), rgba(138,77,255,0) 74%)",
+        background: `radial-gradient(circle, ${branding.accent}55, ${branding.accent}00 74%)`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        boxShadow: "0 0 26px rgba(138,77,255,0.26)",
+        boxShadow: `0 0 26px ${branding.accent}44`,
       }}
     >
-      <Img
-        src={staticFile(mascotSrc.normal)}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          imageRendering: "pixelated",
-          filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.28))",
-        }}
-      />
-    </div>
-    <div style={{...textStyle, fontWeight: 900, fontSize: minimal ? 30 : 38}}>PIXL</div>
-    {!minimal && (
-      <div
-        style={{
-          ...monoStyle,
-          color: COLORS.quiet,
-          fontSize: 13,
-          textTransform: "uppercase",
-          marginLeft: 8,
-        }}
-      >
-        product walkthrough
+        <Img
+          src={staticFile(brandIcon)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            imageRendering: "pixelated",
+            filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.28))",
+          }}
+        />
       </div>
-    )}
-  </div>
-);
+      <div style={{...textStyle, fontWeight: 900, fontSize: minimal ? 30 : 38}}>{branding.wordmark}</div>
+      {!minimal && (
+        <div
+          style={{
+            ...monoStyle,
+            color: COLORS.quiet,
+            fontSize: 13,
+            textTransform: "uppercase",
+            marginLeft: 8,
+          }}
+        >
+          {branding.bugSubtitle}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const SceneShell = ({
   children,
@@ -174,6 +246,7 @@ export const SceneShell = ({
   label: string;
   progressLabel?: string;
 }) => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const enter = fade(frame, 0, 24);
 
@@ -195,8 +268,8 @@ export const SceneShell = ({
             width: 7,
             height: 7,
             borderRadius: 99,
-            background: COLORS.lavender,
-            boxShadow: `0 0 18px ${COLORS.lavender}`,
+            background: branding.accentSoft,
+            boxShadow: `0 0 18px ${branding.accentSoft}`,
           }}
         />
         <span style={{...monoStyle, color: COLORS.muted, fontSize: 13, textTransform: "uppercase"}}>
@@ -232,6 +305,7 @@ export const MascotActor = ({
   reactAt?: number;
   glow?: boolean;
 }) => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const enter = spring({frame: frame - delay, fps, config: {damping: 18, stiffness: 118}});
@@ -239,6 +313,7 @@ export const MascotActor = ({
   const breathe = 1 + Math.sin((frame - delay) / 38) * 0.018;
   const reaction = reactAt == null ? 0 : interpolate(frame - reactAt, [0, 9, 28], [0, 1, 0], clamp);
   const pop = interpolate(reaction, [0, 1], [1, 1.075], {easing: popEase});
+  const src = branding.mascotAssets[mood] ?? mascotSrc[mood];
 
   return (
     <div
@@ -263,17 +338,21 @@ export const MascotActor = ({
           }}
         />
       )}
-      <Img
-        src={staticFile(mascotSrc[mood])}
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          imageRendering: "pixelated",
-          filter: "drop-shadow(0 26px 34px rgba(0,0,0,0.38))",
-        }}
-      />
+      {src ? (
+        <Img
+          src={staticFile(src)}
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            imageRendering: "pixelated",
+            filter: "drop-shadow(0 26px 34px rgba(0,0,0,0.38))",
+          }}
+        />
+      ) : (
+        <MascotFallback size={size} />
+      )}
     </div>
   );
 };
@@ -298,14 +377,17 @@ export const GlassPanel = ({
 );
 
 export const BrowserFrame = ({
-  title = "pixelwarcoin.com",
+  title,
   children,
   style,
 }: {
   title?: string;
   children: ReactNode;
   style?: CSSProperties;
-}) => (
+}) => {
+  const branding = useWalkthroughBranding();
+
+  return (
   <GlassPanel
     style={{
       borderRadius: 22,
@@ -339,13 +421,14 @@ export const BrowserFrame = ({
           background: "rgba(255,255,255,0.035)",
         }}
       >
-        {title}
+        {title ?? branding.domain}
       </div>
       <div style={{width: 58}} />
     </div>
     <div style={{position: "relative", height: "calc(100% - 58px)"}}>{children}</div>
   </GlassPanel>
-);
+  );
+};
 
 export const PixelBoard = ({
   mode = "overview",
@@ -504,7 +587,10 @@ export const ActivityLabel = ({label, wallet, color}: {label: string; wallet: st
   </div>
 );
 
-export const WalletButtonMock = ({connected = false, large = false}: {connected?: boolean; large?: boolean}) => (
+export const WalletButtonMock = ({connected = false, large = false}: {connected?: boolean; large?: boolean}) => {
+  const branding = useWalkthroughBranding();
+
+  return (
   <div
     style={{
       display: "inline-flex",
@@ -513,10 +599,10 @@ export const WalletButtonMock = ({connected = false, large = false}: {connected?
       height: large ? 58 : 46,
       padding: large ? "0 24px" : "0 18px",
       borderRadius: 14,
-      background: connected ? "rgba(126,227,173,0.13)" : `linear-gradient(120deg, ${COLORS.purple}, ${COLORS.lavender})`,
-      border: connected ? "1px solid rgba(126,227,173,0.38)" : "1px solid rgba(255,255,255,0.14)",
-      boxShadow: connected ? "0 0 34px rgba(126,227,173,0.18)" : "0 18px 44px rgba(138,77,255,0.34)",
-      color: connected ? COLORS.green : COLORS.ink,
+      background: connected ? `${branding.accent}1f` : `linear-gradient(120deg, ${branding.accent}, ${branding.accentSoft})`,
+      border: connected ? `1px solid ${branding.accentSoft}66` : "1px solid rgba(255,255,255,0.14)",
+      boxShadow: connected ? `0 0 34px ${branding.accent}22` : `0 18px 44px ${branding.accent}55`,
+      color: connected ? branding.accentSoft : COLORS.ink,
       ...textStyle,
       fontSize: large ? 18 : 15,
       fontWeight: 850,
@@ -525,7 +611,8 @@ export const WalletButtonMock = ({connected = false, large = false}: {connected?
     <span style={{fontSize: large ? 22 : 18}}>{connected ? "✓" : "◈"}</span>
     {connected ? featuredWallet : "Connect Wallet"}
   </div>
-);
+  );
+};
 
 export const WalletModalMock = ({progress}: {progress: number}) => {
   const phantom = interpolate(progress, [0.32, 0.55], [0, 1], {...clamp, easing: easeOut});
@@ -594,6 +681,7 @@ export const WalletModalMock = ({progress}: {progress: number}) => {
 };
 
 export const WalletModalMockRich = ({progress}: {progress: number}) => {
+  const branding = useWalkthroughBranding();
   const phantom = interpolate(progress, [0.32, 0.55], [0, 1], {...clamp, easing: easeOut});
   const connected = progress > 0.62;
 
@@ -632,15 +720,15 @@ export const WalletModalMockRich = ({progress}: {progress: number}) => {
             style={{
               height: 68,
               borderRadius: 18,
-              border: selected ? `1px solid rgba(201,168,255,${0.28 + phantom * 0.42})` : `1px solid ${COLORS.border}`,
-              background: selected ? `rgba(138,77,255,${0.06 + phantom * 0.12})` : "rgba(255,255,255,0.035)",
+              border: selected ? `1px solid ${branding.accentSoft}88` : `1px solid ${COLORS.border}`,
+              background: selected ? `${branding.accent}14` : "rgba(255,255,255,0.035)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               padding: "0 18px",
               marginTop: 12,
               transform: selected ? `scale(${1 + phantom * 0.018})` : "scale(1)",
-              boxShadow: selected ? `0 0 ${phantom * 38}px rgba(138,77,255,0.28)` : "none",
+              boxShadow: selected ? `0 0 ${phantom * 38}px ${branding.accent}44` : "none",
               opacity: index === 0 ? 1 : 0.82,
             }}
           >
@@ -671,7 +759,7 @@ export const WalletModalMockRich = ({progress}: {progress: number}) => {
               </div>
               <div style={{...textStyle, fontSize: 18, fontWeight: 780}}>{wallet.name}</div>
             </div>
-            <div style={{...monoStyle, color: selected && connected ? COLORS.green : COLORS.muted, fontSize: 12}}>
+            <div style={{...monoStyle, color: selected && connected ? branding.accentSoft : COLORS.muted, fontSize: 12}}>
               {selected && connected ? "Connected" : wallet.hint}
             </div>
           </div>
@@ -681,8 +769,11 @@ export const WalletModalMockRich = ({progress}: {progress: number}) => {
   );
 };
 
-export const AppChromeMock = ({progress = 1}: {progress?: number}) => (
-  <BrowserFrame title="pixelwarcoin.com/canvas" style={{width: 1180, height: 690}}>
+export const AppChromeMock = ({progress = 1}: {progress?: number}) => {
+  const branding = useWalkthroughBranding();
+
+  return (
+  <BrowserFrame title={`${branding.domain}/canvas`} style={{width: 1180, height: 690}}>
     <div style={{position: "absolute", inset: 0, display: "grid", gridTemplateColumns: "1fr 340px", gap: 18, padding: 22}}>
       <div>
         <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16}}>
@@ -690,8 +781,8 @@ export const AppChromeMock = ({progress = 1}: {progress?: number}) => (
             <div style={{...textStyle, fontWeight: 850, fontSize: 28}}>The Canvas</div>
             <div style={{...monoStyle, color: COLORS.muted, fontSize: 12, marginTop: 4}}>100 x 100 board · live public territory</div>
           </div>
-          <div style={{...monoStyle, color: COLORS.lavender, fontSize: 13, display: "flex", gap: 8, alignItems: "center"}}>
-            <span style={{width: 7, height: 7, borderRadius: 99, background: COLORS.lavender, boxShadow: `0 0 14px ${COLORS.lavender}`}} />
+          <div style={{...monoStyle, color: branding.accentSoft, fontSize: 13, display: "flex", gap: 8, alignItems: "center"}}>
+            <span style={{width: 7, height: 7, borderRadius: 99, background: branding.accentSoft, boxShadow: `0 0 14px ${branding.accentSoft}`}} />
             realtime
           </div>
         </div>
@@ -707,8 +798,8 @@ export const AppChromeMock = ({progress = 1}: {progress?: number}) => (
             <MascotActor mood="happy" size={64} glow={false} delay={4} />
           </div>
           <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 18}}>
-            <MetricMini label="allowed" value="64" color={COLORS.purple} />
-            <MetricMini label="used" value="48" color={COLORS.lavender} />
+            <MetricMini label="allowed" value="64" color={branding.accent} />
+            <MetricMini label="used" value="48" color={branding.accentSoft} />
           </div>
         </GlassPanel>
         <GlassPanel style={{borderRadius: 18, padding: 18}}>
@@ -722,8 +813,8 @@ export const AppChromeMock = ({progress = 1}: {progress?: number}) => (
                   padding: "9px 12px",
                   borderRadius: 10,
                   color: index === 1 ? COLORS.ink : COLORS.muted,
-                  background: index === 1 ? COLORS.lavender : "rgba(255,255,255,0.045)",
-                  border: `1px solid ${index === 1 ? COLORS.lavender : COLORS.border}`,
+                  background: index === 1 ? branding.accentSoft : "rgba(255,255,255,0.045)",
+                  border: `1px solid ${index === 1 ? branding.accentSoft : COLORS.border}`,
                   fontSize: 12,
                   fontWeight: 800,
                 }}
@@ -747,7 +838,8 @@ export const AppChromeMock = ({progress = 1}: {progress?: number}) => (
       </div>
     </div>
   </BrowserFrame>
-);
+  );
+};
 
 export const MetricMini = ({label, value, color}: {label: string; value: string; color: string}) => (
   <div style={{borderRadius: 14, border: `1px solid ${color}66`, background: `${color}18`, padding: 12}}>
@@ -774,10 +866,11 @@ export const ColorSwatches = ({active = 5}: {active?: number}) => (
 );
 
 export const CapacityBars = ({progress}: {progress: number}) => {
+  const branding = useWalkthroughBranding();
   const rows = [
-    {label: "12K $PIXL", pixels: 12, width: 38, color: COLORS.lavender},
-    {label: "48K $PIXL", pixels: 48, width: 68, color: COLORS.purple},
-    {label: "92K $PIXL", pixels: 92, width: 92, color: COLORS.pink},
+    {label: `12K ${branding.tokenTicker}`, pixels: 12, width: 38, color: branding.accentSoft},
+    {label: `48K ${branding.tokenTicker}`, pixels: 48, width: 68, color: branding.accent},
+    {label: `92K ${branding.tokenTicker}`, pixels: 92, width: 92, color: COLORS.green},
   ];
   return (
     <div style={{display: "flex", flexDirection: "column", gap: 20}}>
