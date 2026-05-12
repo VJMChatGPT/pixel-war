@@ -359,7 +359,7 @@ function MobileStoryCards() {
               <span className="text-gradient-hero">One live board.</span>
             </h2>
             <p className="mt-4 text-base leading-7 text-muted-foreground">
-              The mobile version is built to explain the war fast. Desktop is where painting really opens up.
+              The mobile version explains the territory game fast. Desktop is where painting really opens up.
             </p>
           </div>
         </Reveal>
