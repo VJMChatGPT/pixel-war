@@ -1,10 +1,12 @@
 import {AbsoluteFill, interpolate, useCurrentFrame} from "remotion";
 import {COLORS, FONT, clamp, easeOut} from "../../constants";
+import {useWalkthroughBranding} from "../../branding";
 import {BrandBug, PixelBoard, SceneShell} from "../../components/visuals";
 import {OctopusMascotActor} from "../../components/OctopusMascotActor";
 import {fade, fadeOut, monoStyle, textStyle} from "../../primitives";
 
 export const IntroSceneOctopus = () => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const title = fade(frame, 28, 74) * fadeOut(frame, 132, 158);
   const board = fade(frame, 0, 80);
@@ -43,7 +45,7 @@ export const IntroSceneOctopus = () => {
         <div
           style={{
             ...monoStyle,
-            color: COLORS.lavender,
+            color: branding.accentSoft,
             fontSize: 16,
             textTransform: "uppercase",
             marginBottom: 24,
@@ -51,7 +53,7 @@ export const IntroSceneOctopus = () => {
             transform: `translateY(${interpolate(title, [0, 1], [22, 0])}px)`,
           }}
         >
-          the live canvas for $PIXL holders
+          the live canvas for {branding.tokenTicker} holders
         </div>
         <div
           style={{
@@ -65,11 +67,11 @@ export const IntroSceneOctopus = () => {
             maxWidth: 1000,
           }}
         >
-          Enter the Pixel War.
+          Enter Pixel Battle.
           <br />
           Claim territory.
           <br />
-          <span style={{color: COLORS.lavender}}>Climb the board.</span>
+          <span style={{color: branding.accentSoft}}>Paint & Hold the board.</span>
         </div>
       </div>
       <div style={{position: "absolute", right: 228, bottom: 88, width: 238, height: 238}}>
@@ -101,7 +103,7 @@ export const IntroSceneOctopus = () => {
           bottom: 108,
           width: 360,
           height: 4,
-          background: `linear-gradient(90deg, ${COLORS.purple}, ${COLORS.lavender}, transparent)`,
+          background: `linear-gradient(90deg, ${branding.accent}, ${branding.accentSoft}, transparent)`,
           opacity: title,
           transform: `scaleX(${title})`,
           transformOrigin: "0 50%",
@@ -117,4 +119,3 @@ export const IntroSceneOctopus = () => {
     </SceneShell>
   );
 };
-

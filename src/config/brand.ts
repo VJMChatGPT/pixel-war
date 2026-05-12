@@ -35,3 +35,6 @@ export const WINNER_PRIZE_SUBLINE =
   "Advertise whatever you want here and receive half of the dev fees from this round.";
 export const WINNER_PRIZE_RULES_COPY =
   "Win the round and you get the homepage promotion slot plus 50% of the dev fees collected during that round.";
+export const WINNER_PRIZE_FEE_LABEL = "Estimated dev fees generated";
+export const WINNER_PRIZE_SHARE_LABEL = "Estimated winner share";
+export const WINNER_PRIZE_FEE_DISCLAIMER = "Final amount verified on-chain at round end.";

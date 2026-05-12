@@ -1,10 +1,12 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {COLORS, clamp, easeOut} from "../../constants";
+import {useWalkthroughBranding} from "../../branding";
 import {GlassPanel, PixelConfetti, SceneShell} from "../../components/visuals";
 import {OctopusMascotActor} from "../../components/OctopusMascotActor";
 import {fade, monoStyle, textStyle} from "../../primitives";
 
 export const RewardSceneOctopus = () => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const enter = fade(frame, 0, 24);
   const celebration = interpolate(frame, [8, 118], [0, 1], {...clamp, easing: easeOut});
@@ -24,7 +26,7 @@ export const RewardSceneOctopus = () => {
       />
 
       <div style={{position: "absolute", left: 118, top: 138, width: 620, opacity: enter}}>
-        <div style={{...monoStyle, color: COLORS.lavender, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
+        <div style={{...monoStyle, color: branding.accentSoft, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
           visibility reward
         </div>
         <div style={{...textStyle, fontSize: 90, fontWeight: 950, lineHeight: 0.94}}>
@@ -57,7 +59,7 @@ export const RewardSceneOctopus = () => {
         >
           <div style={{...monoStyle, color: COLORS.quiet, fontSize: 12, textTransform: "uppercase"}}>top player</div>
           <div style={{display: "flex", alignItems: "baseline", gap: 16, marginTop: 14}}>
-            <div style={{...textStyle, fontSize: 86, fontWeight: 950, lineHeight: 0.86, color: COLORS.lavender}}>#1</div>
+            <div style={{...textStyle, fontSize: 86, fontWeight: 950, lineHeight: 0.86, color: branding.accentSoft}}>#1</div>
             <div>
               <div style={{...monoStyle, color: COLORS.text, fontSize: 18, fontWeight: 800}}>9pXL...8f2A</div>
               <div style={{...monoStyle, color: COLORS.muted, fontSize: 12, marginTop: 8}}>live leaderboard</div>
@@ -120,7 +122,7 @@ export const RewardSceneOctopus = () => {
           }}
         >
           <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-            <div style={{...monoStyle, color: COLORS.lavender, fontSize: 12, textTransform: "uppercase"}}>featured placement</div>
+            <div style={{...monoStyle, color: branding.accentSoft, fontSize: 12, textTransform: "uppercase"}}>featured placement</div>
             <div
               style={{
                 ...monoStyle,
@@ -154,7 +156,7 @@ export const RewardSceneOctopus = () => {
                     key={index}
                     style={{
                       borderRadius: 3,
-                      background: [COLORS.purple, COLORS.lavender, COLORS.blue, COLORS.pink, COLORS.gold][index % 5],
+                      background: [branding.accent, branding.accentSoft, COLORS.blue, COLORS.green, COLORS.gold][index % 5],
                       opacity: index % 5 === 0 || index % 7 === 0 ? 0.96 : 0.42 + ((index % 4) * 0.13),
                       boxShadow: index % 5 === 0 ? "0 0 14px rgba(201,168,255,0.38)" : "none",
                     }}
@@ -202,4 +204,3 @@ export const RewardSceneOctopus = () => {
     </SceneShell>
   );
 };
-

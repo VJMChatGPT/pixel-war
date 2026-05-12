@@ -1,16 +1,17 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {COLORS, clamp, easeOut} from "../constants";
+import {useWalkthroughBranding} from "../branding";
 import {GlassPanel, LeaderboardAnimatedMock, MascotActor, SceneShell} from "../components/visuals";
 import {getLeaderboardStage} from "../leaderboardMotion";
 import {fade, monoStyle, textStyle} from "../primitives";
 
-export const LeaderboardScene = () => {
+export const LeaderboardScene = ({pace = 0.6}: {pace?: number}) => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
-  const pace = 0.6;
   const at = (value: number) => Math.round(value * pace);
   const enter = fade(frame, 0, at(32));
-  const promote = interpolate(frame, [at(88), at(116), at(132), at(164)], [0, 0.48, 0.56, 1], clamp);
-  const boardProgress = interpolate(frame, [at(14), at(166)], [0, 1], {...clamp, easing: easeOut});
+  const promote = interpolate(frame, [at(72), at(98), at(118), at(146)], [0, 0.42, 0.7, 1], clamp);
+  const boardProgress = interpolate(frame, [at(12), at(148)], [0, 1], {...clamp, easing: easeOut});
   const rankStage = getLeaderboardStage(promote);
   const stagedRank = rankStage === "start" ? 3 : rankStage === "mid" ? 2 : 1;
 
@@ -29,7 +30,7 @@ export const LeaderboardScene = () => {
           transform: `translateX(${interpolate(enter, [0, 1], [42, 0])}px)`,
         }}
       >
-        <div style={{...monoStyle, color: COLORS.lavender, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
+        <div style={{...monoStyle, color: branding.accentSoft, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
           visible progress
         </div>
         <div style={{...textStyle, fontSize: 76, fontWeight: 950, lineHeight: 0.94}}>
@@ -38,7 +39,7 @@ export const LeaderboardScene = () => {
         <div style={{...textStyle, color: COLORS.muted, fontSize: 25, lineHeight: 1.42, marginTop: 24}}>
           Every move can push your wallet higher. The rank shift is the moment players come back for.
         </div>
-        <GlassPanel style={{borderRadius: 28, padding: 28, marginTop: 38, borderColor: "rgba(201,168,255,0.42)"}}>
+        <GlassPanel style={{borderRadius: 28, padding: 28, marginTop: 38, borderColor: `${branding.accentSoft}88`}}>
           <div style={{display: "flex", alignItems: "center", justifyContent: "space-between"}}>
             <div>
               <div style={{...monoStyle, color: COLORS.muted, fontSize: 12, textTransform: "uppercase"}}>your rank</div>

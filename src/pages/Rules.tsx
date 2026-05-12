@@ -90,6 +90,9 @@ export default function Rules() {
               <p className="mt-4 text-sm leading-7 text-muted-foreground md:text-base">
                 {WINNER_PRIZE_RULES_COPY}
               </p>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
+                The live estimate shown on the homepage is informational. The final winner share is verified on-chain at round end.
+              </p>
               <div className="mt-5 space-y-2 text-sm text-foreground">
                 <div>- Homepage promotion slot</div>
                 <div>- 50% of dev fees from the round</div>

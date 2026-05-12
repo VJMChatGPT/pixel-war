@@ -1,5 +1,6 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {COLORS, clamp} from "../constants";
+import {useWalkthroughBranding} from "../branding";
 import {CapacityBars, GlassPanel, MascotActor, SceneShell} from "../components/visuals";
 import {fade, monoStyle, textStyle} from "../primitives";
 
@@ -11,6 +12,7 @@ const FormulaTile = ({label, value, color}: {label: string; value: string; color
 );
 
 export const CoreLoopScene = () => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const enter = fade(frame, 0, 34);
   const progress = interpolate(frame, [18, 130], [0, 1], clamp);
@@ -18,20 +20,20 @@ export const CoreLoopScene = () => {
   return (
     <SceneShell label="04 / core loop">
       <div style={{position: "absolute", left: 120, top: 168, width: 660, opacity: enter}}>
-        <div style={{...monoStyle, color: COLORS.lavender, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
+        <div style={{...monoStyle, color: branding.accentSoft, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
           simple incentive
         </div>
         <div style={{...textStyle, fontSize: 76, fontWeight: 950, lineHeight: 0.94}}>
-          More $PIXL
+          More {branding.tokenTicker}
           <br />
           means more presence.
         </div>
         <div style={{...textStyle, color: COLORS.muted, fontSize: 25, lineHeight: 1.42, marginTop: 24}}>
-          Holding $PIXL unlocks capacity to paint. Painting creates territory. Territory pushes you up the board.
+          Holding {branding.tokenTicker} unlocks capacity to paint. Painting creates territory. Territory pushes you up the board.
         </div>
         <div style={{display: "flex", gap: 16, marginTop: 34}}>
-          <FormulaTile label="hold" value="$PIXL" color={COLORS.lavender} />
-          <FormulaTile label="unlock" value="pixels" color={COLORS.purple} />
+          <FormulaTile label="hold" value={branding.tokenTicker} color={branding.accentSoft} />
+          <FormulaTile label="unlock" value="pixels" color={branding.accent} />
           <FormulaTile label="compete" value="rank" color={COLORS.pink} />
         </div>
       </div>
@@ -55,8 +57,8 @@ export const CoreLoopScene = () => {
                   style={{
                     aspectRatio: "1 / 1",
                     borderRadius: 4,
-                    background: active ? [COLORS.purple, COLORS.lavender, COLORS.pink][index % 3] : "rgba(255,255,255,0.06)",
-                    boxShadow: active ? "0 0 18px rgba(138,77,255,0.38)" : "none",
+                    background: active ? [branding.accent, branding.accentSoft, COLORS.green][index % 3] : "rgba(255,255,255,0.06)",
+                    boxShadow: active ? `0 0 18px ${branding.accent}44` : "none",
                   }}
                 />
               );

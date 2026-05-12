@@ -15,6 +15,7 @@ import {
   WINNER_PRIZE_HEADLINE,
   WINNER_PRIZE_SUBLINE,
 } from "@/config/brand";
+import { WinnerPrizeFees } from "@/components/WinnerPrizeFees";
 
 const CURRENT_ROUND_NUMBER = 1;
 
@@ -147,14 +148,7 @@ export function WinnerAdSlot() {
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
           {WINNER_PRIZE_SUBLINE}
         </p>
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
-            homepage slot
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
-            50% of dev fees
-          </div>
-        </div>
+        <WinnerPrizeFees />
         <div className="mt-8">
           <Button asChild variant="outline" className="h-11 rounded-xl">
             <Link to="/rules#winner-prize">View rules</Link>

@@ -8,13 +8,16 @@ import {
   WalletButtonMock,
   WalletModalMockRich,
 } from "../components/visuals";
+import {useWalkthroughBranding} from "../branding";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 export const ConnectWalletScene = () => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const enter = fade(frame, 0, 34);
   const modal = fade(frame, 40, 74);
-  const connected = fade(frame, 110, 148);
+  const connected = fade(frame, 96, 126);
+  const modalExit = 1 - fade(frame, 112, 126);
 
   return (
     <SceneShell label="03 / wallet" progressLabel="visual mock · no real connection">
@@ -28,7 +31,7 @@ export const ConnectWalletScene = () => {
           transform: `translateY(${interpolate(enter, [0, 1], [36, 0])}px)`,
         }}
       >
-        <div style={{...monoStyle, color: COLORS.lavender, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
+        <div style={{...monoStyle, color: branding.accentSoft, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
           wallet-gated painting
         </div>
         <div style={{...textStyle, fontSize: 72, fontWeight: 950, lineHeight: 0.94}}>
@@ -50,7 +53,7 @@ export const ConnectWalletScene = () => {
           transform: `scale(${interpolate(enter, [0, 1], [0.96, 1])})`,
         }}
       >
-        <BrowserFrame title="pixelwarcoin.com/canvas" style={{width: 800, height: 650}}>
+        <BrowserFrame title={`${branding.domain}/canvas`} style={{width: 800, height: 650}}>
           <div style={{padding: 34}}>
             <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
               <div>
@@ -80,8 +83,8 @@ export const ConnectWalletScene = () => {
                   style={{
                     width: `${interpolate(connected, [0, 1], [4, 70])}%`,
                     height: "100%",
-                    background: `linear-gradient(90deg, ${COLORS.purple}, ${COLORS.lavender})`,
-                    boxShadow: "0 0 28px rgba(138,77,255,0.45)",
+                    background: `linear-gradient(90deg, ${branding.accent}, ${branding.accentSoft})`,
+                    boxShadow: `0 0 28px ${branding.accent}55`,
                   }}
                 />
               </div>
@@ -95,11 +98,11 @@ export const ConnectWalletScene = () => {
           position: "absolute",
           right: 314,
           top: 278,
-          opacity: modal * (1 - fade(frame, 152, 176)),
-          transform: `translateY(${interpolate(modal, [0, 1], [42, 0])}px) scale(${interpolate(modal, [0, 1], [0.94, 1])})`,
+          opacity: modal * modalExit,
+          transform: `translateY(${interpolate(modal, [0, 1], [42, 0]) + interpolate(modalExit, [0, 1], [18, 0])}px) scale(${interpolate(modal, [0, 1], [0.94, 1]) * interpolate(modalExit, [0, 1], [0.92, 1])})`,
         }}
       >
-        <WalletModalMockRich progress={interpolate(frame, [48, 158], [0, 1], clamp)} />
+        <WalletModalMockRich progress={interpolate(frame, [46, 132], [0, 1], clamp)} />
       </div>
     </SceneShell>
   );

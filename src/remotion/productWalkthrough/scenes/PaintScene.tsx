@@ -8,9 +8,11 @@ import {
   PixelBoard,
   SceneShell,
 } from "../components/visuals";
+import {useWalkthroughBranding} from "../branding";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 export const PaintScene = () => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const enter = fade(frame, 0, 32);
   const paintProgress = interpolate(frame, [52, 182], [0, 1], {...clamp, easing: easeOut});
@@ -27,7 +29,7 @@ export const PaintScene = () => {
           transform: `translateY(${interpolate(enter, [0, 1], [42, 0])}px)`,
         }}
       >
-        <BrowserFrame title="pixelwarcoin.com/canvas" style={{width: 1260, height: 820}}>
+        <BrowserFrame title={`${branding.domain}/canvas`} style={{width: 1260, height: 820}}>
           <div style={{display: "grid", gridTemplateColumns: "760px 1fr", gap: 28, padding: 30}}>
             <div>
               <div style={{display: "flex", justifyContent: "space-between", marginBottom: 20}}>
@@ -35,9 +37,9 @@ export const PaintScene = () => {
                   <div style={{...textStyle, fontSize: 34, fontWeight: 900}}>The Canvas</div>
                   <div style={{...monoStyle, color: COLORS.muted, fontSize: 12, marginTop: 6}}>click to paint · instant feedback</div>
                 </div>
-                <div style={{...monoStyle, color: COLORS.lavender, fontSize: 13}}>brush 2x2</div>
+                <div style={{...monoStyle, color: branding.accentSoft, fontSize: 13}}>brush 2x2</div>
               </div>
-              <PixelBoard mode="paint" progress={paintProgress} activeColor={COLORS.purple} showCursor style={{width: 710}} />
+              <PixelBoard mode="paint" progress={paintProgress} activeColor={branding.accent} showCursor style={{width: 710}} />
             </div>
             <div style={{display: "flex", flexDirection: "column", gap: 16}}>
               <GlassPanel style={{borderRadius: 22, padding: 22}}>
@@ -51,7 +53,7 @@ export const PaintScene = () => {
                   <span style={{fontSize: 24, color: COLORS.muted}}> pixels</span>
                 </div>
                 <div style={{height: 10, background: "rgba(255,255,255,0.07)", borderRadius: 999, overflow: "hidden", marginTop: 18}}>
-                  <div style={{width: `${paintProgress * 100}%`, height: "100%", background: `linear-gradient(90deg, ${COLORS.purple}, ${COLORS.lavender})`}} />
+                  <div style={{width: `${paintProgress * 100}%`, height: "100%", background: `linear-gradient(90deg, ${branding.accent}, ${branding.accentSoft})`}} />
                 </div>
               </GlassPanel>
               <GlassPanel style={{borderRadius: 22, padding: 22, flex: 1}}>
@@ -67,7 +69,7 @@ export const PaintScene = () => {
                       opacity: interpolate(frame, [52 + index * 26, 78 + index * 26], [0, 1], clamp),
                     }}
                   >
-                    <span style={{width: 10, height: 10, borderRadius: 99, background: [COLORS.blue, COLORS.purple, COLORS.green][index]}} />
+                    <span style={{width: 10, height: 10, borderRadius: 99, background: [COLORS.blue, branding.accent, COLORS.green][index]}} />
                     <span style={{...monoStyle, color: COLORS.text, fontSize: 15}}>{item}</span>
                   </div>
                 ))}

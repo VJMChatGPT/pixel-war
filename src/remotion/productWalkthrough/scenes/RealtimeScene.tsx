@@ -1,17 +1,19 @@
 import {interpolate, useCurrentFrame} from "remotion";
 import {activityEvents} from "../mockData";
 import {COLORS, clamp, easeOut} from "../constants";
+import {useWalkthroughBranding} from "../branding";
 import {ActivityLabel, GlassPanel, MascotActor, PixelBoard, SceneShell} from "../components/visuals";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 export const RealtimeScene = () => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const enter = fade(frame, 0, 32);
   const progress = interpolate(frame, [18, 170], [0, 1], {...clamp, easing: easeOut});
 
   return (
     <SceneShell label="06 / realtime">
-      <div style={{position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 50%, rgba(138,77,255,0.13), transparent 44%)"}} />
+      <div style={{position: "absolute", inset: 0, background: `radial-gradient(circle at 50% 50%, ${branding.accent}22, transparent 44%)`}} />
       <div
         style={{
           position: "absolute",
@@ -21,7 +23,7 @@ export const RealtimeScene = () => {
           opacity: enter,
         }}
       >
-        <div style={{...monoStyle, color: COLORS.lavender, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
+        <div style={{...monoStyle, color: branding.accentSoft, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
           live board energy
         </div>
         <div style={{...textStyle, fontSize: 70, fontWeight: 950, lineHeight: 0.95}}>

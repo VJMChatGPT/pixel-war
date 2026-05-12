@@ -6,6 +6,7 @@ import {
   MascotActor,
   SceneShell,
 } from "../components/visuals";
+import {useWalkthroughBranding} from "../branding";
 import {fade, monoStyle, textStyle} from "../primitives";
 
 const MiniPage = ({title, subtitle, active = false}: {title: string; subtitle: string; active?: boolean}) => (
@@ -24,6 +25,7 @@ const MiniPage = ({title, subtitle, active = false}: {title: string; subtitle: s
 );
 
 export const AppOverviewScene = () => {
+  const branding = useWalkthroughBranding();
   const frame = useCurrentFrame();
   const enter = fade(frame, 0, 38);
   const appProgress = interpolate(frame, [20, 126], [0.2, 1], {...clamp, easing: easeOut});
@@ -40,7 +42,7 @@ export const AppOverviewScene = () => {
           transform: `translateX(${interpolate(enter, [0, 1], [-38, 0])}px)`,
         }}
       >
-        <div style={{...monoStyle, color: COLORS.lavender, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
+        <div style={{...monoStyle, color: branding.accentSoft, fontSize: 14, textTransform: "uppercase", marginBottom: 18}}>
           one product loop
         </div>
         <div style={{...textStyle, fontSize: 64, fontWeight: 950, lineHeight: 0.96}}>
