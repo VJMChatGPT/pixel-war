@@ -14,36 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      launch_config: {
-        Row: {
-          countdown_ends_at: string | null
-          countdown_started_at: string | null
-          created_at: string
-          id: string
-          mechanics_enabled: boolean
-          phase: "prelaunch" | "live" | "ended"
-          updated_at: string
-        }
-        Insert: {
-          countdown_ends_at?: string | null
-          countdown_started_at?: string | null
-          created_at?: string
-          id?: string
-          mechanics_enabled?: boolean
-          phase?: "prelaunch" | "live" | "ended"
-          updated_at?: string
-        }
-        Update: {
-          countdown_ends_at?: string | null
-          countdown_started_at?: string | null
-          created_at?: string
-          id?: string
-          mechanics_enabled?: boolean
-          phase?: "prelaunch" | "live" | "ended"
-          updated_at?: string
-        }
-        Relationships: []
-      }
       paint_history: {
         Row: {
           id: number
@@ -111,38 +81,26 @@ export type Database = {
       }
       wallet_state: {
         Row: {
-          display_name: string | null
           last_balance: number
           last_paint_at: string | null
-          last_points_update_at: string
           pixels_allowed: number
           pixels_used: number
-          points_per_second: number
-          total_points: number
           updated_at: string
           wallet: string
         }
         Insert: {
-          display_name?: string | null
           last_balance?: number
           last_paint_at?: string | null
-          last_points_update_at?: string
           pixels_allowed?: number
           pixels_used?: number
-          points_per_second?: number
-          total_points?: number
           updated_at?: string
           wallet: string
         }
         Update: {
-          display_name?: string | null
           last_balance?: number
           last_paint_at?: string | null
-          last_points_update_at?: string
           pixels_allowed?: number
           pixels_used?: number
-          points_per_second?: number
-          total_points?: number
           updated_at?: string
           wallet?: string
         }
@@ -153,25 +111,10 @@ export type Database = {
       leaderboard: {
         Row: {
           controlled_pixels: number | null
-          display_name: string | null
           last_active: string | null
           pixels_allowed: number | null
           rank: number | null
           supply_percentage: number | null
-          wallet: string | null
-        }
-        Relationships: []
-      }
-      public_wallet_state: {
-        Row: {
-          display_name: string | null
-          last_paint_at: string | null
-          last_points_update_at: string | null
-          pixels_allowed: number | null
-          pixels_used: number | null
-          points_per_second: number | null
-          total_points: number | null
-          updated_at: string | null
           wallet: string | null
         }
         Relationships: []
