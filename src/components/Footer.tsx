@@ -43,7 +43,7 @@ export function Footer() {
             <li>
               <a
                 className="hover:text-foreground"
-                href="https://x.com/pixelwarcoin"
+                href="https://x.com/pixelbattlecoin"
                 target="_blank"
                 rel="noopener noreferrer"
               >
