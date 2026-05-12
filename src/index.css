@@ -5,75 +5,75 @@
 @tailwind utilities;
 
 /* ============================================================
-   Pixel War design system, premium dark arcade / web3 aesthetic
-   All colors are HSL. Use semantic tokens, never raw colors.
+   Pixel Battle design system — deep teal canvas, mint paint.
+   Octopus-inspired palette. All colors HSL. Use semantic tokens.
    ============================================================ */
 
 @layer base {
   :root {
-    /* Core surfaces, deep violet-tinted midnight (Phantom-inspired) */
-    --background: 260 35% 5%;
-    --foreground: 270 30% 96%;
+    /* Core surfaces — deep ocean / teal midnight */
+    --background: 178 60% 5%;
+    --foreground: 165 60% 96%;
 
-    --card: 262 32% 8%;
-    --card-foreground: 270 30% 96%;
+    --card: 180 45% 8%;
+    --card-foreground: 165 60% 96%;
 
-    --popover: 260 35% 6%;
-    --popover-foreground: 270 30% 96%;
+    --popover: 178 55% 6%;
+    --popover-foreground: 165 60% 96%;
 
-    /* Primary = vivid violet */
-    --primary: 268 90% 65%;
-    --primary-foreground: 260 35% 5%;
+    /* Primary = mint green (octopus body) */
+    --primary: 158 78% 55%;
+    --primary-foreground: 178 60% 6%;
 
-    /* Secondary = soft lavender */
-    --secondary: 280 75% 72%;
-    --secondary-foreground: 260 35% 5%;
+    /* Secondary = teal */
+    --secondary: 178 70% 52%;
+    --secondary-foreground: 178 60% 6%;
 
-    /* Accent = pale lilac for highlights / "ready" states */
-    --accent: 285 90% 78%;
-    --accent-foreground: 260 35% 5%;
+    /* Accent = aqua highlight */
+    --accent: 174 88% 62%;
+    --accent-foreground: 178 60% 6%;
 
-    /* Tertiary tones — restrained, all in violet family */
-    --neon-gold: 45 90% 65%;        /* used VERY sparingly (e.g. crown) */
-    --neon-violet: 270 100% 75%;
-    --neon-coral: 320 85% 70%;      /* magenta-leaning */
-    --neon-mint: 268 90% 65%;       /* legacy alias → primary */
+    /* Tertiary tones — paint accents, used sparingly */
+    --neon-gold: 45 90% 65%;
+    --neon-violet: 270 70% 72%;     /* legacy alias, unused */
+    --neon-coral: 340 85% 68%;
+    --neon-mint: 158 78% 55%;       /* canonical mint */
 
-    --muted: 262 25% 14%;
-    --muted-foreground: 268 15% 68%;
+    --muted: 180 28% 12%;
+    --muted-foreground: 170 18% 68%;
 
     --destructive: 0 80% 62%;
-    --destructive-foreground: 270 30% 96%;
+    --destructive-foreground: 165 60% 96%;
 
-    --border: 262 28% 16%;
-    --input: 262 28% 16%;
-    --ring: 268 90% 65%;
+    --border: 180 30% 16%;
+    --input: 180 30% 16%;
+    --ring: 158 78% 55%;
 
     --radius: 0.875rem;
 
-    /* Gradients — violet/lavender only, no rainbow */
-    --gradient-hero: linear-gradient(135deg, hsl(268 90% 65%), hsl(280 80% 70%), hsl(295 85% 75%));
-    --gradient-neon: linear-gradient(120deg, hsl(268 90% 65%), hsl(285 90% 75%));
-    --gradient-arcade: linear-gradient(135deg, hsl(280 80% 72%), hsl(268 90% 60%));
-    --gradient-card: linear-gradient(160deg, hsl(262 32% 10% / 0.92), hsl(260 35% 6% / 0.96));
-    --gradient-radial-glow: radial-gradient(circle at 50% 0%, hsl(268 90% 65% / 0.22), transparent 60%);
+    /* Gradients — teal / mint / aqua family */
+    --gradient-hero: linear-gradient(135deg, hsl(158 78% 55%), hsl(174 88% 62%), hsl(190 80% 70%));
+    --gradient-neon: linear-gradient(120deg, hsl(158 78% 55%), hsl(174 88% 62%));
+    --gradient-arcade: linear-gradient(135deg, hsl(174 88% 62%), hsl(158 78% 50%));
+    --gradient-card: linear-gradient(160deg, hsl(180 45% 10% / 0.92), hsl(178 60% 6% / 0.96));
+    --gradient-radial-glow: radial-gradient(circle at 50% 0%, hsl(158 78% 55% / 0.22), transparent 60%);
 
     /* Shadows / glows */
-    --glow-primary: 0 0 40px hsl(268 90% 65% / 0.5), 0 0 80px hsl(268 90% 65% / 0.22);
-    --glow-secondary: 0 0 40px hsl(280 75% 72% / 0.45), 0 0 80px hsl(280 75% 72% / 0.18);
-    --glow-accent: 0 0 30px hsl(285 90% 78% / 0.5);
-    --shadow-card: 0 30px 60px -20px hsl(260 50% 2% / 0.7), 0 0 0 1px hsl(262 28% 16%);
-    --shadow-elevated: 0 40px 80px -30px hsl(268 90% 65% / 0.3), 0 0 0 1px hsl(262 28% 20%);
+    --glow-primary: 0 0 40px hsl(158 78% 55% / 0.5), 0 0 80px hsl(158 78% 55% / 0.22);
+    --glow-secondary: 0 0 40px hsl(178 70% 52% / 0.45), 0 0 80px hsl(178 70% 52% / 0.18);
+    --glow-accent: 0 0 30px hsl(174 88% 62% / 0.5);
+    --shadow-card: 0 30px 60px -20px hsl(180 70% 2% / 0.7), 0 0 0 1px hsl(180 30% 16%);
+    --shadow-elevated: 0 40px 80px -30px hsl(158 78% 55% / 0.3), 0 0 0 1px hsl(180 30% 20%);
 
     /* Sidebar */
-    --sidebar-background: 260 35% 6%;
-    --sidebar-foreground: 270 30% 90%;
-    --sidebar-primary: 268 90% 65%;
-    --sidebar-primary-foreground: 260 35% 5%;
-    --sidebar-accent: 262 28% 14%;
-    --sidebar-accent-foreground: 270 30% 96%;
-    --sidebar-border: 262 28% 16%;
-    --sidebar-ring: 268 90% 65%;
+    --sidebar-background: 178 55% 6%;
+    --sidebar-foreground: 165 60% 90%;
+    --sidebar-primary: 158 78% 55%;
+    --sidebar-primary-foreground: 178 60% 6%;
+    --sidebar-accent: 180 30% 14%;
+    --sidebar-accent-foreground: 165 60% 96%;
+    --sidebar-border: 180 30% 16%;
+    --sidebar-ring: 158 78% 55%;
   }
 }
 
@@ -91,9 +91,9 @@
     font-family: 'Space Grotesk', system-ui, sans-serif;
     overflow-x: hidden;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(268 90% 65% / 0.18), transparent 60%),
-      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(285 90% 70% / 0.1), transparent 60%),
-      radial-gradient(ellipse 60% 40% at 0% 80%, hsl(255 90% 65% / 0.1), transparent 60%);
+      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(158 78% 55% / 0.16), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(174 88% 62% / 0.10), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 0% 80%, hsl(190 80% 65% / 0.10), transparent 60%);
     background-attachment: fixed;
   }
 
