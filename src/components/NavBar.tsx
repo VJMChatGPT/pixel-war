@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { PixlMascot } from "./PixlMascot";
+import { PixlMark } from "./PixlMark";
 import { WalletConnectButton } from "./WalletConnectButton";
 import { HeaderShareOnXButton } from "./HeaderShareOnXButton";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { APP_CONFIG } from "@/config/app";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ArrowUpRight, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
 const links = [
   { to: "/", label: "Home" },
@@ -16,8 +16,6 @@ const links = [
   { to: "/profile", label: "Profile" },
   { to: "/rules", label: "Rules" },
 ];
-
-const TRADE_URL = "https://pump.fun/coin/9UdjvmrxbRH3EZLD7UnbQTFjgNTkMqZ6Xq4PpXTSpump";
 
 export function NavBar() {
   const [scrolled, setScrolled] = useState(false);
@@ -39,13 +37,13 @@ export function NavBar() {
     >
       <div className="container flex h-14 items-center justify-between md:h-20">
         <Link to="/" className="group flex min-w-0 items-center gap-3">
-          <PixlMascot size={40} mood="idle" />
+          <PixlMark size={36} alt={`${APP_CONFIG.name} mark`} />
           <div className="min-w-0 leading-none">
             <div className="truncate font-display text-lg font-bold tracking-tight sm:text-xl">
               {APP_CONFIG.name}
             </div>
             <div className="mt-0.5 hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:block">
-              paint territory. win the war.
+              {APP_CONFIG.tagline}
             </div>
           </div>
         </Link>
@@ -76,14 +74,11 @@ export function NavBar() {
           <HeaderShareOnXButton />
           <WalletConnectButton />
           <Button
-            asChild
             size="lg"
-            className="h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] hover:opacity-95"
+            disabled
+            className="h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] opacity-80"
           >
-            <a href={TRADE_URL} target="_blank" rel="noopener noreferrer">
-              <span>Buy $PIXL</span>
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
+            <span>Buy $PIXL</span>
           </Button>
         </div>
 
@@ -95,14 +90,11 @@ export function NavBar() {
             <SheetContent side="right" className="border-border bg-background px-5">
               <div className="mt-8 flex flex-col gap-2">
                 <Button
-                  asChild
                   size="lg"
-                  className="h-12 w-full rounded-xl bg-gradient-neon px-5 font-semibold text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] hover:opacity-95"
+                  disabled
+                  className="h-12 w-full rounded-xl bg-gradient-neon px-5 font-semibold text-primary-foreground opacity-80"
                 >
-                  <a href={TRADE_URL} target="_blank" rel="noopener noreferrer">
-                    <span>Buy $PIXL</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </a>
+                  <span>Buy $PIXL</span>
                 </Button>
                 <Button
                   asChild

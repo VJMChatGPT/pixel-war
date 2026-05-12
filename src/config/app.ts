@@ -35,8 +35,8 @@ const CANVAS_WIDTH = Math.floor(Math.sqrt(TOTAL_PIXELS));
 const CANVAS_HEIGHT = Math.ceil(TOTAL_PIXELS / CANVAS_WIDTH);
 
 export const APP_CONFIG = {
-  name: "Pixel War",
-  tagline: "Paint territory. Win the war.",
+  name: brandName,
+  tagline: brandTagline,
 
   canvas: {
     width: CANVAS_WIDTH,
@@ -61,3 +61,4 @@ export const APP_CONFIG = {
 } as const;
 
 export type HexColor = string;
+import { brandName, brandTagline } from "./brand";

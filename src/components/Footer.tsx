@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import { APP_CONFIG } from "@/config/app";
 
-import { PixlMascot } from "./PixlMascot";
+import { PixlMark } from "./PixlMark";
 
 export function Footer() {
   return (
@@ -10,26 +10,17 @@ export function Footer() {
       <div className="container grid grid-cols-2 gap-8 py-12 md:grid-cols-4">
         <div className="col-span-2 md:col-span-1">
           <div className="flex items-center gap-3 mb-3">
-            <PixlMascot size={36} mood="cheer" />
+            <PixlMark size={34} alt={`${APP_CONFIG.name} mark`} />
             <div className="font-display font-bold text-lg">{APP_CONFIG.name}</div>
           </div>
           <p className="text-sm text-muted-foreground">
-            A live Solana territory game. Hold $PIXL, paint territory, and climb by points.
+            A live Solana territory game. Hold $PIXL, paint territory, defend your pixels, and grow by points.
           </p>
         </div>
         <div>
           <h4 className="font-display font-semibold text-sm mb-3">App</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>
-              <a
-                className="hover:text-foreground"
-                href="https://pump.fun/coin/9UdjvmrxbRH3EZLD7UnbQTFjgNTkMqZ6Xq4PpXTSpump"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Buy $PIXL
-              </a>
-            </li>
+            <li><span className="text-foreground/80">Buy $PIXL</span></li>
             <li><Link to="/canvas" className="hover:text-foreground">Canvas</Link></li>
             <li><Link to="/leaderboard" className="hover:text-foreground">Leaderboard</Link></li>
             <li><Link to="/profile" className="hover:text-foreground">Profile</Link></li>
@@ -40,12 +31,7 @@ export function Footer() {
         <div>
           <h4 className="font-display font-semibold text-sm mb-3">Token</h4>
           <ul className="space-y-2 text-sm text-muted-foreground font-mono">
-            <li>
-              CA:{" "}
-              <span className="inline-flex items-center gap-2 text-muted-foreground/90">
-                <span className="break-all text-foreground/80">9UdjvmrxbRH3EZLD7UnbQTFjgNTkMqZ6Xq4PpXTSpump</span>
-              </span>
-            </li>
+            <li><span className="text-foreground/80">Launching soon</span></li>
             <li>Network: Solana</li>
             <li>Supply: 1,000,000,000</li>
           </ul>

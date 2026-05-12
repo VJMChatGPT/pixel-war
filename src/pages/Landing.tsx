@@ -19,9 +19,6 @@ import { shortAddress } from "@/lib/format";
 import type { PixelRow } from "@/services/pixels";
 import { toast } from "sonner";
 
-const BUY_PIXL_URL = "https://pump.fun/coin/9UdjvmrxbRH3EZLD7UnbQTFjgNTkMqZ6Xq4PpXTSpump";
-const PIXL_CA = "9UdjvmrxbRH3EZLD7UnbQTFjgNTkMqZ6Xq4PpXTSpump";
-
 /* ------------------------------------------------------------------ */
 /* Section heading helper                                             */
 /* ------------------------------------------------------------------ */
@@ -117,7 +114,7 @@ const STAGES = [
   { key: "foothold", label: "02 · Foothold", title: "A foothold.", sub: "Stack tokens. Stack pixels. Build a position the whole board can recognize." },
   { key: "territory", label: "03 · Territory", title: "Territory.", sub: "Hundreds of cells under one wallet. A region of the canvas with your name on it." },
   { key: "board", label: "04 · The Board", title: "The board.", sub: "10,000 pixels. One public, live, contestable canvas for every round." },
-  { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on Pixel War." },
+  { key: "dominance", label: "05 · The Prize", title: "Win the spotlight.", sub: "Whoever rules the most pixels wins a real ad slot on the homepage. Real visibility. Real exposure. Promote your project to everyone who lands on Pixel Battle." },
 ];
 
 const MOBILE_STORY_CARDS = [
@@ -529,7 +526,7 @@ export default function Landing() {
                 <>
                   Enter the
                   <br />
-                  <span className="text-gradient-hero">Pixel War.</span>
+                  <span className="text-gradient-hero">Pixel Battle.</span>
                 </>
               ) : (
                 <>
@@ -581,14 +578,12 @@ export default function Landing() {
               {lightweightHero ? (
                 <>
                   <Button
-                    asChild
                     size="lg"
-                    className="h-12 w-full rounded-xl bg-gradient-neon px-6 text-base font-semibold text-primary-foreground shadow-[0_14px_36px_rgba(168,85,247,0.28)] sm:w-auto"
+                    disabled
+                    className="h-12 w-full rounded-xl bg-gradient-neon px-6 text-base font-semibold text-primary-foreground opacity-80 sm:w-auto"
                   >
-                    <a href={BUY_PIXL_URL} target="_blank" rel="noopener noreferrer">
-                      Buy $PIXL
-                      <ArrowRight className="h-5 w-5" />
-                    </a>
+                    Buy $PIXL
+                    <ArrowRight className="h-5 w-5" />
                   </Button>
                   <Button
                     size="lg"
@@ -656,8 +651,7 @@ export default function Landing() {
               transition={{ duration: 0.7, delay: 0.68 }}
               className="mt-4 max-w-full rounded-xl border border-border/70 bg-card/65 px-4 py-3 font-mono text-[11px] leading-5 text-muted-foreground"
             >
-              <span className="mr-2 uppercase tracking-[0.2em] text-accent">CA:</span>
-              <span className="break-all text-foreground/80">{PIXL_CA}</span>
+              <span className="uppercase tracking-[0.2em] text-accent">Launching soon</span>
             </motion.div>
 
             <motion.div

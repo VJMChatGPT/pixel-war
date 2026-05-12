@@ -38,7 +38,7 @@ export function ShareOnXButton({
       window.open(intentUrl, "_blank", "noopener,noreferrer");
 
       toast.success("Opening X share", {
-        description: "Your post includes a dedicated Pixel War share page with a live social preview.",
+        description: "Your post includes a dedicated Pixel Battle share page with a live social preview.",
       });
     } catch (error) {
       toast.error("Could not prepare your X share", {
@@ -83,7 +83,7 @@ export function ShareOnXButton({
             Show off your territory on X
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
-            Open a dedicated Pixel War share page with your highlighted territory, live points, and a social preview card.
+      Open a dedicated Pixel Battle share page with your highlighted territory, live points, and a social preview card.
           </div>
         </div>
         <div className="rounded-xl border border-primary/30 bg-primary/10 p-2 text-primary shrink-0">

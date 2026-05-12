@@ -53,7 +53,7 @@ export function getLaunchStatus(config: LaunchConfigRow | null, nowMs = Date.now
       remainingMs,
       isLiveWindow,
       canPaint,
-      title: "Pixel War is live",
+      title: "Pixel Battle is live",
       description: "6-hour war window. Connect wallet, paint your pixels, and fight for points.",
     };
   }
@@ -84,7 +84,7 @@ export function getLaunchStatus(config: LaunchConfigRow | null, nowMs = Date.now
       isLiveWindow,
       canPaint,
       title: "Launch window ended",
-      description: "Painting is locked until Pixel War is reopened from the backend launch state.",
+      description: "Painting is locked until Pixel Battle is reopened from the backend launch state.",
     };
   }
 
@@ -98,6 +98,6 @@ export function getLaunchStatus(config: LaunchConfigRow | null, nowMs = Date.now
     isLiveWindow,
     canPaint,
     title: "Launch preparation",
-    description: "The backend countdown has not started yet. Painting will unlock when Pixel War goes live.",
+      description: "The backend countdown has not started yet. Painting will unlock when Pixel Battle goes live.",
   };
 }

@@ -49,13 +49,13 @@ export default function Litepaper() {
             <div className="text-center">
               <Eyebrow>litepaper</Eyebrow>
               <h1 className="mt-6 font-display text-5xl font-bold leading-[0.95] tracking-tight md:text-7xl">
-                Pixel War Litepaper
+                Pixel Battle Litepaper
               </h1>
               <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-muted-foreground md:text-xl">
                 A live public territory war powered by $PIXL.
               </p>
               <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
-                Pixel War turns token ownership into visible territory on a public 100x100 canvas.
+                Pixel Battle turns token ownership into visible territory on a public 100x100 canvas.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Button asChild size="lg" className="h-13 rounded-xl bg-gradient-neon px-7 text-primary-foreground glow-primary">
@@ -90,7 +90,7 @@ export default function Litepaper() {
                   Buy $PIXL. Claim pixels. Paint the board. Earn points. Climb the leaderboard.
                 </p>
                 <p>
-                  Pixel War takes token ownership and makes it visible. The result is not a hidden wallet game or a private score counter. It is a public board where control is contested in real time.
+                  Pixel Battle takes token ownership and makes it visible. The result is not a hidden wallet game or a private score counter. It is a public board where control is contested in real time.
                 </p>
               </SectionBlock>
 
@@ -140,13 +140,13 @@ export default function Litepaper() {
                   Territory earns points over time. More controlled territory means stronger point generation.
                 </p>
                 <p>
-                  Points are the social score of Pixel War. They power leaderboard position, visible status, and long-term competition. They are not financial rewards and they are not presented as yield.
+                  Points are the social score of Pixel Battle. They power leaderboard position, visible status, and long-term competition. They are not financial rewards and they are not presented as yield.
                 </p>
               </SectionBlock>
 
               <SectionBlock icon={Trophy} title="Leaderboard and Status">
                 <p>
-                  Pixel War is public by design. Wallets compete for visible dominance, leaderboard rank, and the status that comes from holding space on a live board everyone can inspect.
+                  Pixel Battle is public by design. Wallets compete for visible dominance, leaderboard rank, and the status that comes from holding space on a live board everyone can inspect.
                 </p>
                 <p>
                   The point is not only to own territory. The point is to be seen owning it.

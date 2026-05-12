@@ -144,7 +144,7 @@ export default function CanvasPage() {
     if (!launch.canPaint) {
       if (!options?.silentError) {
         toast.error("Painting unavailable", {
-          description: launch.title === "Pixel War is live" ? launch.description : "Pixel War is not live yet.",
+          description: launch.title === "Pixel Battle is live" ? launch.description : "Pixel Battle is not live yet.",
         });
       }
       return false;
@@ -405,7 +405,7 @@ export default function CanvasPage() {
             <Alert className="border-border/70 bg-card/70 lg:hidden">
               <AlertTitle>Mobile preview mode</AlertTitle>
               <AlertDescription>
-                Pixel War is best played on desktop. You can still view the board, track the leaderboard, and check your territory from here.
+                Pixel Battle is best played on desktop. You can still view the board, track the leaderboard, and check your territory from here.
               </AlertDescription>
             </Alert>
             <NeonCard shimmer={canPaint} className="p-2 md:p-3 aspect-square md:aspect-auto md:h-[calc(100vh-180px)] glow-primary">
