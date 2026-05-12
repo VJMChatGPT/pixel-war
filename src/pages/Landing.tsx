@@ -883,15 +883,14 @@ export default function Landing() {
         <div className="container relative grid items-center gap-10 lg:grid-cols-[minmax(0,520px)_1fr] lg:gap-14">
           <Reveal>
             <div>
-              <SectionEyebrow>dominance</SectionEyebrow>
+              <SectionEyebrow>the leaderboard</SectionEyebrow>
               <h2 className="mt-5 font-display text-4xl font-bold leading-[0.95] tracking-tight md:text-7xl">
-                The score has
+                Climb the
                 <br />
-                <span className="text-gradient-hero">a king.</span>
+                <span className="text-gradient-hero">leaderboard.</span>
               </h2>
               <p className="mt-6 text-muted-foreground text-lg leading-relaxed max-w-md">
-                Every wallet's grip on the canvas creates passive points. Pixels show territory, but points decide who
-                is really leading.
+                Every wallet's territory generates points in real time. Pixels are presence. Points are progress. Defend your area to keep climbing.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="h-12 px-6 rounded-xl bg-gradient-neon text-primary-foreground glow-primary">
@@ -932,10 +931,10 @@ export default function Landing() {
             <div className="mx-auto mb-12 max-w-2xl text-center md:mb-16">
               <SectionEyebrow>token mechanic</SectionEyebrow>
               <h2 className="mt-5 font-display text-4xl font-bold leading-[0.95] tracking-tight md:text-7xl">
-                Buy. Hold. <span className="text-gradient-hero">Win territory.</span>
+                Buy. Hold. <span className="text-gradient-hero">Grow your territory.</span>
               </h2>
               <p className="mt-5 text-muted-foreground text-lg">
-                Or sell, and watch your pixels go back to the void.
+                Sell, and the territory you can no longer cover opens back up to other painters.
               </p>
             </div>
           </Reveal>
@@ -969,9 +968,9 @@ export default function Landing() {
                   </div>
                   <span className="font-pixel text-[9px] text-destructive">-territory</span>
                 </div>
-                <h3 className="font-display font-bold text-3xl mb-2">Sell, and the board forgets you.</h3>
+                <h3 className="font-display font-bold text-3xl mb-2">Sell, and the territory frees up.</h3>
                 <p className="text-sm text-muted-foreground mb-6">
-                  Drop below the threshold and your pixels become claimable again. Territory you can't defend, you don't keep.
+                  Drop below the threshold and pixels you can no longer cover become claimable again. Territory you can't defend, you don't keep.
                 </p>
                 <div className="grid grid-cols-12 gap-1">
                   {MECHANIC_PIXEL_INDICES.map((i) => (
@@ -1014,10 +1013,10 @@ export default function Landing() {
             <h2 className="mt-6 font-display text-5xl font-bold leading-[0.9] tracking-[-0.03em] md:text-8xl lg:text-9xl">
               Ten thousand pixels.
               <br />
-              <span className="text-gradient-hero">One king.</span>
+              <span className="text-gradient-hero">One live canvas.</span>
             </h2>
             <p className="mt-8 text-muted-foreground max-w-xl mx-auto text-lg md:text-xl">
-              Connect your wallet. Take your pixels. Defend them in front of everyone.
+              Hold $PIXL. Paint your pixels. Defend your area. Grow your presence.
             </p>
 
             <div className="mt-12 flex flex-wrap gap-3 justify-center">
