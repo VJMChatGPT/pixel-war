@@ -52,10 +52,10 @@ export default function Litepaper() {
                 Pixel Battle Litepaper
               </h1>
               <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-muted-foreground md:text-xl">
-                A live public territory war powered by $PIXL.
+                A live public canvas for territory, painted with $PIXL.
               </p>
               <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
-                Pixel Battle turns token ownership into visible territory on a public 100x100 canvas.
+                Pixel Battle turns token ownership into visible territory on a public 100x100 canvas. Hold to claim, paint to mark, defend to keep, grow to lead.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Button asChild size="lg" className="h-13 rounded-xl bg-gradient-neon px-7 text-primary-foreground glow-primary">
@@ -96,10 +96,10 @@ export default function Litepaper() {
 
               <SectionBlock icon={Flag} title="The Canvas">
                 <p>
-                  The board has {APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels. Every pixel can be owned, painted, lost, and fought over.
+                  The board has {APP_CONFIG.canvas.totalPixels.toLocaleString()} pixels. Every pixel can be claimed, painted, lost, and contested.
                 </p>
                 <p>
-                  Territory is not permanent. Other players can paint over your cells, which means the canvas stays alive and competitive instead of freezing into a static snapshot.
+                  Territory is not permanent. Other players can paint over your cells, which keeps the canvas alive and contested instead of freezing into a static snapshot.
                 </p>
               </SectionBlock>
 
@@ -191,7 +191,7 @@ export default function Litepaper() {
                         closing
                       </div>
                       <h2 className="mt-5 font-display text-4xl font-bold leading-tight md:text-5xl">
-                        The war is public. The board is live. Your territory is visible.
+                        The canvas is public. The board is live. Your territory is visible.
                       </h2>
                     </div>
                     <Button asChild size="lg" className="h-13 rounded-xl bg-gradient-neon px-7 text-primary-foreground glow-primary">

@@ -51,12 +51,12 @@ export const APP_CONFIG = {
     cooldownMs: 15 * 60 * 1000, // 15 minutes
   },
 
-  /** Curated violet/lavender palette — Phantom-inspired, no rainbow. */
+  /** Pixel Battle palette — teal/mint/aqua paints, with a few warm accents. */
   palette: [
-    "#f3e8ff", "#e0c8ff", "#c9a8ff", "#a78bff",
-    "#9d4dff", "#8a4dff", "#7b2dff", "#5b2dba",
-    "#3d1d7a", "#1a0b2e", "#ffffff", "#c4b5d9",
-    "#8b7da8", "#ff6fae", "#9bd9ff", "#ffd16a",
+    "#ecfffa", "#b8f5e3", "#7ee3ad", "#4ce5d0",
+    "#61f3bb", "#2ec9a7", "#1ea890", "#0f8a78",
+    "#0a5e58", "#051817", "#ffffff", "#9bd9ff",
+    "#5fb8d8", "#ff9f6a", "#ffd16a", "#ff6fae",
   ] as const,
 } as const;
 
