@@ -25,23 +25,24 @@ const MIN_PAINT_IP_LIMIT = 6_000;
 const MIN_PAINT_WALLET_LIMIT = 1_000;
 const PAINT_WALLET_BURST_BUFFER = 60;
 const PAINT_WALLET_ATTEMPTS_PER_SLOT = 3;
+// Keep this list in sync with APP_CONFIG.palette in src/config/app.ts.
 const ALLOWED_COLORS = new Set([
-  "#f3e8ff",
-  "#e0c8ff",
-  "#c9a8ff",
-  "#a78bff",
-  "#9d4dff",
-  "#8a4dff",
-  "#7b2dff",
-  "#5b2dba",
-  "#3d1d7a",
-  "#1a0b2e",
+  "#ecfffa",
+  "#b8f5e3",
+  "#7ee3ad",
+  "#4ce5d0",
+  "#61f3bb",
+  "#2ec9a7",
+  "#1ea890",
+  "#0f8a78",
+  "#0a5e58",
+  "#051817",
   "#ffffff",
-  "#c4b5d9",
-  "#8b7da8",
-  "#ff6fae",
   "#9bd9ff",
+  "#5fb8d8",
+  "#ff9f6a",
   "#ffd16a",
+  "#ff6fae",
 ]);
 
 type PaintRequest = {
