@@ -1,6 +1,6 @@
 export const BRAND_CONFIG = {
   brandName: "Pixel Battle",
-  ticker: "$P&H",
+  ticker: "$H&P",
   tagline: "HOLD. PAINT. DEFEND. GROW.",
   description:
     "Green and teal pixel-art octopus branding for a competitive territory-painting game UI. Playful, premium, readable, and built around public canvas control.",

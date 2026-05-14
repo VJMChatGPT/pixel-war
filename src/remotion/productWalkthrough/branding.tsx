@@ -11,6 +11,7 @@ export type WalkthroughBranding = {
   wordmark: string;
   bugSubtitle: string;
   brandBugMood: MascotMood;
+  brandBugAsset?: string;
   tokenTicker: string;
   alternateName: string;
   domain: string;
@@ -25,6 +26,7 @@ const defaultBranding: WalkthroughBranding = {
   wordmark: "PIXL",
   bugSubtitle: "product walkthrough",
   brandBugMood: "normal",
+  brandBugAsset: undefined,
   tokenTicker: "$PIXL",
   alternateName: "PIXL",
   domain: "pixelwarcoin.com",
@@ -69,17 +71,18 @@ export const useWalkthroughBranding = () => useContext(walkthroughBrandingContex
 
 export const octopusWalkthroughBranding: WalkthroughBranding = {
   wordmark: BRAND_CONFIG.brandName,
-  bugSubtitle: "Paint & Hold walkthrough",
+  bugSubtitle: "Hold & Paint walkthrough",
   brandBugMood: "waving",
-  tokenTicker: "$P&H",
-  alternateName: "Paint & Hold",
+  brandBugAsset: "mark/pixl-mark-32.png",
+  tokenTicker: "$H&P",
+  alternateName: "Hold & Paint",
   domain: "pixelwarcoin.com",
   accent: BRAND_CONFIG.colors.mintGreen,
   accentSoft: BRAND_CONFIG.colors.aquaHighlight,
   backgroundDeep: BRAND_CONFIG.colors.backgroundDeep,
   backgroundDark: BRAND_CONFIG.colors.backgroundDark,
   mascotAssets: {
-    normal: "brand/octopus-serious.png",
+    normal: "brand/octopus-idle.png",
     waving: "brand/octopus-idle.png",
     happy: "brand/octopus-shock.png",
     sleeping: "brand/octopus-sleep.png",

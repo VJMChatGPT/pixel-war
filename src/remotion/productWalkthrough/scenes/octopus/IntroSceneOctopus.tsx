@@ -71,7 +71,7 @@ export const IntroSceneOctopus = () => {
           <br />
           Claim territory.
           <br />
-          <span style={{color: branding.accentSoft}}>Paint & Hold the board.</span>
+          <span style={{color: branding.accentSoft}}>Hold & Paint the board.</span>
         </div>
       </div>
       <div style={{position: "absolute", right: 228, bottom: 88, width: 238, height: 238}}>
@@ -112,7 +112,7 @@ export const IntroSceneOctopus = () => {
       <AbsoluteFill
         style={{
           pointerEvents: "none",
-          background: "radial-gradient(circle at 70% 72%, rgba(138,77,255,0.12), transparent 20%)",
+          background: `radial-gradient(circle at 70% 72%, ${branding.accent}22, transparent 20%)`,
           opacity: fade(frame, 18, 54),
         }}
       />

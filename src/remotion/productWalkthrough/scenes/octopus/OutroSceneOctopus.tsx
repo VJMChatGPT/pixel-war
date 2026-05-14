@@ -19,7 +19,7 @@ export const OutroSceneOctopus = () => {
           position: "absolute",
           inset: 0,
           background:
-            "radial-gradient(circle at 72% 48%, rgba(138,77,255,0.24), transparent 30%), radial-gradient(circle at 30% 18%, rgba(201,168,255,0.08), transparent 24%)",
+            `radial-gradient(circle at 72% 48%, ${branding.accent}3d, transparent 30%), radial-gradient(circle at 30% 18%, ${branding.accentSoft}14, transparent 24%)`,
         }}
       />
 
@@ -38,7 +38,7 @@ export const OutroSceneOctopus = () => {
           {[
             {label: `Buy ${branding.tokenTicker}.`, color: COLORS.text},
             {label: "Claim territory.", color: branding.accentSoft},
-            {label: "Paint & Hold the board.", color: COLORS.white},
+            {label: "Hold & Paint the board.", color: COLORS.white},
           ].map((item) => (
             <div key={item.label} style={{...textStyle, fontSize: 76, fontWeight: 930, lineHeight: 0.95, color: item.color}}>
               {item.label}
@@ -46,7 +46,7 @@ export const OutroSceneOctopus = () => {
           ))}
         </div>
         <div style={{...textStyle, color: COLORS.muted, fontSize: 24, lineHeight: 1.42, marginTop: 28, maxWidth: 650}}>
-          Paint & Hold powers a live 100 × 100 territory board where {branding.tokenTicker} holders compete for status, visibility and control.
+          Hold & Paint powers a live 100 x 100 territory board where {branding.tokenTicker} holders compete for status, visibility and control.
         </div>
         <div style={{display: "flex", gap: 18, alignItems: "center", marginTop: 42}}>
           <WalletButtonMock large />
@@ -69,7 +69,7 @@ export const OutroSceneOctopus = () => {
           </div>
         </div>
         <div style={{display: "flex", gap: 12, marginTop: 28, opacity: fade(frame, 84, 132)}}>
-          {["100 × 100 canvas", `${branding.tokenTicker} territory`, "live leaderboard"].map((item) => (
+          {["100 x 100 canvas", `${branding.tokenTicker} territory`, "live leaderboard"].map((item) => (
             <div
               key={item}
               style={{
@@ -98,7 +98,7 @@ export const OutroSceneOctopus = () => {
           transform: `translateY(${interpolate(fade(frame, 20, 58), [0, 1], [34, 0])}px)`,
         }}
       >
-        <OctopusMascotActor mood="happy" size={320} reactAt={64} rotate={-3} />
+        <OctopusMascotActor mood="normal" size={320} reactAt={64} rotate={-3} />
       </div>
     </SceneShell>
   );
