@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
-const BUY_URL = "https://pump.fun/coin/EUMC3kxi2bv1aCMzTvkD96XCi12xvS5CqWAtV1mFpump";
-
 const links = [
   { to: "/", label: "Home" },
   { to: "/canvas", label: "Canvas" },
@@ -81,13 +79,11 @@ export function NavBar() {
           <HeaderShareOnXButton />
           <WalletConnectButton />
           <Button
-            asChild
             size="lg"
-            className="h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)]"
+            disabled
+            className="h-11 rounded-xl px-5 font-semibold bg-gradient-neon text-primary-foreground shadow-[0_10px_30px_rgba(168,85,247,0.28)] opacity-80"
           >
-            <a href={BUY_URL} target="_blank" rel="noopener noreferrer">
-              <span>Buy {tokenTicker}</span>
-            </a>
+            <span>Buy {tokenTicker}</span>
           </Button>
         </div>
 
@@ -99,13 +95,11 @@ export function NavBar() {
             <SheetContent side="right" className="border-border bg-background px-5">
               <div className="mt-8 flex flex-col gap-2">
                 <Button
-                  asChild
                   size="lg"
-                  className="h-12 w-full rounded-xl bg-gradient-neon px-5 font-semibold text-primary-foreground"
+                  disabled
+                  className="h-12 w-full rounded-xl bg-gradient-neon px-5 font-semibold text-primary-foreground opacity-80"
                 >
-                  <a href={BUY_URL} target="_blank" rel="noopener noreferrer">
-                    <span>Buy {tokenTicker}</span>
-                  </a>
+                  <span>Buy {tokenTicker}</span>
                 </Button>
                 <Button
                   asChild
