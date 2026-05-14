@@ -652,7 +652,9 @@ export default function Landing() {
               transition={{ duration: 0.7, delay: 0.68 }}
               className="mt-4 max-w-full rounded-xl border border-border/70 bg-card/65 px-4 py-3 font-mono text-[11px] leading-5 text-muted-foreground"
             >
-              <span className="uppercase tracking-[0.2em] text-accent">Soon</span>
+              <span className="uppercase tracking-[0.2em] text-accent">
+                CA: EUMC3kxi2bv1aCMzTvkD96XCi12xvS5CqWAtV1mFpump
+              </span>
             </motion.div>
 
             <motion.div
