@@ -15,7 +15,6 @@ import {
   WINNER_PRIZE_HEADLINE,
   WINNER_PRIZE_SUBLINE,
 } from "@/config/brand";
-import { WinnerPrizeFees } from "@/components/WinnerPrizeFees";
 
 const CURRENT_ROUND_NUMBER = 1;
 
@@ -148,7 +147,6 @@ export function WinnerAdSlot() {
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
           {WINNER_PRIZE_SUBLINE}
         </p>
-        <WinnerPrizeFees />
         <div className="mt-8">
           <Button asChild variant="outline" className="h-11 rounded-xl">
             <Link to="/rules#winner-prize">View rules</Link>
